@@ -370,6 +370,38 @@ _ 🟡 En progreso _
 - [9] *Creacion de rutasRutas* : authRoutes.js ,productRoutes.js,cartRoutes.js,orderRoutes.js
 
 
+
+## Sesión: 28/09/2026 
+
+### Objetivo
+Configurá CORS para permitir que el Frontend se conecte sin problemas.
+Creá las rutas base (ej: /api/auth, /api/products) y un endpoint de prueba GET /api/health que responda {status: 'OK'}.
+
+
+### Cambios realizados
+Primero instalo la el paquete de cors utilizando el siguiente comando
+```js
+npm install cors 
+```
+
+luego agregue al codigo existente en src/index.js
+```js
+import cors from 'cors';
+```
+
+```js
+app.use(cors());
+```
+ 
+_🟡 En progreso_
+
+### Pendientes para la próxima sesión
+Creá las rutas base (ej: /api/auth, /api/products) 
+y un endpoint de prueba GET /api/health que responda {status: 'OK'}.
+
+
+
+
  ## Sesión: DD/MM/AAAA (Plantilla)
 
 ### Objetivo
