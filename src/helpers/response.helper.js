@@ -1,4 +1,4 @@
-const success = (res, data = null, message = 'Operación exitosa', statusCode = 200) => {
+export const successResponse = (res, data = null, message = 'Operación exitosa', statusCode = 200) => {
   return res.status(statusCode).json({
     ok: true,
     message,
@@ -6,7 +6,7 @@ const success = (res, data = null, message = 'Operación exitosa', statusCode = 
   });
 };
 
-const error = (res, error, message = 'Ha ocurrido un error en el servidor', statusCode = 500) => {
+export const errorResponse = (res, error, message = 'Ha ocurrido un error en el servidor', statusCode = 500) => {
   console.error(`[Error de Servidor]: ${error?.message || error}`);
 
   return res.status(statusCode).json({
@@ -14,9 +14,4 @@ const error = (res, error, message = 'Ha ocurrido un error en el servidor', stat
     message,
     error: error?.message || error || null
   });
-};
-
-module.exports = {
-  success,
-  error
 };
