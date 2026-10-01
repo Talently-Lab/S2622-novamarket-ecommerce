@@ -1,6 +1,3 @@
-//Regla general
-// primero imports , luego middlewares y rutas, y al final app.listen
-
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -9,11 +6,19 @@ import routes from './routes/index.js';
 
 const app = express();
 
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*', //URL de front
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200 
+};
+
 connectDB();
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api', routes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+
