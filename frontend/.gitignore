@@ -26,3 +26,7 @@ npm-debug.log*
 
 # Vite
 vite.config.ts.timestamp-*
+
+# Local AI-agent working files (kept out of the shared repo)
+odd/
+.atl/
