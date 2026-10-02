@@ -1,0 +1,23 @@
+#!/bin/sh
+# Local pre-push checks. These hooks are bypassable with `git push --no-verify`
+# and do NOT replace server-side branch protection, which is not configured.
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ "$branch" = "main" ]; then
+  echo "pre-push: direct pushes from 'main' are blocked. Push a 'feat/*', 'fix/*', 'chore/*', or 'docs/*' branch instead."
+  exit 1
+fi
+
+case "$branch" in
+feat/* | fix/* | chore/* | docs/*) ;;
+*)
+  echo "pre-push: branch '$branch' does not follow the agreed convention (feat/*, fix/*, chore/*, docs/*)."
+  exit 1
+  ;;
+esac
+
+npm run typecheck
+npm run lint
+npm test -- --run
+npm run build
