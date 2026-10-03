@@ -399,7 +399,111 @@ _🟡 En progreso_
 Creá las rutas base (ej: /api/auth, /api/products) 
 y un endpoint de prueba GET /api/health que responda {status: 'OK'}.
 
+## Sesión: 5/10/2026 
+### Objetivo
+📌 1. Modelo de Usuario (Base de Datos)
+Creá el modelo de datos para los usuarios con Mongoose en /src/models/User.js.
 
+📌 3. Endpoint de Perfil (Restaurar Sesión)
+Creá la ruta protegida GET /api/auth/me.
+
+Devuelve los datos del usuario autenticado (excluyendo el password usando .select('-password')). Frontend usará esto para mantener la sesión al recargar la página.
+### Cambios realizados
+Mi compañero Facuendo creo las rutas base (ej: /api/auth, /api/products) y un endpoint de prueba GET /api/health que responda {status: 'OK'}.
+
+ya habia adelantado pero solo esta parte que es el esquema de User
+```js
+ const mongoose = require('mongoose');
+const { Schema } = mongoose;
+const bcrypt = require('bcryptjs');
+
+const userSchema = new Schema({
+  nombre: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  rol: {
+    type: String,
+    enum: ['client', 'admin'],
+    default: 'client'
+  },
+  carrito: {
+    items: [
+      {
+        productId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Product'
+        },
+        cantidad: {
+          type: Number,
+          default: 1
+        }
+      }
+    ],
+    fechaCreacion: {
+      type: Date,
+      default: null
+    },
+    fechaActualizacion: {
+      type: Date,
+      default: null
+    }
+  }
+}, {
+  timestamps: true
+});
+module.exports = mongoose.model('User', userSchema);
+ ```
+hoy hice el Hash de la contraseña antes de guardar
+```js
+ userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+```
+y tambien Comparar contraseña en el login
+ ```js
+ 
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+ ```
+  
+_🟡 En progreso_
+
+### Pendientes para la próxima sesión
+📌 3. Endpoint de Perfil (Restaurar Sesión)
+Creá la ruta protegida GET /api/auth/me.
+```js
+npm install cors 
+```
+
+luego agregue al codigo existente en src/index.js
+```js
+import cors from 'cors';
+```
+
+```js
+app.use(cors());
+```
+ 
+_🟡 En progreso_
+
+### Pendientes para la próxima sesión
+Creá las rutas base (ej: /api/auth, /api/products) 
+y un endpoint de prueba GET /api/health que responda {status: 'OK'}.
 
 
  ## Sesión: DD/MM/AAAA (Plantilla)
