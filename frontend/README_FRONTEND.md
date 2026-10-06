@@ -1,1 +1,0 @@
-# S2622-novamarket-ecommerce
