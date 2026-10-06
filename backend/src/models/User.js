@@ -1,6 +1,7 @@
 
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+const bcrypt = require('bcryptjs');
 
 const userSchema = new Schema({
   nombre: {
@@ -20,8 +21,8 @@ const userSchema = new Schema({
   },
   rol: {
     type: String,
-    enum: ['cliente', 'admin'],
-    default: 'cliente'
+    enum: ['client', 'admin'],
+    default: 'client'
   },
   carrito: {
     items: [
@@ -48,5 +49,17 @@ const userSchema = new Schema({
 }, {
   timestamps: true
 });
+
+
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model('User', userSchema);
