@@ -1,17 +1,16 @@
-
 export default function Footer() {
   return (
     <footer className="w-full border-t border-zinc-200 bg-zinc-100 p-8 font-sans text-zinc-900">
       <div className="mx-auto flex max-w-[390px] flex-col gap-4 md:max-w-none">
         <div className="flex flex-col gap-2">
           <div className="w-fit rounded border border-zinc-400 px-3 py-1 text-sm font-semibold tracking-wider">
-           NovaMarket
+            NovaMarket
           </div>
           <p className="m-0 text-sm leading-5 text-zinc-600">
             Tecnología para tu setup
           </p>
         </div>
-        
+
         <div className="flex flex-col">
           <div className="flex h-12 items-center justify-between border-b border-zinc-300 text-sm font-medium">
             <span>Categorías</span>
