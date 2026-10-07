@@ -1,7 +1,8 @@
+import mongoose from 'mongoose';  //usemos los imports y export modernos ya que el package.json tiene "type": "module"
+import bcrypt from 'bcryptjs';
 
-const mongoose = require('mongoose');
+
 const { Schema } = mongoose;
-const bcrypt = require('bcryptjs');
 
 const userSchema = new Schema({
   nombre: {
@@ -54,12 +55,11 @@ const userSchema = new Schema({
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 10);
-  next();
+  //no es necesario llamar a next() aquí, ya que bcrypt.hash es una función asíncrona y el flujo de ejecución continuará después de que se complete la operación de hash. (genera error si se llama a next() aquí)
 });
-
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);
