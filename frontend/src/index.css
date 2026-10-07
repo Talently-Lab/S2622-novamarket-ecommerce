@@ -1,1 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+
+/*
+ * NovaMarket design tokens — Tailwind v4 theme.
+ * Source: Figma "Guia de componentes - NovaMarket" (tokens frame).
+ * Figma names use `/` (e.g. `fondo/pagina`); CSS utilities use `-`
+ * (e.g. `bg-fondo-pagina`). Figma -> utility map is kept in comments.
+ * Primitives are the raw palette (never apply directly);
+ * semantics point to primitives (these are the ones components use).
+ */
+@theme {
+  /* ---- Primitives: brand blues ---- */
+  --color-azul-900: #1e293b; /* Azul marca */
+  /* NOTE: hex read from guide image as #3S5871; assumed #355871. Confirm with design. */
+  --color-azul-600: #355871; /* Azul secundario */
+
+  /* ---- Primitives: action oranges ---- */
+  --color-naranja-700: #a3450e; /* Hover del CTA */
+  --color-naranja-600: #c45311; /* CTA con texto blanco */
+  --color-naranja-500: #ed742d; /* Acento sobre azul */
+
+  /* ---- Primitives: feedback ---- */
+  --color-menta-300: #99f2c8; /* Feedback de sistema */
+  --color-rojo-700: #b91c1c; /* Error (a validar) */
+
+  /* ---- Primitives: neutrals ---- */
+  --color-gris-0: #ffffff; /* Blanco */
+  --color-gris-50: #f8fafc; /* Fondo de pagina */
+  --color-gris-200: #e4e4e4; /* Divisores, placeholders */
+  --color-gris-50-a16: color-mix(in srgb, #f8fafc 16%, transparent); /* Divisor sobre azul */
+
+  /* ---- Semantics: fondos (fondo/*) ---- */
+  --color-fondo-pagina: var(--color-gris-50);
+  --color-fondo-superficie: var(--color-gris-0);
+  --color-fondo-estructura: var(--color-azul-900);
+  --color-fondo-deshabilitado: var(--color-gris-200);
+  --color-fondo-exito: var(--color-menta-300);
+
+  /* ---- Semantics: texto (texto/*) ---- */
+  --color-texto-principal: var(--color-azul-900);
+  --color-texto-secundario: var(--color-azul-600);
+  --color-texto-sobre-estructura: var(--color-gris-50);
+  --color-texto-sobre-estructura-sec: var(--color-gris-200);
+  --color-texto-sobre-accion: var(--color-gris-0);
+  --color-texto-sobre-exito: var(--color-azul-900);
+  --color-texto-error: var(--color-rojo-700);
+
+  /* ---- Semantics: accion (accion/*) ---- */
+  --color-accion-primaria: var(--color-naranja-600);
+  --color-accion-primaria-hover: var(--color-naranja-700);
+  --color-accion-acento: var(--color-naranja-500);
+
+  /* ---- Semantics: bordes (borde/*) ---- */
+  --color-borde-divisor: var(--color-gris-200);
+  --color-borde-divisor-estructura: var(--color-gris-50-a16);
+  --color-borde-input: var(--color-azul-600);
+  --color-borde-foco: var(--color-azul-900); /* foco 2px */
+  --color-borde-error: var(--color-rojo-700); /* error 2px */
+
+  /* ---- Typeface ---- */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * Text styles (Inter, letter-spacing 0, no color — color comes from texto/*).
+   * Weight is applied per usage: Bold=font-bold, Semibold=font-semibold,
+   * Medium=font-medium, Regular=font-normal.
+   */
+  --text-display: 40px; /* Display Bold 40/48 */
+  --text-display--line-height: 48px;
+  --text-titulo-1: 32px; /* Titulo/1 Bold 32/40 */
+  --text-titulo-1--line-height: 40px;
+  --text-titulo-2: 24px; /* Titulo/2 Bold 24/32 */
+  --text-titulo-2--line-height: 32px;
+  --text-titulo-3: 18px; /* Titulo/3 Bold 18/24 */
+  --text-titulo-3--line-height: 24px;
+  --text-precio: 18px; /* Precio Bold 18/24 */
+  --text-precio--line-height: 24px;
+  --text-cuerpo: 16px; /* Cuerpo/regular Regular 16/24 */
+  --text-cuerpo--line-height: 24px;
+  --text-cuerpo-boton: 16px; /* Cuerpo/boton Semibold 16/24 */
+  --text-cuerpo-boton--line-height: 24px;
+  --text-cuerpo-chico: 14px; /* Cuerpo-chico/regular Regular 14/20 */
+  --text-cuerpo-chico--line-height: 20px;
+  --text-cuerpo-chico-label: 14px; /* Cuerpo-chico/label Medium 14/20 */
+  --text-cuerpo-chico-label--line-height: 20px;
+  --text-caption: 12px; /* Caption Regular 12/16 */
+  --text-caption--line-height: 16px;
+  --text-caption-badge: 12px; /* Caption/badge Semibold 12/16 */
+  --text-caption-badge--line-height: 16px;
+
+  /*
+   * Radii (radio/*): sm 4 thumbnails, md 8 botones/inputs/toast,
+   * lg 12 tarjetas/contenedores, xl 16 hero/bottom-sheet,
+   * full -> rounded-full (chips, badges, contador).
+   */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+/*
+ * Espaciado (base 4px) matches the Tailwind default scale, so no custom
+ * tokens are needed — use the mapped utility:
+ * espaciado/1=4 -> p-1, /2=8 -> p-2, /3=12 -> p-3, /4=16 -> p-4,
+ * /6=24 -> p-6, /8=32 -> p-8, /12=48 -> p-12, /16=64 -> p-16, /20=80 -> p-20.
+ *
+ * Tamanos: alto/boton 48 -> h-12, alto/boton-sm 44 -> h-11 (minimo tactil),
+ * alto/chip 32 -> h-8, alto/badge 24 -> h-6,
+ * alto/navbar-mobile 112 -> h-[112px], alto/navbar-desktop 120 -> h-[120px].
+ *
+ * Grillas: mobile 390 margen 16 / 2 col / gutter 12;
+ * desktop 1440 contenedor 1280 margen 80 / 12 col / gutter 24;
+ * tactil minimo 44x44.
+ */
