@@ -7,7 +7,7 @@ export const successResponse = (res, data = null, message = 'Operación exitosa'
 };
 
 export const errorResponse = (res, error, message = 'Ha ocurrido un error en el servidor', statusCode = 500) => {
-  console.error(`[Error de Servidor]: ${error?.message || error}`);
+  console.error(`[Error de Servidor]: ${error?.message || error}, message: ${message}`);
 
   return res.status(statusCode).json({
     ok: false,
