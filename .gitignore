@@ -161,3 +161,6 @@ dist
 # Ignore all local history of files
 .history
 .ionide
+
+# Local ODD task tracking (local-only, mirrored in Engram)
+odd/
