@@ -19,8 +19,27 @@ class AuthService {
         return { token, user: userObject };
     }
 
-    async loginUser() {
+    async loginUser(userData) {
+        const { email, password } = userData;
+        const user = await User.findOne({ email });
 
+        if (!user) {
+            throw new Error('Credenciales inválidas');
+        }
+
+        const isPasswordValid = await user.comparePassword(password);
+
+        if (!isPasswordValid) {
+            throw new Error('Credenciales inválidas');
+        }
+
+        const userObject = user.toObject();
+
+        delete userObject.password;
+
+        const token = generateToken(user);
+
+        return { token, user: userObject };
     }
 
     async getCurrentUser() {

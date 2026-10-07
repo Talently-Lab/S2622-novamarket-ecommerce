@@ -16,3 +16,9 @@ export const registerSchema = z.object({
         .regex(/[a-z]/, 'La contraseña debe contener al menos una letra minúscula')
         .regex(/\d/, 'La contraseña debe contener al menos un número')
 });
+
+
+export const loginSchema = z.object({
+    email: z.string('El email debe ser una cadena de texto').email('Email inválido'),
+    password: z.string('La contraseña debe ser una cadena de texto')
+});
