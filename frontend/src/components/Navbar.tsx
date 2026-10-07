@@ -188,14 +188,16 @@ export default function Navbar({ count = 2 }: NavbarProps) {
       </div>
 
       {/* Desktop top bar */}
-      <div className="hidden items-center justify-between gap-8 px-20 py-4 md:flex">
-        <NavLink to="/" className="shrink-0 text-titulo-2 font-bold">
-          NovaMarket
-        </NavLink>
-        <SearchForm id="navbar-search-desktop" className="w-[640px] shrink" />
-        <div className="flex shrink-0 items-center gap-4">
-          <SessionLinks />
-          <CartButton count={count} />
+      <div className="hidden justify-center px-20 md:flex">
+        <div className="flex w-full max-w-[1280px] items-center justify-between gap-8 py-4">
+          <NavLink to="/" className="shrink-0 text-titulo-2 font-bold">
+            NovaMarket
+          </NavLink>
+          <SearchForm id="navbar-search-desktop" className="w-[640px] shrink" />
+          <div className="flex shrink-0 items-center gap-4">
+            <SessionLinks />
+            <CartButton count={count} />
+          </div>
         </div>
       </div>
 
@@ -206,26 +208,25 @@ export default function Navbar({ count = 2 }: NavbarProps) {
       />
 
       {/* Desktop category bar */}
-      <nav
-        aria-label="Categorías"
-        className="hidden items-center gap-8 px-20 py-6 md:flex"
-      >
-        <button
-          type="button"
-          onClick={() => navigate('/productos')}
-          className="text-cuerpo font-semibold hover:underline"
-        >
-          Todos
-        </button>
-        {CATEGORIES.map((category) => (
-          <NavLink
-            key={category}
-            to="/productos"
-            className="text-cuerpo hover:underline"
+      <nav aria-label="Categorías" className="hidden justify-center px-20 md:flex">
+        <div className="flex w-full max-w-[1280px] items-center gap-8 py-6">
+          <button
+            type="button"
+            onClick={() => navigate('/productos')}
+            className="text-cuerpo font-semibold hover:underline"
           >
-            {category}
-          </NavLink>
-        ))}
+            Todos
+          </button>
+          {CATEGORIES.map((category) => (
+            <NavLink
+              key={category}
+              to="/productos"
+              className="text-cuerpo hover:underline"
+            >
+              {category}
+            </NavLink>
+          ))}
+        </div>
       </nav>
 
       {/* Mobile drawer: session + categories */}
