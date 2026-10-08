@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { ChakraProof } from '../components/ChakraProof.tsx';
 
 export default function HomePage() {
   return (
@@ -32,6 +33,7 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+      <ChakraProof />
     </main>
   );
 }
