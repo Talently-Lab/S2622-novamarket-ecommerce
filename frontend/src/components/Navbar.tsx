@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext.tsx';
+import Icon from './icons/Icon.tsx';
 
 // TODO(cart): wire `count` to a real cart context once it exists.
 // The default 2 mirrors the Figma badge example, it is not live data.
@@ -18,22 +19,7 @@ function CartButton({ count }: { count: number }) {
       aria-label="Carrito"
       className="relative flex h-12 w-12 shrink-0 items-center justify-center"
     >
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        className="text-accion-primaria"
-      >
-        <path d="M3 4h2l2.4 12.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20.5 8H6" />
-        <circle cx="10" cy="20" r="1.25" />
-        <circle cx="17" cy="20" r="1.25" />
-      </svg>
+      <Icon name="shopping_cart" className="text-2xl text-accion-primaria" />
       <span
         aria-label={`${count} productos en el carrito`}
         className="absolute right-0 top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-accion-acento px-1 text-caption-badge font-semibold text-texto-sobre-accion"
@@ -74,19 +60,7 @@ function SearchForm({ id, className = '' }: { id: string; className?: string }) 
         aria-label="Buscar"
         className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-texto-secundario"
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-3.5-3.5" />
-        </svg>
+        <Icon name="search" className="text-xl" />
       </button>
     </form>
   );
@@ -163,18 +137,7 @@ export default function Navbar({ count = 2 }: NavbarProps) {
           onClick={() => setMenuOpen((open) => !open)}
           className="flex h-12 w-12 items-center justify-center"
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M4 7h16M4 12h16M4 17h16" />
-          </svg>
+          <Icon name="menu" className="text-2xl" />
         </button>
         <NavLink to="/" className="text-titulo-3 font-bold">
           NovaMarket
