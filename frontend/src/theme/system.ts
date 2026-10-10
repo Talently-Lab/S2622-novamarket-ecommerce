@@ -1,4 +1,5 @@
 import { createSystem, defaultConfig, defineConfig } from '@chakra-ui/react';
+import { buttonRecipe } from './button.recipe.ts';
 
 // NovaMarket theme bridge for Chakra v3.
 // Primitives mirror frontend/src/index.css `@theme` (same hex values);
@@ -11,6 +12,9 @@ const config = defineConfig({
   // which owns the CSS reset via `@import 'tailwindcss'` in index.css.
   preflight: false,
   theme: {
+    recipes: {
+      button: buttonRecipe,
+    },
     tokens: {
       colors: {
         azul: {
