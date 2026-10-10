@@ -1,90 +1,142 @@
-import type { User } from '../types/auth.ts';
-import { ApiError } from './api.ts';
+import type { Role, User } from '../types/auth.ts';
+import { ApiError, apiFetch } from './api.ts';
 
 export interface AuthResult {
   user: User;
   token: string;
 }
 
-const ADMIN_USER: User = {
-  id: '1',
-  name: 'Admin',
-  email: 'admin@example.com',
-  role: 'admin',
-};
-
-const ADMIN_TOKEN = 'fake-jwt-admin';
-const CLIENT_TOKEN_PREFIX = 'fake-jwt-cliente.';
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+/** User shape returned by the backend (Mongo + Spanish field names). */
+interface BackendUser {
+  _id: string;
+  nombre: string;
+  email: string;
+  rol: string;
 }
 
-function encodeClienteToken(name: string, email: string): string {
-  return `${CLIENT_TOKEN_PREFIX}${btoa(JSON.stringify({ name, email }))}`;
-}
-
-function decodeClienteToken(token: string): User | null {
-  if (!token.startsWith(CLIENT_TOKEN_PREFIX)) return null;
-  try {
-    const payload = JSON.parse(
-      atob(token.slice(CLIENT_TOKEN_PREFIX.length)),
-    ) as { name?: string; email?: string };
-    if (!payload.name || !payload.email) return null;
-    return {
-      id: `cliente-${payload.email}`,
-      name: payload.name,
-      email: payload.email,
-      role: 'cliente',
-    };
-  } catch {
-    return null;
-  }
+interface AuthData {
+  token: string;
+  user: BackendUser;
 }
 
 /**
- * Simulated login.
- * TODO: replace the simulated body with the real endpoint POST /api/auth/login
- * via apiFetch<AuthResult>('/auth/login', { method: 'POST', body: { email, password } }).
+ * Backend wraps results in `{ ok, message, data }` (see
+ * backend/src/helpers/response.helper.js). The bare `{ token, user }`
+ * shape is also accepted so the service does not break if the
+ * envelope ever changes.
+ */
+type AuthResponse = {
+  ok: boolean;
+  message: string;
+  data: AuthData | null;
+} | AuthData;
+
+type MeResponse = {
+  ok: boolean;
+  message: string;
+  data: BackendUser | { user: BackendUser } | null;
+} | BackendUser;
+
+function isBackendUser(value: unknown): value is BackendUser {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '_id' in value &&
+    'nombre' in value &&
+    'email' in value
+  );
+}
+
+function mapRole(rol: string): Role {
+  return rol === 'admin' ? 'admin' : 'cliente';
+}
+
+function mapUser(raw: BackendUser): User {
+  return {
+    id: String(raw._id),
+    name: raw.nombre,
+    email: raw.email,
+    role: mapRole(raw.rol),
+  };
+}
+
+function unwrapAuthData(response: AuthResponse, fallbackMessage: string): AuthData {
+  const data =
+    response !== null &&
+    typeof response === 'object' &&
+    'data' in response
+      ? response.data
+      : (response as AuthData);
+  if (!data?.token || !isBackendUser(data.user)) {
+    const message =
+      typeof response === 'object' && response !== null && 'message' in response
+        ? response.message
+        : fallbackMessage;
+    throw new ApiError(message || fallbackMessage);
+  }
+  return data;
+}
+
+/**
+ * Login against POST /api/auth/login.
+ * Sends `{ email, password }` and returns only `{ user, token }`
+ * (never persists or returns the password).
  */
 export async function login(
   email: string,
   password: string,
 ): Promise<AuthResult> {
-  await delay(300);
-  if (email === 'admin@example.com' && password === '123456') {
-    return { user: ADMIN_USER, token: ADMIN_TOKEN };
-  }
-  throw new ApiError('Invalid credentials', 401);
+  const response = await apiFetch<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: { email, password },
+  });
+  const data = unwrapAuthData(response, 'Login failed');
+  return { user: mapUser(data.user), token: data.token };
 }
 
 /**
- * Simulated registration (always creates a cliente user).
- * TODO: replace the simulated body with the real endpoint POST /api/auth/register
- * via apiFetch<AuthResult>('/auth/register', { method: 'POST', body: { name, email, password } }).
+ * Register against POST /api/auth/register.
+ * The backend validates `nombre` (min 2 chars), so the frontend
+ * `name` is sent as `nombre`.
  */
 export async function register(
   name: string,
   email: string,
-  _password: string,
+  password: string,
 ): Promise<AuthResult> {
-  void _password;
-  await delay(300);
-  const user: User = { id: `cliente-${email}`, name, email, role: 'cliente' };
-  return { user, token: encodeClienteToken(name, email) };
+  const response = await apiFetch<AuthResponse>('/auth/register', {
+    method: 'POST',
+    body: { nombre: name, email, password },
+  });
+  const data = unwrapAuthData(response, 'Registration failed');
+  return { user: mapUser(data.user), token: data.token };
 }
 
 /**
- * Simulated session restore from a stored token.
- * TODO: replace the simulated body with the real endpoint GET /api/auth/me
- * via apiFetch<User>('/auth/me').
+ * Restore the session against GET /api/auth/me.
+ * The token is injected from localStorage by `apiFetch`, so no
+ * parameter is needed (single source of truth).
  */
-export async function me(token: string): Promise<User> {
-  await delay(150);
-  if (token === ADMIN_TOKEN) return ADMIN_USER;
-  const cliente = decodeClienteToken(token);
-  if (cliente) return cliente;
-  throw new ApiError('Invalid token', 401);
+export async function me(): Promise<User> {
+  const response = await apiFetch<MeResponse>('/auth/me');
+  const data =
+    response !== null && typeof response === 'object' && 'data' in response
+      ? response.data
+      : (response as BackendUser);
+  const raw = isBackendUser(data)
+    ? data
+    : data !== null &&
+        typeof data === 'object' &&
+        'user' in data &&
+        isBackendUser(data.user)
+      ? data.user
+      : null;
+  if (!raw) {
+    const message =
+      typeof response === 'object' && response !== null && 'message' in response
+        ? response.message
+        : null;
+    throw new ApiError(message || 'Invalid session', 401);
+  }
+  return mapUser(raw);
 }
