@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose"; // import en lugar de require, ya que estamos usando ES Modules
 const { Schema } = mongoose;
 
 const productSchema = new Schema({
@@ -23,15 +23,20 @@ const productSchema = new Schema({
   },
   categoria: {
     type: String,
+    enum: ['accesorios', 'perifericos', 'gadgets'],
     required: true,
     trim: true
   },
   imagenUrl: {
     type: String
+  },
+  activo: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true   // genera createdAt y updatedAt automático
 });
 
-module.exports = mongoose.model('Product', productSchema);
+export default mongoose.model('Product', productSchema);
 
