@@ -6,7 +6,7 @@ class CartController {
         try {
             return successResponse(res, null, null, 200);
         } catch (error) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 
@@ -14,7 +14,7 @@ class CartController {
         try {
             return successResponse(res, null, null, 200);
         } catch (error) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 
@@ -22,7 +22,7 @@ class CartController {
         try {
             return successResponse(res, null, null, 200);
         } catch (error) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 
@@ -30,7 +30,7 @@ class CartController {
         try {
             return successResponse(res, null, null, 200);
         } catch (error) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 
@@ -38,7 +38,7 @@ class CartController {
         try {
             return successResponse(res, null, null, 200);
         } catch (error) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 }

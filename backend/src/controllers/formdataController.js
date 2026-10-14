@@ -8,7 +8,7 @@ class FormdataController {
             const category = FormdataService.getProductsCategory();
             return successResponse(res, category, 'Categorías de productos', 200);
         } catch (error) {
-            return errorResponse(res, error, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 

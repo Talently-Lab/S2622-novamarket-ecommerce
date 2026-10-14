@@ -5,8 +5,8 @@ class ProductController {
     async getAllProducts(req, res, next) {
         try {
             return successResponse(res, null, null, 200);
-        } catch (err) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+        } catch (error) {
+            return errorResponse(res, error);
         }
     }
 
@@ -14,40 +14,40 @@ class ProductController {
         try {
             const response = await ProductService.getProductById(req.params.id);
             return successResponse(res, response, 'Producto encontrado', 200);
-        } catch (err) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+        } catch (error) {
+            return errorResponse(res, error);
         }
     }
 
     async createProduct(req, res, next) {
         try {
             return successResponse(res, null, null, 200);
-        } catch (err) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+        } catch (error) {
+            return errorResponse(res, error);
         }
     }
 
     async updateProduct(req, res, next) {
         try {
             return successResponse(res, null, null, 200);
-        } catch (err) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+        } catch (error) {
+            return errorResponse(res, error);
         }
     }
 
     async deleteProduct(req, res, next) {
         try {
             return successResponse(res, null, null, 200);
-        } catch (err) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+        } catch (error) {
+            return errorResponse(res, error);
         }
     }
 
     async updateProductStock(req, res, next) {
         try {
             return successResponse(res, null, null, 200);
-        } catch (err) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+        } catch (error) {
+            return errorResponse(res, error);
         }
     }
 }
