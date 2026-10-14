@@ -20,6 +20,10 @@ const swaggerDocument = {
       name: 'Formularios',
       description: 'Datos de referencia para completar formularios.',
     },
+    {
+      name: 'Productos',
+      description: 'Consulta de productos disponibles.',
+    },
   ],
   paths: {
     '/auth/register': {
@@ -237,9 +241,172 @@ const swaggerDocument = {
         },
       },
     },
+    '/products/{id}': {
+      get: {
+        tags: ['Productos'],
+        summary: 'Obtener producto por ID',
+        description:
+          'Devuelve un producto activo por su identificador de MongoDB (ObjectId).',
+        operationId: 'getProductById',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            description: 'Identificador del producto. Debe ser un ObjectId de 24 caracteres hexadecimales.',
+            schema: {
+              type: 'string',
+              pattern: '^[0-9a-fA-F]{24}$',
+              example: '507f1f77bcf86cd799439011',
+            },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Producto encontrado.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductByIdResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Producto encontrado',
+                  data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    nombre: 'Auriculares inalámbricos',
+                    descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                    precio: 89.99,
+                    stock: 12,
+                    categoria: 'gadgets',
+                    imagenUrl: 'https://example.com/auriculares.jpg',
+                    activo: true,
+                    createdAt: '2026-01-15T10:30:00.000Z',
+                    updatedAt: '2026-01-15T10:30:00.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'El ID no es un ObjectId válido.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'El ID del producto debe ser un ObjectId válido',
+                  error: null,
+                },
+              },
+            },
+          },
+          500: {
+            description:
+              'Error al buscar el producto, incluido el caso en que no se encuentre un producto activo con ese ID.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Error al comprobar el estado del servidor',
+                  error: 'Producto no encontrado',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
+      ProductByIdResponse: {
+        type: 'object',
+        required: ['ok', 'message', 'data'],
+        properties: {
+          ok: {
+            type: 'boolean',
+            enum: [true],
+          },
+          message: {
+            type: 'string',
+            example: 'Producto encontrado',
+          },
+          data: {
+            $ref: '#/components/schemas/Product',
+          },
+        },
+      },
+      Product: {
+        type: 'object',
+        required: [
+          '_id',
+          'nombre',
+          'precio',
+          'stock',
+          'categoria',
+          'activo',
+          'createdAt',
+          'updatedAt',
+        ],
+        properties: {
+          _id: {
+            type: 'string',
+            description: 'Identificador del producto en MongoDB.',
+            example: '507f1f77bcf86cd799439011',
+          },
+          nombre: {
+            type: 'string',
+            example: 'Auriculares inalámbricos',
+          },
+          descripcion: {
+            type: 'string',
+            nullable: true,
+            example: 'Auriculares Bluetooth con cancelación de ruido',
+          },
+          precio: {
+            type: 'number',
+            example: 89.99,
+          },
+          stock: {
+            type: 'integer',
+            example: 12,
+          },
+          categoria: {
+            type: 'string',
+            enum: ['accesorios', 'perifericos', 'gadgets'],
+            example: 'gadgets',
+          },
+          imagenUrl: {
+            type: 'string',
+            nullable: true,
+            example: 'https://example.com/auriculares.jpg',
+          },
+          activo: {
+            type: 'boolean',
+            example: true,
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          __v: {
+            type: 'integer',
+            description: 'Versión del documento de MongoDB.',
+            example: 0,
+          },
+        },
+      },
       ProductCategoriesResponse: {
         type: 'object',
         required: ['ok', 'message', 'data'],

@@ -1,13 +1,15 @@
 import express from "express";
 import ProductController from "../controllers/productController.js";
-import {authenticate} from "../middleware/verifyToken.js";
-import {authorize} from "../middleware/isAdmin.js"
+import { authenticate } from "../middleware/verifyToken.js";
+import { authorize } from "../middleware/isAdmin.js"
+import { validateParams } from "../middleware/validateSchema.js";
+import { GET_PRODUCT_SCHEMA } from "../zodSchemas/products.js";
 const router = express.Router();
 
 
 
 router.get('/', ProductController.getAllProducts);
-router.get('/:id', ProductController.getProductById);
+router.get('/:id', validateParams(GET_PRODUCT_SCHEMA), ProductController.getProductById);
 router.post('/', authenticate, authorize('admin'), ProductController.createProduct);
 router.put('/:id', authenticate, authorize('admin'), ProductController.updateProduct);
 router.delete('/:id', authenticate, authorize('admin'), ProductController.deleteProduct);

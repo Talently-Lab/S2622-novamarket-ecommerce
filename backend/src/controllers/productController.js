@@ -1,4 +1,5 @@
 import { errorResponse, successResponse } from '../helpers/response.helper.js';
+import ProductService from '../services/productService.js';
 
 class ProductController {
     async getAllProducts(req, res, next) {
@@ -11,7 +12,8 @@ class ProductController {
 
     async getProductById(req, res, next) {
         try {
-            return successResponse(res, null, null, 200);
+            const response = await ProductService.getProductById(req.params.id);
+            return successResponse(res, response, 'Producto encontrado', 200);
         } catch (err) {
             return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
         }
