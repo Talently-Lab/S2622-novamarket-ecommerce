@@ -6,7 +6,30 @@ export const GET_PRODUCT_SCHEMA = z.object({
         .regex(/^[0-9a-fA-F]{24}$/, 'El ID del producto debe ser un ObjectId válido'),
 });
 
-export const loginSchema = z.object({
-    email: z.string('El email debe ser una cadena de texto').email('Email inválido'),
-    password: z.string('La contraseña debe ser una cadena de texto')
+//tiene que tener filtro de categoria, nombre, precio, limit, page, ademas un filtro de ordenamiento por precio ascendente o descendente y acendente descendente por fecha de creacion
+export const GET_PRODUCTS_SCHEMA = z.object({
+    limit: z
+        .string({ required_error: 'El límite de productos es requerido' })
+        .regex(/^\d+$/, 'El límite de productos debe ser un número entero')
+        .transform((val) => parseInt(val, 10))
+        .default('10'),
+    page: z
+        .string({ required_error: 'La página de productos es requerida' })
+        .regex(/^\d+$/, 'La página de productos debe ser un número entero')
+        .transform((val) => parseInt(val, 10))
+        .default('1'),
+    category: z.string().optional(),
+    name: z.string().optional(),
+    minPrice: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .optional(),
+    maxPrice: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .optional(),
+    sortByPrice: z.enum(['asc', 'desc']).optional(),
+    sortByDate: z.enum(['asc', 'desc']).optional(),
 });

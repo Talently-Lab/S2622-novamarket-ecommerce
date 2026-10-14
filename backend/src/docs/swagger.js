@@ -323,9 +323,228 @@ const swaggerDocument = {
         },
       },
     },
+    '/products/': {
+      get: {
+        tags: ['Productos'],
+        summary: 'Listar productos',
+        description:
+          'Devuelve productos activos con filtros opcionales, paginación y ordenamiento.',
+        operationId: 'getAllProducts',
+        parameters: [
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            description: 'Cantidad máxima de productos por página. Por defecto: 10.',
+            schema: {
+              type: 'integer',
+              default: 10,
+              example: 10,
+            },
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            description: 'Número de página, comenzando desde 1. Por defecto: 1.',
+            schema: {
+              type: 'integer',
+              default: 1,
+              example: 1,
+            },
+          },
+          {
+            name: 'category',
+            in: 'query',
+            required: false,
+            description: 'Filtra por categoría del producto.',
+            schema: {
+              type: 'string',
+              enum: ['accesorios', 'perifericos', 'gadgets'],
+            },
+          },
+          {
+            name: 'name',
+            in: 'query',
+            required: false,
+            description: 'Busca por nombre del producto, sin distinguir mayúsculas.',
+            schema: {
+              type: 'string',
+              example: 'auriculares',
+            },
+          },
+          {
+            name: 'minPrice',
+            in: 'query',
+            required: false,
+            description: 'Precio mínimo inclusivo.',
+            schema: {
+              type: 'integer',
+              minimum: 0,
+              example: 10,
+            },
+          },
+          {
+            name: 'maxPrice',
+            in: 'query',
+            required: false,
+            description: 'Precio máximo inclusivo.',
+            schema: {
+              type: 'integer',
+              minimum: 0,
+              example: 100,
+            },
+          },
+          {
+            name: 'sortByPrice',
+            in: 'query',
+            required: false,
+            description: 'Ordena por precio.',
+            schema: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+            },
+          },
+          {
+            name: 'sortByDate',
+            in: 'query',
+            required: false,
+            description: 'Ordena por fecha de creación.',
+            schema: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+            },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Productos encontrados.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductsListResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Productos encontrados',
+                  data: {
+                    products: [
+                      {
+                        _id: '507f1f77bcf86cd799439011',
+                        nombre: 'Auriculares inalámbricos',
+                        descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                        precio: 89,
+                        stock: 12,
+                        categoria: 'gadgets',
+                        imagenUrl: 'https://example.com/auriculares.jpg',
+                        createdAt: '2026-01-15T10:30:00.000Z',
+                        updatedAt: '2026-01-15T10:30:00.000Z',
+                      },
+                    ],
+                    totalProducts: 1,
+                  },
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno al obtener los productos.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
+      ProductsListResponse: {
+        type: 'object',
+        required: ['ok', 'message', 'data'],
+        properties: {
+          ok: {
+            type: 'boolean',
+            enum: [true],
+          },
+          message: {
+            type: 'string',
+            example: 'Productos encontrados',
+          },
+          data: {
+            type: 'object',
+            required: ['products', 'totalProducts'],
+            properties: {
+              products: {
+                type: 'array',
+                items: {
+                  $ref: '#/components/schemas/ProductListItem',
+                },
+              },
+              totalProducts: {
+                type: 'integer',
+                description: 'Cantidad total de productos que coinciden con los filtros.',
+                example: 1,
+              },
+            },
+          },
+        },
+      },
+      ProductListItem: {
+        type: 'object',
+        required: ['_id', 'nombre', 'precio', 'stock', 'categoria', 'createdAt', 'updatedAt'],
+        properties: {
+          _id: {
+            type: 'string',
+            description: 'Identificador del producto en MongoDB.',
+            example: '507f1f77bcf86cd799439011',
+          },
+          nombre: {
+            type: 'string',
+            example: 'Auriculares inalámbricos',
+          },
+          descripcion: {
+            type: 'string',
+            nullable: true,
+            example: 'Auriculares Bluetooth con cancelación de ruido',
+          },
+          precio: {
+            type: 'number',
+            example: 89,
+          },
+          stock: {
+            type: 'integer',
+            example: 12,
+          },
+          categoria: {
+            type: 'string',
+            enum: ['accesorios', 'perifericos', 'gadgets'],
+            example: 'gadgets',
+          },
+          imagenUrl: {
+            type: 'string',
+            nullable: true,
+            example: 'https://example.com/auriculares.jpg',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+        },
+      },
       ProductByIdResponse: {
         type: 'object',
         required: ['ok', 'message', 'data'],

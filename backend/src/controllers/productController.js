@@ -4,7 +4,15 @@ import ProductService from '../services/productService.js';
 class ProductController {
     async getAllProducts(req, res, next) {
         try {
-            return successResponse(res, null, null, 200);
+
+            const filters = req.query;
+            const options = {
+                limit: parseInt(req.query.limit) || 10,
+                page: parseInt(req.query.page) || 1,
+            };
+
+            const products = await ProductService.getAllProducts(filters, options);
+            return successResponse(res, products, 'Productos encontrados', 200);
         } catch (error) {
             return errorResponse(res, error);
         }
