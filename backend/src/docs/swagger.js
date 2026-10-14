@@ -3,7 +3,7 @@ const swaggerDocument = {
   info: {
     title: 'NovaMarket API',
     version: '1.0.0',
-    description: 'Documentación de los endpoints de autenticación de NovaMarket.',
+    description: 'Documentación de los endpoints de NovaMarket.',
   },
   servers: [
     {
@@ -15,6 +15,10 @@ const swaggerDocument = {
     {
       name: 'Autenticación',
       description: 'Registro e inicio de sesión de usuarios.',
+    },
+    {
+      name: 'Formularios',
+      description: 'Datos de referencia para completar formularios.',
     },
   ],
   paths: {
@@ -192,9 +196,72 @@ const swaggerDocument = {
         },
       },
     },
+    '/formdata/products': {
+      get: {
+        tags: ['Formularios'],
+        summary: 'Obtener categorías de productos',
+        description:
+          'Devuelve las categorías disponibles para productos según las opciones definidas en el modelo.',
+        operationId: 'getProductCategories',
+        responses: {
+          200: {
+            description: 'Categorías de productos obtenidas correctamente.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductCategoriesResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Categorías de productos',
+                  data: ['accesorios', 'perifericos', 'gadgets'],
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno al obtener las categorías.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Error al comprobar el estado del servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
+      ProductCategoriesResponse: {
+        type: 'object',
+        required: ['ok', 'message', 'data'],
+        properties: {
+          ok: {
+            type: 'boolean',
+            enum: [true],
+          },
+          message: {
+            type: 'string',
+            example: 'Categorías de productos',
+          },
+          data: {
+            type: 'array',
+            items: {
+              type: 'string',
+              enum: ['accesorios', 'perifericos', 'gadgets'],
+            },
+            example: ['accesorios', 'perifericos', 'gadgets'],
+          },
+        },
+      },
       RegisterRequest: {
         type: 'object',
         required: ['nombre', 'email', 'password'],
