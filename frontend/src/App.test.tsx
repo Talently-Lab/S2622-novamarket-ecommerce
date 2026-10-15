@@ -1,9 +1,48 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
-import { products } from './mocks/products.ts';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+function stubCatalogFetch() {
+  const payload = {
+    ok: true,
+    message: 'Operación exitosa',
+    data: [
+      {
+        _id: 'mongo-id-1',
+        nombre: 'Auriculares NovaSound X1',
+        descripcion: 'Auriculares inalambricos over-ear',
+        precio: 45999.9,
+        stock: 24,
+        categoria: 'accesorios',
+        imagenUrl: 'https://example.com/x1.png',
+      },
+      {
+        _id: 'mongo-id-2',
+        nombre: 'Mouse Gamer NovaTech',
+        descripcion: 'Mouse optico para gaming',
+        precio: 18500.0,
+        stock: 40,
+        categoria: 'perifericos',
+        imagenUrl: 'https://example.com/mouse.png',
+      },
+    ],
+  };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ),
+  );
+}
 
 describe('NovaMarket landing page', () => {
   it('welcomes visitors to NovaMarket on the root route', () => {
@@ -34,7 +73,8 @@ describe('NovaMarket landing page', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the mock product catalog on /productos', () => {
+  it('renders the API-backed product catalog on /productos', async () => {
+    stubCatalogFetch();
     render(
       <MemoryRouter initialEntries={['/productos']}>
         <AuthProvider>
@@ -44,8 +84,8 @@ describe('NovaMarket landing page', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /^products$/i }),
+      await screen.findByRole('heading', { name: /todos los productos/i }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole('img')).toHaveLength(products.length);
+    expect(await screen.findAllByRole('img')).toHaveLength(2);
   });
 });

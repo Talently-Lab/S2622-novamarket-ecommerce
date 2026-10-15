@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
-import type { Product } from '../mocks/products.ts';
+import type { Product } from '../types/product.ts';
 import Icon from './icons/Icon.tsx';
 
 // Reusable catalog card from Figma frame `178:2042` / set `178:2059`.

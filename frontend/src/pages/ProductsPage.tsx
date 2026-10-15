@@ -1,43 +1,116 @@
-import { products } from '../mocks/products.ts';
+import { useState } from 'react';
+import { Button } from '@chakra-ui/react';
+import CategoryFilter from '../components/CategoryFilter.tsx';
+import ProductCard from '../components/ProductCard.tsx';
+import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
+import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
+import { useProducts } from '../hooks/useProducts.ts';
 
+const PAGE_SIZE = 8;
+const SKELETON_COUNT = 8;
+
+// API-backed catalog (SN-249, Figma 212:1259). Mobile-first grid with
+// 2 columns from mobile; "Cargar más" paginates client-side over the
+// received set and resets on every filter change. No cart wiring:
+// cards render without onAdd by design.
 export default function ProductsPage() {
+  const {
+    products,
+    categories,
+    category,
+    setCategory,
+    loading,
+    error,
+    retry,
+  } = useProducts();
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  function handleCategoryChange(next: string) {
+    setCategory(next);
+    setVisibleCount(PAGE_SIZE);
+  }
+
+  const visible = products.slice(0, visibleCount);
+  const hasMore = visibleCount < products.length;
+  const countLabel =
+    products.length === 1 ? '1 producto' : `${products.length} productos`;
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-        Products
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <h1 className="text-titulo-2 font-bold tracking-tight text-texto-principal">
+        Todos los productos
       </h1>
-      <p className="mt-2 text-slate-600">
-        Low-fi catalog with {products.length} mock products.
+      <p
+        aria-live="polite"
+        className="mt-1 text-cuerpo-chico text-texto-secundario"
+      >
+        {loading ? 'Cargando productos…' : countLabel}
       </p>
-      <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {products.map((product) => (
-          <li
-            key={product.id}
-            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-          >
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              loading="lazy"
-              className="aspect-[3/2] w-full bg-slate-100 object-cover"
-            />
-            <div className="p-4">
-              <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                {product.category}
-              </p>
-              <h2 className="mt-1 text-sm font-semibold text-slate-900">
-                {product.name}
-              </h2>
-              <p className="mt-2 text-base font-bold text-slate-900">
-                ${product.price.toLocaleString('en-US')}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Stock: {product.stock}
-              </p>
+      <div className="mt-4">
+        <CategoryFilter
+          categories={categories}
+          value={category}
+          onChange={handleCategoryChange}
+        />
+      </div>
+
+      {loading ? (
+        <div
+          aria-busy="true"
+          className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4"
+        >
+          {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+            <ProductCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : error ? (
+        <div
+          role="alert"
+          className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-borde-error bg-fondo-superficie px-6 py-12 text-center"
+        >
+          <p className="text-titulo-3 font-bold text-texto-principal">
+            No se pudieron cargar los productos
+          </p>
+          <p className="text-cuerpo-chico text-texto-error">{error}</p>
+          <Button variant="primary" onClick={retry}>
+            Reintentar
+          </Button>
+        </div>
+      ) : products.length === 0 ? (
+        category ? (
+          <ProductsEmptyState
+            title="Sin resultados"
+            description="No hay productos en esta categoría."
+          />
+        ) : (
+          <ProductsEmptyState
+            title="No hay productos disponibles"
+            description="Vuelve a intentarlo más tarde."
+          />
+        )
+      ) : (
+        <>
+          <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
+            {visible.map((product) => (
+              <li key={product.id}>
+                <ProductCard product={product} />
+              </li>
+            ))}
+          </ul>
+          {hasMore ? (
+            <div className="mt-8 flex justify-center">
+              <Button
+                variant="primary"
+                onClick={() =>
+                  setVisibleCount((count) => count + PAGE_SIZE)
+                }
+              >
+                Cargar más
+              </Button>
             </div>
-          </li>
-        ))}
-      </ul>
+          ) : null}
+        </>
+      )}
     </main>
   );
 }

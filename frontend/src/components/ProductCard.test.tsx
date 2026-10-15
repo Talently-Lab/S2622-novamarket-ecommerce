@@ -3,7 +3,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import ProductCard from './ProductCard.tsx';
-import type { Product } from '../mocks/products.ts';
+import type { Product } from '../types/product.ts';
 import { system } from '../theme/system.ts';
 
 const baseProduct: Product = {
