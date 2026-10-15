@@ -2,9 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import ProductCard, {
-  getProductCardVariant,
-} from './ProductCard.tsx';
+import ProductCard from './ProductCard.tsx';
 import type { Product } from '../mocks/products.ts';
 import { system } from '../theme/system.ts';
 
@@ -19,22 +17,38 @@ const baseProduct: Product = {
 };
 
 function renderCard(node: ReactNode) {
-  render(<ChakraProvider value={system}>{node}</ChakraProvider>);
+  return render(<ChakraProvider value={system}>{node}</ChakraProvider>);
 }
 
-describe('getProductCardVariant', () => {
+describe('ProductCard variants', () => {
   it('resolves default when in stock and not added', () => {
-    expect(getProductCardVariant(baseProduct)).toBe('default');
+    const { container } = renderCard(<ProductCard product={baseProduct} />);
+    const card = container.querySelector('article[data-variant]');
+    expect(card).toHaveAttribute('data-variant', 'default');
+    expect(
+      screen.getByRole('button', { name: 'Agregar' }),
+    ).toBeEnabled();
   });
 
   it('resolves added when flagged and in stock', () => {
-    expect(getProductCardVariant(baseProduct, true)).toBe('added');
+    const { container } = renderCard(
+      <ProductCard product={baseProduct} added />,
+    );
+    const card = container.querySelector('article[data-variant]');
+    expect(card).toHaveAttribute('data-variant', 'added');
+    expect(screen.getByRole('status')).toHaveTextContent('Agregado');
   });
 
   it('resolves out-of-stock even when flagged as added', () => {
-    expect(getProductCardVariant({ ...baseProduct, stock: 0 }, true)).toBe(
-      'out-of-stock',
+    const { container } = renderCard(
+      <ProductCard product={{ ...baseProduct, stock: 0 }} added />,
     );
+    const card = container.querySelector('article[data-variant]');
+    expect(card).toHaveAttribute('data-variant', 'out-of-stock');
+    expect(
+      screen.getByRole('button', { name: 'Sin stock' }),
+    ).toBeDisabled();
+    expect(screen.queryByText('Agregado')).not.toBeInTheDocument();
   });
 });
 
@@ -45,10 +59,18 @@ describe('ProductCard', () => {
     expect(
       screen.getByRole('heading', { name: baseProduct.name }),
     ).toBeInTheDocument();
-    expect(screen.getByText('$45,999.9')).toBeInTheDocument();
+    expect(screen.getByText('$46.000')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Agregar' }),
     ).toBeEnabled();
+  });
+
+  it('formats the price for Argentina without visible decimals', () => {
+    renderCard(
+      <ProductCard product={{ ...baseProduct, price: 32000 }} />,
+    );
+
+    expect(screen.getByText('$32.000')).toBeInTheDocument();
   });
 
   it('calls onAdd with the product when the CTA is clicked', () => {

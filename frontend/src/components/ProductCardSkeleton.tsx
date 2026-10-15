@@ -13,7 +13,7 @@ export default function ProductCardSkeleton({
       role="status"
       aria-label={label}
       data-testid="product-card-skeleton"
-      className="flex w-full flex-col overflow-hidden rounded-xl border border-borde-divisor bg-fondo-superficie"
+      className="flex w-full flex-col overflow-hidden rounded-2xl border border-borde-divisor bg-fondo-superficie"
     >
       <div aria-hidden="true" className="flex flex-col">
         <div className="aspect-square w-full animate-pulse bg-fondo-deshabilitado" />

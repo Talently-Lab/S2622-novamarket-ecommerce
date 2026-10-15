@@ -17,7 +17,7 @@ export interface ProductCardProps {
   onAdd?: (product: Product) => void;
 }
 
-export function getProductCardVariant(
+function getProductCardVariant(
   product: Product,
   added = false,
 ): ProductCardVariant {
@@ -27,7 +27,7 @@ export function getProductCardVariant(
 }
 
 function formatPrice(price: number): string {
-  return `$${price.toLocaleString('en-US')}`;
+  return `$${price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 }
 
 export default function ProductCard({
@@ -43,7 +43,7 @@ export default function ProductCard({
     <article
       aria-labelledby={nameId}
       data-variant={variant}
-      className="flex w-full flex-col overflow-hidden rounded-xl border border-borde-divisor bg-fondo-superficie"
+      className="flex w-full flex-col overflow-hidden rounded-2xl border border-borde-divisor bg-fondo-superficie"
     >
       {imageFailed ? (
         <div
