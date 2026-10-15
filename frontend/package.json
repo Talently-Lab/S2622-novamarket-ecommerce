@@ -17,7 +17,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "chakra typegen ./src/theme/system.ts"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.37.0",
@@ -29,6 +30,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@chakra-ui/cli": "^3.37.0",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@eslint/js": "^9.39.5",

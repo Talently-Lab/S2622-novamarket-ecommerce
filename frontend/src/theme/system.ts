@@ -1,4 +1,5 @@
 import { createSystem, defaultConfig, defineConfig } from '@chakra-ui/react';
+import { buttonRecipe } from './button.recipe.ts';
 import { inputRecipe } from './input.recipe.ts';
 
 // NovaMarket theme bridge for Chakra v3.
@@ -13,6 +14,7 @@ const config = defineConfig({
   preflight: false,
   theme: {
     recipes: {
+      button: buttonRecipe,
       input: inputRecipe,
     },
     tokens: {
