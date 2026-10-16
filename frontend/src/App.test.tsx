@@ -19,7 +19,7 @@ describe('NovaMarket landing page', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /novamarket: tecnología/i }),
+      screen.getByRole('heading', { name: /potenciá tu setup/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /categorías/i }),
