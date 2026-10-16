@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
 import type { Product } from '../types/product.ts';
+import { buildImageSrcSet } from '../utils/responsiveImage.ts';
 import Icon from './icons/Icon.tsx';
 
 // Reusable catalog card from Figma frame `178:2042` / set `178:2059`.
@@ -15,6 +16,8 @@ export interface ProductCardProps {
   added?: boolean;
   /** Fired only from the Default CTA. No cart logic lives here. */
   onAdd?: (product: Product) => void;
+  /** Eager, high-priority load for above-the-fold cards. Defaults to lazy. */
+  priority?: boolean;
 }
 
 function getProductCardVariant(
@@ -34,6 +37,7 @@ export default function ProductCard({
   product,
   added = false,
   onAdd,
+  priority = false,
 }: ProductCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const variant = getProductCardVariant(product, added);
@@ -56,8 +60,12 @@ export default function ProductCard({
       ) : (
         <img
           src={product.imageUrl}
+          srcSet={buildImageSrcSet(product.imageUrl)}
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
           alt={product.name}
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
+          decoding="async"
           onError={() => setImageFailed(true)}
           className="aspect-square w-full bg-fondo-deshabilitado object-cover"
         />

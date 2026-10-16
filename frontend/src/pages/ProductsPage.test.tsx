@@ -21,7 +21,7 @@ function product(index: number, category = 'accesorios'): Product {
     price: 1000 * index,
     stock: 10,
     category,
-    imageUrl: `https://example.com/${index}.png`,
+    imageUrl: `https://images.unsplash.com/photo-123?auto=format&fit=crop&w=600&q=80&index=${index}`,
   };
 }
 
@@ -129,6 +129,27 @@ describe('ProductsPage', () => {
     );
     await screen.findByText('10 productos');
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(8);
+  });
+
+  it('prioritizes the first cards and lazy-loads the rest', async () => {
+    mockedGetProducts.mockResolvedValueOnce(
+      Array.from({ length: 8 }, (_, index) => product(index + 1)),
+    );
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    const images = screen.getAllByRole('img');
+    expect(images).toHaveLength(8);
+    for (const [index, img] of images.entries()) {
+      if (index < 4) {
+        expect(img).toHaveAttribute('loading', 'eager');
+        expect(img.getAttribute('fetchpriority')).toBe('high');
+      } else {
+        expect(img).toHaveAttribute('loading', 'lazy');
+        expect(img.getAttribute('fetchpriority')).toBeNull();
+      }
+    }
   });
 
   it('renders the no-match state when the filter returns nothing', async () => {

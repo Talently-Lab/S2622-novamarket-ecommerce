@@ -8,6 +8,7 @@ import { useProducts } from '../hooks/useProducts.ts';
 
 const PAGE_SIZE = 8;
 const SKELETON_COUNT = 8;
+const PRIORITY_COUNT = 4;
 
 // API-backed catalog (SN-249, Figma 212:1259). Mobile-first grid with
 // 2 columns from mobile; "Cargar más" paginates client-side over the
@@ -91,9 +92,12 @@ export default function ProductsPage() {
       ) : (
         <>
           <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
-            {visible.map((product) => (
+            {visible.map((product, index) => (
               <li key={product.id}>
-                <ProductCard product={product} />
+                <ProductCard
+                  product={product}
+                  priority={index < PRIORITY_COUNT}
+                />
               </li>
             ))}
           </ul>

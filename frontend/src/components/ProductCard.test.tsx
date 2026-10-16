@@ -126,7 +126,57 @@ describe('ProductCard', () => {
     fireEvent.click(cta);
     expect(onAdd).not.toHaveBeenCalled();
   });
+});
 
+describe('ProductCard responsive images', () => {
+  const unsplashProduct: Product = {
+    ...baseProduct,
+    imageUrl:
+      'https://images.unsplash.com/photo-123?auto=format&fit=crop&w=600&q=80',
+  };
+
+  it('lazy-loads by default without high fetch priority', () => {
+    renderCard(<ProductCard product={baseProduct} />);
+
+    const img = screen.getByRole('img', { name: baseProduct.name });
+    expect(img).toHaveAttribute('loading', 'lazy');
+    expect(img.getAttribute('fetchpriority')).toBeNull();
+    expect(img).toHaveAttribute('decoding', 'async');
+  });
+
+  it('omits srcset when the URL has no w param', () => {
+    renderCard(<ProductCard product={baseProduct} />);
+
+    const img = screen.getByRole('img', { name: baseProduct.name });
+    expect(img.getAttribute('srcset')).toBeNull();
+  });
+
+  it('exposes srcset and sizes when the URL has a w param', () => {
+    renderCard(<ProductCard product={unsplashProduct} />);
+
+    const img = screen.getByRole('img', { name: baseProduct.name });
+    const srcSet = img.getAttribute('srcset');
+    expect(srcSet).toContain('w=200');
+    expect(srcSet).toContain('w=600');
+    expect(srcSet).toContain('200w');
+    expect(srcSet).toContain('800w');
+    expect(img).toHaveAttribute(
+      'sizes',
+      '(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw',
+    );
+    expect(img).toHaveAttribute('src', unsplashProduct.imageUrl);
+  });
+
+  it('eager-loads with high priority when flagged', () => {
+    renderCard(<ProductCard product={unsplashProduct} priority />);
+
+    const img = screen.getByRole('img', { name: baseProduct.name });
+    expect(img).toHaveAttribute('loading', 'eager');
+    expect(img.getAttribute('fetchpriority')).toBe('high');
+  });
+});
+
+describe('ProductCard image fallback', () => {
   it('shows an accessible local fallback when the image fails', () => {
     renderCard(
       <ProductCard
