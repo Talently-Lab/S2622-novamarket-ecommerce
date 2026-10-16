@@ -26,6 +26,8 @@ export default function ProductsPage() {
   const {
     products,
     categories,
+    counts,
+    total,
     category,
     setCategory,
     loading,
@@ -91,6 +93,8 @@ export default function ProductsPage() {
           categories={categories}
           value={category}
           onChange={handleCategoryChange}
+          counts={counts}
+          total={total}
         />
       </div>
 
