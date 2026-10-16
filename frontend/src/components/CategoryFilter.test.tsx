@@ -149,4 +149,22 @@ describe('CategoryFilter', () => {
     expect(trigger).toHaveFocus();
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('spans the CTA full width and animates the sheet entrance', () => {
+    renderFilter();
+    const { dialog } = openSheet();
+
+    expect(dialog.className).toContain('animate-sheet-in');
+    expect(
+      screen.getByRole('button', { name: 'Cerrar filtro de categorías' })
+        .className,
+    ).toContain('animate-fade-in');
+
+    // Inline width instead of w-full: the Chakra recipe width (240px) wins
+    // over the Tailwind utility through cascade layers, so width is forced.
+    const cta = within(dialog).getByRole('button', {
+      name: /ver 11 productos/i,
+    });
+    expect(cta.style.width).toBe('100%');
+  });
 });

@@ -111,13 +111,13 @@ export default function CategoryFilter({
             type="button"
             aria-label="Cerrar filtro de categorías"
             onClick={closeSheet}
-            className="absolute inset-0 cursor-default bg-fondo-estructura/60"
+            className="absolute inset-0 animate-fade-in cursor-default bg-fondo-estructura/60"
           />
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Categorías"
-            className="relative max-h-[85vh] w-full overflow-y-auto rounded-t-xl bg-fondo-superficie sm:mx-auto sm:w-full sm:max-w-md sm:rounded-xl"
+            className="relative max-h-[85vh] w-full animate-sheet-in overflow-y-auto rounded-t-xl bg-fondo-superficie sm:mx-auto sm:w-full sm:max-w-md sm:rounded-xl"
           >
             <div
               aria-hidden="true"
@@ -160,10 +160,14 @@ export default function CategoryFilter({
               ))}
             </fieldset>
             <div className="px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              {/* Inline width instead of w-full: the Chakra recipe fixes
+                  width at 240px in a cascade layer injected after
+                  Tailwind's utilities, so the w-full utility loses and the
+                  button would render 240px wide. Inline style wins. */}
               <Button
                 variant="primary"
                 onClick={applyPending}
-                className="w-full"
+                style={{ width: '100%' }}
               >
                 {ctaLabel}
               </Button>

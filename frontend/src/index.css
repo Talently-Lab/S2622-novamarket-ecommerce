@@ -98,6 +98,39 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+
+  /*
+   * Entrance motion (bottom-sheet + scrim). Utilities: animate-sheet-in,
+   * animate-fade-in. The 0.35s sheet duration is the single tuning knob.
+   */
+  --animate-sheet-in: sheet-in 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-fade-in: fade-in 0.25s ease-out;
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Motion accessibility: skip the entrance animation for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-in,
+  .animate-fade-in {
+    animation: none;
+  }
 }
 
 /*
