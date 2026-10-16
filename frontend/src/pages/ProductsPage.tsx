@@ -10,6 +10,14 @@ const PAGE_SIZE = 8;
 const SKELETON_COUNT = 8;
 const PRIORITY_COUNT = 4;
 
+// Display names for the real category slugs in MOCK_DATA.csv.
+// Unknown slugs fall back to the raw value so new categories still read.
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  accesorios: 'Accesorios',
+  perifericos: 'Periféricos',
+  gadgets: 'Gadgets',
+};
+
 // API-backed catalog (SN-249, Figma 212:1259). Mobile-first grid with
 // 2 columns from mobile; "Cargar más" paginates client-side over the
 // received set and resets on every filter change. No cart wiring:
@@ -35,18 +43,49 @@ export default function ProductsPage() {
   const hasMore = visibleCount < products.length;
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;
+  const title = category
+    ? (CATEGORY_DISPLAY_NAMES[category] ?? category)
+    : 'Todos los productos';
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <h1 className="text-titulo-2 font-bold tracking-tight text-texto-principal">
-        Todos los productos
-      </h1>
-      <p
-        aria-live="polite"
-        className="mt-1 text-cuerpo-chico text-texto-secundario"
-      >
-        {loading ? 'Cargando productos…' : countLabel}
-      </p>
+      <nav aria-label="Miga de pan">
+        <ol className="flex items-center gap-1">
+          <li>
+            <a
+              href="/"
+              className="text-caption text-texto-secundario underline"
+            >
+              Inicio
+            </a>
+          </li>
+          <li
+            aria-hidden="true"
+            className="text-caption text-texto-secundario"
+          >
+            /
+          </li>
+          <li>
+            <span
+              aria-current="page"
+              className="text-caption text-texto-secundario underline"
+            >
+              {title}
+            </span>
+          </li>
+        </ol>
+      </nav>
+      <div className="mt-4">
+        <h1 className="text-titulo-2 font-bold text-texto-principal">
+          {title}
+        </h1>
+        <p
+          aria-live="polite"
+          className="mt-1 text-cuerpo text-texto-principal"
+        >
+          {loading ? 'Cargando productos…' : countLabel}
+        </p>
+      </div>
       <div className="mt-4">
         <CategoryFilter
           categories={categories}

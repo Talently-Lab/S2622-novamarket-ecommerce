@@ -49,6 +49,50 @@ describe('ProductsPage', () => {
     expect(screen.getAllByTestId('product-card-skeleton')).not.toHaveLength(0);
   });
 
+  it('renders the breadcrumb with Inicio link and current page mirroring the title', async () => {
+    mockedGetProducts.mockResolvedValueOnce([product(1)]);
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    expect(
+      screen.getByRole('navigation', { name: /miga de pan/i }),
+    ).toBeInTheDocument();
+
+    const homeLink = screen.getByRole('link', { name: 'Inicio' });
+    expect(homeLink).toHaveAttribute('href', '/');
+    expect(homeLink.className).toContain('text-caption');
+    expect(homeLink.className).toContain('text-texto-secundario');
+    expect(homeLink.className).toContain('underline');
+
+    const heading = screen.getByRole('heading', {
+      name: /todos los productos/i,
+    });
+    expect(heading.tagName).toBe('H1');
+    expect(heading.className).toContain('text-titulo-2');
+    expect(heading.className).not.toContain('tracking-tight');
+
+    const current = screen.getByText((_, element) => {
+      return (
+        element?.tagName === 'SPAN' &&
+        element.getAttribute('aria-current') === 'page'
+      );
+    });
+    expect(current).toHaveTextContent(heading.textContent ?? '');
+  });
+
+  it('styles the count as Body 16/24 in texto-principal with live region', async () => {
+    mockedGetProducts.mockResolvedValueOnce([product(1)]);
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    const count = screen.getByText('1 producto');
+    expect(count.className).toContain('text-cuerpo');
+    expect(count.className).toContain('text-texto-principal');
+    expect(count).toHaveAttribute('aria-live', 'polite');
+  });
+
   it('renders the populated list with the real count and load-more paging', async () => {
     mockedGetProducts.mockResolvedValueOnce(
       Array.from({ length: 10 }, (_, index) => product(index + 1)),
@@ -129,6 +173,19 @@ describe('ProductsPage', () => {
     );
     await screen.findByText('10 productos');
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(8);
+    expect(
+      screen.getByRole('heading', { name: 'Gadgets' }),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getByText((_, element) => {
+          return (
+            element?.tagName === 'SPAN' &&
+            element.getAttribute('aria-current') === 'page'
+          );
+        })
+        .textContent,
+    ).toBe('Gadgets');
   });
 
   it('prioritizes the first cards and lazy-loads the rest', async () => {
