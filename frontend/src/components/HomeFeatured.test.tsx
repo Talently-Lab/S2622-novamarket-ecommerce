@@ -1,7 +1,54 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getProducts } from '../services/productService.ts';
+import type { Product } from '../types/product.ts';
 import HomeFeatured from './HomeFeatured.tsx';
+
+vi.mock('../services/productService.ts', () => ({
+  getProducts: vi.fn(),
+}));
+
+const mockedGetProducts = vi.mocked(getProducts);
+
+const MOCK_PRODUCTS: Product[] = [
+  {
+    id: 1,
+    name: 'Auriculares Bluetooth NovaSound X1',
+    description: 'Auriculares inalámbricos',
+    price: 45999,
+    stock: 24,
+    category: 'accesorios',
+    imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
+  },
+  {
+    id: 2,
+    name: 'Mouse Gamer NovaTech RGB 7200DPI',
+    description: 'Mouse óptico para gaming',
+    price: 18500,
+    stock: 40,
+    category: 'perifericos',
+    imageUrl: 'https://images.unsplash.com/photo-1613141412501-9012977f1969',
+  },
+  {
+    id: 3,
+    name: 'Teclado Mecánico NovaKey TKL',
+    description: 'Teclado mecánico reducido',
+    price: 52300,
+    stock: 18,
+    category: 'perifericos',
+    imageUrl: 'https://images.unsplash.com/photo-1585314614250-d213876625e1',
+  },
+  {
+    id: 6,
+    name: 'Smartwatch NovaFit Pulse',
+    description: 'Reloj inteligente',
+    price: 68900,
+    stock: 15,
+    category: 'gadgets',
+    imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12',
+  },
+];
 
 function renderFeatured() {
   return render(
@@ -12,11 +59,15 @@ function renderFeatured() {
 }
 
 describe('HomeFeatured', () => {
-  it('renders the Destacados header with a Ver todo link', () => {
+  beforeEach(() => {
+    mockedGetProducts.mockResolvedValue(MOCK_PRODUCTS);
+  });
+
+  it('renders the Destacados header with a Ver todo link', async () => {
     renderFeatured();
 
     expect(
-      screen.getByRole('heading', { name: 'Destacados' }),
+      await screen.findByRole('heading', { name: 'Destacados' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /ver todo/i })).toHaveAttribute(
       'href',
@@ -24,29 +75,64 @@ describe('HomeFeatured', () => {
     );
   });
 
-  it('renders four cards with Novedad badge, name, es-AR price and Agregar button', () => {
+  it('renders the mock products with Novedad badge, name, es-AR price, image and Agregar button', async () => {
     renderFeatured();
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(4);
+    expect(await screen.findAllByRole('listitem')).toHaveLength(4);
     expect(screen.getAllByText('Novedad')).toHaveLength(4);
-    expect(screen.getAllByText('$32.000')).toHaveLength(4);
-    expect(
-      screen.getByText('Auriculares inalámbricos NovaSound'),
-    ).toBeInTheDocument();
 
-    const buttons = screen.getAllByRole('button', { name: /agregar .* al carrito/i });
+    for (const product of MOCK_PRODUCTS) {
+      expect(screen.getByText(product.name)).toBeInTheDocument();
+      const image = screen.getByRole('img', { name: product.name });
+      expect(image).toHaveAttribute('src', product.imageUrl);
+      expect(image).toHaveAttribute('loading', 'lazy');
+      expect(image).toHaveAttribute('decoding', 'async');
+    }
+
+    expect(screen.getByText('$45.999')).toBeInTheDocument();
+    expect(screen.getByText('$18.500')).toBeInTheDocument();
+
+    const buttons = screen.getAllByRole('button', {
+      name: /agregar .* al carrito/i,
+    });
     expect(buttons).toHaveLength(4);
     for (const button of buttons) {
       expect(button).toHaveTextContent('Agregar');
     }
   });
 
-  it('keeps the add buttons at the 44px touch target', () => {
+  it('shows the accessible fallback when an image fails to load', async () => {
     renderFeatured();
 
-    const section = screen.getByRole('region', { name: 'Destacados' });
+    const image = await screen.findByRole('img', {
+      name: MOCK_PRODUCTS[0].name,
+    });
+    fireEvent.error(image);
+
+    expect(
+      screen.getByRole('img', { name: MOCK_PRODUCTS[0].name }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('img', { name: MOCK_PRODUCTS[1].name }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the add buttons at the 44px touch target', async () => {
+    renderFeatured();
+
+    const section = await screen.findByRole('region', { name: 'Destacados' });
     for (const button of within(section).getAllByRole('button')) {
       expect(button.className).toContain('h-11');
     }
+  });
+
+  it('hides the section when the catalog fails to load', async () => {
+    mockedGetProducts.mockRejectedValueOnce(new Error('network error'));
+    renderFeatured();
+
+    await waitFor(() => expect(mockedGetProducts).toHaveBeenCalled());
+    expect(
+      screen.queryByRole('heading', { name: 'Destacados' }),
+    ).not.toBeInTheDocument();
   });
 });

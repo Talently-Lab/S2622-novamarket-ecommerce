@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe('NovaMarket landing page', () => {
-  it('shows the mini-deploy home with banner, categories and featured', () => {
+  it('shows the mini-deploy home with banner, categories and featured', async () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <AuthProvider>
@@ -25,7 +25,7 @@ describe('NovaMarket landing page', () => {
       screen.getByRole('heading', { name: /categorías/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /destacados/i }),
+      await screen.findByRole('heading', { name: /destacados/i }),
     ).toBeInTheDocument();
   });
 
