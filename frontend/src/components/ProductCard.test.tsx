@@ -73,6 +73,27 @@ describe('ProductCard', () => {
     expect(screen.getByText('$32.000')).toBeInTheDocument();
   });
 
+  it('reserves the same two-line title height for short and long names', () => {
+    renderCard(
+      <>
+        <ProductCard product={baseProduct} />
+        <ProductCard
+          product={{
+            ...baseProduct,
+            id: 2,
+            name: 'Auriculares Bluetooth NovaSound X1 con cancelación de ruido activa',
+          }}
+        />
+      </>,
+    );
+
+    const titles = screen.getAllByRole('heading', { level: 2 });
+    expect(titles).toHaveLength(2);
+    for (const title of titles) {
+      expect(title).toHaveClass('h-10', 'line-clamp-2', 'overflow-hidden');
+    }
+  });
+
   it('calls onAdd with the product when the CTA is clicked', () => {
     const onAdd = vi.fn();
     renderCard(<ProductCard product={baseProduct} onAdd={onAdd} />);

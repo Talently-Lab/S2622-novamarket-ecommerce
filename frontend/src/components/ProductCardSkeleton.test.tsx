@@ -21,6 +21,17 @@ describe('ProductCardSkeleton', () => {
     ).toBeInTheDocument();
   });
 
+  it('reserves the same two-line title height without interactive elements', () => {
+    render(<ProductCardSkeleton />);
+
+    const titleSlot = screen.getByTestId('product-card-skeleton-title');
+    expect(titleSlot).toHaveClass('h-10');
+    expect(titleSlot.childElementCount).toBe(2);
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
   it('exposes no interactive state', () => {
     render(<ProductCardSkeleton />);
 

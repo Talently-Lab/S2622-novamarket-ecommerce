@@ -65,7 +65,7 @@ export default function ProductCard({
       <div className="flex flex-col gap-2 p-3">
         <h2
           id={nameId}
-          className="text-cuerpo-chico font-normal text-texto-principal"
+          className="h-10 line-clamp-2 overflow-hidden text-cuerpo-chico font-normal text-texto-principal"
         >
           {product.name}
         </h2>
