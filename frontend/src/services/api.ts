@@ -1,4 +1,11 @@
-export const API_BASE_URL = '/api';
+/**
+ * Base URL de la API. En local se resuelve con VITE_API_URL (ver frontend/.env);
+ * en producción, mismo origen bajo /api. Sin slash final para concatenar seguro.
+ */
+const ENV_BASE_URL = import.meta.env.VITE_API_URL as string | undefined;
+
+export const API_BASE_URL =
+  (ENV_BASE_URL ?? '/api').replace(/\/+$/, '') || '/api';
 export const TOKEN_STORAGE_KEY = 'novamarket_token';
 
 export class ApiError extends Error {

@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        const restored = await authService.me(stored.token);
+        const restored = await authService.me();
         if (cancelled) return;
         setUser(restored);
         setToken(stored.token);
