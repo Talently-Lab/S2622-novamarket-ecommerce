@@ -55,7 +55,7 @@ export default function ProductCard({
           aria-label={product.name}
           className="flex aspect-square w-full items-center justify-center bg-fondo-deshabilitado"
         >
-          <Icon name="image_not_supported" className="text-texto-secundario" />
+          <Icon name="image_not_supported" className="text-4xl text-texto-principal" />
         </div>
       ) : (
         <img
@@ -80,6 +80,9 @@ export default function ProductCard({
         <p className="text-precio font-bold text-texto-principal">
           {formatPrice(product.price)}
         </p>
+        {/* Width note: the Chakra recipe fixes width at 240px in a cascade
+            layer injected after Tailwind's utilities, so neither the
+            width style prop nor w-full survive — both CTAs force it inline. */}
         {variant === 'added' ? (
           <p
             role="status"
@@ -89,13 +92,18 @@ export default function ProductCard({
             Agregado
           </p>
         ) : variant === 'out-of-stock' ? (
-          <Button variant="primary" disabled width="100%" height="44px">
+          <Button
+            variant="primary"
+            disabled
+            style={{ width: '100%' }}
+            height="44px"
+          >
             Sin stock
           </Button>
         ) : (
           <Button
             variant="primary"
-            width="100%"
+            style={{ width: '100%' }}
             height="44px"
             onClick={() => onAdd?.(product)}
           >

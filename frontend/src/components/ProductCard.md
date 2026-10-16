@@ -34,6 +34,9 @@ import { products } from './mocks/products.ts';
 ## Notes
 
 - Broken images swap to a local placeholder (`role="img"` with the
-  product name); no external retry URL.
-- The CTA uses `<Button variant="primary">` with explicit full width
-  and 44 px height, since the shared recipe defaults to 240x48.
+  product name): gris-200 box with a large (`text-4xl`) dark-navy
+  `image_not_supported` Material Symbol; no external retry URL.
+- Both CTAs force `style={{ width: '100%' }}` inline: the shared recipe
+  fixes width at 240px in a cascade layer injected after Tailwind's
+  utilities, so neither the `width` style prop nor `w-full` survive.
+  Height stays 44px per card design (recipe default is 240x48).

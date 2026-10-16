@@ -60,9 +60,11 @@ describe('ProductCard', () => {
       screen.getByRole('heading', { name: baseProduct.name }),
     ).toBeInTheDocument();
     expect(screen.getByText('$46.000')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Agregar' }),
-    ).toBeEnabled();
+    const cta = screen.getByRole('button', { name: 'Agregar' });
+    expect(cta).toBeEnabled();
+    // Inline width: the Chakra recipe width wins over style props and
+    // utilities through cascade layers, so it is forced (see component).
+    expect(cta.style.width).toBe('100%');
   });
 
   it('formats the price for Argentina without visible decimals', () => {
@@ -123,6 +125,7 @@ describe('ProductCard', () => {
 
     const cta = screen.getByRole('button', { name: 'Sin stock' });
     expect(cta).toBeDisabled();
+    expect(cta.style.width).toBe('100%');
     fireEvent.click(cta);
     expect(onAdd).not.toHaveBeenCalled();
   });
@@ -191,5 +194,11 @@ describe('ProductCard image fallback', () => {
       baseProduct.name,
     );
     expect(screen.queryByAltText(baseProduct.name)).not.toBeInTheDocument();
+
+    // Figma placeholder: large dark-navy broken-image icon on gris-200.
+    const icon = screen.getByText('image_not_supported');
+    expect(icon.tagName).toBe('SPAN');
+    expect(icon.className).toContain('text-4xl');
+    expect(icon.className).toContain('text-texto-principal');
   });
 });
