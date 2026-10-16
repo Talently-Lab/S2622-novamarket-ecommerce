@@ -2,12 +2,12 @@ import { Link } from 'react-router';
 import bannerImage from '../assets/banner/banner.png';
 
 /**
- * Home hero: real Banner.png artwork with the value proposition placed on
- * the empty left third of the image.
+ * Home hero: real Banner.png artwork with the value proposition.
  *
- * Mobile stacks the copy above the artwork inside the same card (the 2:1
- * artwork is too short to overlay without colliding with the products);
- * from `md` up the copy overlays the image.
+ * Mobile puts the artwork on top and the copy below inside the same card,
+ * matching the image-over-text pattern used by the rest of the home
+ * (categories and featured). From `md` up the copy overlays the empty left
+ * third of the artwork.
  */
 export default function HomeBanner() {
   return (
@@ -15,10 +15,18 @@ export default function HomeBanner() {
       aria-labelledby="home-hero-title"
       className="relative overflow-hidden rounded-xl bg-fondo-superficie"
     >
-      <div className="relative z-10 flex flex-col items-start gap-3 px-6 py-8 md:absolute md:inset-y-0 md:left-0 md:max-w-[42%] md:justify-center md:px-12 md:py-0">
+      <img
+        src={bannerImage}
+        alt="Teclado, auriculares, parlante, batería externa, mouse y audífonos inalámbricos sobre pedestales claros"
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
+        className="aspect-[2/1] w-full object-cover"
+      />
+      <div className="flex flex-col items-start gap-3 p-6 md:absolute md:inset-y-0 md:left-0 md:max-w-[42%] md:justify-center md:px-12 md:py-0">
         <h1
           id="home-hero-title"
-          className="text-display font-bold text-texto-principal"
+          className="text-titulo-1 font-bold text-texto-principal md:text-display"
         >
           Potenciá tu setup
         </h1>
@@ -32,14 +40,6 @@ export default function HomeBanner() {
           Ver productos
         </Link>
       </div>
-      <img
-        src={bannerImage}
-        alt="Teclado, auriculares, parlante, batería externa, mouse y audífonos inalámbricos sobre pedestales claros"
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        className="aspect-[2/1] w-full object-cover"
-      />
     </section>
   );
 }
