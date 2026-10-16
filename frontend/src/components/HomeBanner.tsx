@@ -2,12 +2,11 @@ import { Link } from 'react-router';
 import bannerImage from '../assets/banner/banner.png';
 
 /**
- * Home hero: real Banner.png artwork with the value proposition.
+ * Home hero: real Banner.png artwork with the value proposition overlaid on
+ * the empty left area of the image, on every breakpoint.
  *
- * Mobile puts the artwork on top and the copy below inside the same card,
- * matching the image-over-text pattern used by the rest of the home
- * (categories and featured). From `md` up the copy overlays the empty left
- * third of the artwork.
+ * Mobile keeps the copy inside the banner too, with a smaller headline and a
+ * slightly taller crop so the blurb and CTA fit over the artwork.
  */
 export default function HomeBanner() {
   return (
@@ -21,21 +20,27 @@ export default function HomeBanner() {
         loading="eager"
         fetchPriority="high"
         decoding="async"
-        className="aspect-[2/1] w-full object-cover"
+        className="h-[210px] w-full object-cover md:aspect-[2/1] md:h-auto"
       />
-      <div className="flex flex-col items-start gap-3 p-6 md:absolute md:inset-y-0 md:left-0 md:max-w-[42%] md:justify-center md:px-12 md:py-0">
+      {/* Mobile only: soft white fade on the left so the copy stays legible
+          over the artwork; desktop's left third is empty already. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-fondo-superficie via-fondo-superficie/65 to-transparent md:hidden"
+      />
+      <div className="absolute inset-0 flex flex-col items-start justify-center gap-2 p-5 md:max-w-[42%] md:gap-3 md:px-12">
         <h1
           id="home-hero-title"
-          className="text-titulo-1 font-bold text-texto-principal md:text-display"
+          className="text-titulo-2 font-bold text-texto-principal md:text-display"
         >
           Potenciá tu setup
         </h1>
-        <p className="max-w-md text-cuerpo text-texto-secundario">
+        <p className="max-w-[78%] text-cuerpo-chico text-texto-secundario md:max-w-md md:text-cuerpo">
           Periféricos, accesorios y gadgets al alcance de tu mano.
         </p>
         <Link
           to="/productos"
-          className="mt-1 flex h-12 items-center justify-center rounded-md bg-accion-primaria px-6 text-cuerpo-boton font-semibold text-texto-sobre-accion hover:bg-accion-primaria-hover"
+          className="mt-1 flex h-10 items-center justify-center rounded-md bg-accion-primaria px-5 text-cuerpo-chico-label font-semibold text-texto-sobre-accion hover:bg-accion-primaria-hover md:h-12 md:px-6 md:text-cuerpo-boton"
         >
           Ver productos
         </Link>
