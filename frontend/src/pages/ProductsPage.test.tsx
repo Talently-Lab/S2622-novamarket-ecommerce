@@ -340,7 +340,7 @@ describe('ProductsPage', () => {
     }
   });
 
-  it('renders the no-match state when the applied filter returns nothing', async () => {
+  it('renders the illustrated no-match state and clears the filter from its CTA', async () => {
     const catalog = [product(1), product(2), product(3, 'gadgets')];
     mockedGetProducts.mockImplementation(async (category?: string) => {
       if (!category) return [...catalog];
@@ -359,7 +359,29 @@ describe('ProductsPage', () => {
       within(dialog).getByRole('button', { name: 'Ver 1 producto' }),
     );
 
-    expect(await screen.findByText('Sin resultados')).toBeInTheDocument();
+    expect(
+      await screen.findByText('No hay productos en Gadgets'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Por ahora no tenemos nada acá. Mirá el resto del catálogo.'),
+    ).toBeInTheDocument();
+
+    const art = document.querySelector(
+      '[data-testid="products-empty-state"] img',
+    );
+    // Small SVGs are inlined as data URIs (tests and prod build alike).
+    expect(art?.getAttribute('src')).toContain('data:image/svg+xml');
+    expect(art?.getAttribute('alt')).toBe('');
+    expect(art?.getAttribute('aria-hidden')).toBe('true');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver todos los productos' }),
+    );
+
+    expect(await screen.findByText('Producto 1')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /todos los productos/i }),
+    ).toBeInTheDocument();
   });
 
   it('applies the categoria URL param on load (deep link)', async () => {

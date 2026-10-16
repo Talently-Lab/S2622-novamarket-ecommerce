@@ -36,6 +36,11 @@ export default function ProductsPage() {
     setVisibleCount(PAGE_SIZE);
   }
 
+  function clearFilter() {
+    setSearchParams({});
+    setVisibleCount(PAGE_SIZE);
+  }
+
   const visible = products.slice(0, visibleCount);
   const hasMore = visibleCount < products.length;
   const countLabel =
@@ -117,8 +122,12 @@ export default function ProductsPage() {
       ) : products.length === 0 ? (
         category ? (
           <ProductsEmptyState
-            title="Sin resultados"
-            description="No hay productos en esta categoría."
+            title={`No hay productos en ${getCategoryDisplayName(category)}`}
+            description="Por ahora no tenemos nada acá. Mirá el resto del catálogo."
+            action={{
+              label: 'Ver todos los productos',
+              onAction: clearFilter,
+            }}
           />
         ) : (
           <ProductsEmptyState
