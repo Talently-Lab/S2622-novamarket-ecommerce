@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { NavLink, useNavigate } from 'react-router';
+import { Link, NavLink, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../context/AuthContext.tsx';
+import {
+  CATEGORY_DISPLAY_NAMES,
+  KNOWN_CATEGORY_ORDER,
+} from '../utils/categories.ts';
 import Icon from './icons/Icon.tsx';
 
 // TODO(cart): wire `count` to a real cart context once it exists.
@@ -10,7 +14,9 @@ interface NavbarProps {
   count?: number;
 }
 
-const CATEGORIES = ['Periféricos', 'Audio', 'Accesorios', 'Gadges', 'Ofertas'];
+// Selected category marker from Nav_categorias.png: orange underline.
+const SELECTED_CATEGORY_CLASS =
+  'underline decoration-accion-acento decoration-2 underline-offset-4';
 
 function CartButton({ count }: { count: number }) {
   return (
@@ -119,11 +125,21 @@ function SessionLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function Navbar({ count = 2 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeCategory = searchParams.get('categoria') ?? '';
 
-  function goToProducts() {
-    setMenuOpen(false);
-    navigate('/productos');
+  // Mirrors useProducts: bogus slugs mean "no filter", so Todos is selected.
+  function isSelected(slug: string) {
+    if (slug === '') {
+      return (
+        activeCategory === '' || !KNOWN_CATEGORY_ORDER.includes(activeCategory)
+      );
+    }
+    return activeCategory === slug;
+  }
+
+  function desktopCategoryClass(slug: string, base: string) {
+    return `${base} ${isSelected(slug) ? SELECTED_CATEGORY_CLASS : 'hover:underline'}`;
   }
 
   return (
@@ -173,21 +189,20 @@ export default function Navbar({ count = 2 }: NavbarProps) {
       {/* Desktop category bar */}
       <nav aria-label="Categorías" className="hidden justify-center px-20 md:flex">
         <div className="flex w-full max-w-[1280px] items-center gap-8 py-6">
-          <button
-            type="button"
-            onClick={() => navigate('/productos')}
-            className="text-cuerpo font-semibold hover:underline"
+          <Link
+            to="/productos"
+            className={desktopCategoryClass('', 'text-cuerpo font-semibold')}
           >
             Todos
-          </button>
-          {CATEGORIES.map((category) => (
-            <NavLink
-              key={category}
-              to="/productos"
-              className="text-cuerpo hover:underline"
+          </Link>
+          {KNOWN_CATEGORY_ORDER.map((slug) => (
+            <Link
+              key={slug}
+              to={`/productos?categoria=${slug}`}
+              className={desktopCategoryClass(slug, 'text-cuerpo')}
             >
-              {category}
-            </NavLink>
+              {CATEGORY_DISPLAY_NAMES[slug]}
+            </Link>
           ))}
         </div>
       </nav>
@@ -202,22 +217,22 @@ export default function Navbar({ count = 2 }: NavbarProps) {
             <SessionLinks onNavigate={() => setMenuOpen(false)} />
           </div>
           <div className="mt-4 flex flex-col items-start gap-3 border-t border-borde-divisor-estructura pt-4">
-            <button
-              type="button"
-              onClick={goToProducts}
-              className="text-cuerpo font-semibold"
+            <Link
+              to="/productos"
+              onClick={() => setMenuOpen(false)}
+              className={`text-cuerpo font-semibold ${isSelected('') ? SELECTED_CATEGORY_CLASS : ''}`}
             >
               Todos
-            </button>
-            {CATEGORIES.map((category) => (
-              <NavLink
-                key={category}
-                to="/productos"
+            </Link>
+            {KNOWN_CATEGORY_ORDER.map((slug) => (
+              <Link
+                key={slug}
+                to={`/productos?categoria=${slug}`}
                 onClick={() => setMenuOpen(false)}
-                className="text-cuerpo"
+                className={`text-cuerpo ${isSelected(slug) ? SELECTED_CATEGORY_CLASS : ''}`}
               >
-                {category}
-              </NavLink>
+                {CATEGORY_DISPLAY_NAMES[slug]}
+              </Link>
             ))}
           </div>
         </nav>

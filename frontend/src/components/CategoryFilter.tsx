@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@chakra-ui/react';
 import Icon from './icons/Icon.tsx';
+import {
+  getCategoryDisplayName,
+  orderCategoryOptions,
+} from '../utils/categories.ts';
 
 interface CategoryFilterProps {
   categories: string[];
@@ -8,24 +12,6 @@ interface CategoryFilterProps {
   onChange: (category: string) => void;
   counts: Record<string, number>;
   total: number;
-}
-
-// Display names for the real category slugs in MOCK_DATA.csv.
-// Unknown slugs fall back to the raw value so new categories still read.
-const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
-  accesorios: 'Accesorios',
-  perifericos: 'Periféricos',
-  gadgets: 'Gadgets',
-};
-
-// Screenshot order: "Todos" first, then known slugs in Figma order.
-// Unknown slugs are appended in data order so new categories still appear.
-const KNOWN_ORDER = ['perifericos', 'accesorios', 'gadgets'];
-
-function orderedOptions(categories: string[]): string[] {
-  const known = KNOWN_ORDER.filter((slug) => categories.includes(slug));
-  const unknown = categories.filter((slug) => !KNOWN_ORDER.includes(slug));
-  return ['', ...known, ...unknown];
 }
 
 // Bottom-sheet category dialog (overlay-todos.png). The closed trigger keeps
@@ -84,7 +70,7 @@ export default function CategoryFilter({
     }
   }, [open ]);
 
-  const options = orderedOptions(categories);
+  const options = orderCategoryOptions(categories);
   const pendingCount = pending === '' ? total : (counts[pending] ?? 0);
   const ctaLabel = `Ver ${pendingCount} ${pendingCount === 1 ? 'producto' : 'productos'}`;
 
@@ -153,9 +139,7 @@ export default function CategoryFilter({
                     onChange={() => setPending(slug)}
                     className="h-5 w-5 accent-texto-principal"
                   />
-                  {slug === ''
-                    ? 'Todos'
-                    : (CATEGORY_DISPLAY_NAMES[slug] ?? slug)}
+                  {slug === '' ? 'Todos' : getCategoryDisplayName(slug)}
                 </label>
               ))}
             </fieldset>

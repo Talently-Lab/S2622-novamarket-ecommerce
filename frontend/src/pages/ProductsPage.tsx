@@ -1,22 +1,16 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Button } from '@chakra-ui/react';
 import CategoryFilter from '../components/CategoryFilter.tsx';
 import ProductCard from '../components/ProductCard.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
 import { useProducts } from '../hooks/useProducts.ts';
+import { getCategoryDisplayName } from '../utils/categories.ts';
 
 const PAGE_SIZE = 8;
 const SKELETON_COUNT = 8;
 const PRIORITY_COUNT = 4;
-
-// Display names for the real category slugs in MOCK_DATA.csv.
-// Unknown slugs fall back to the raw value so new categories still read.
-const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
-  accesorios: 'Accesorios',
-  perifericos: 'Periféricos',
-  gadgets: 'Gadgets',
-};
 
 // API-backed catalog (SN-249, Figma 212:1259). Mobile-first grid with
 // 2 columns from mobile; "Cargar más" paginates client-side over the
@@ -29,15 +23,16 @@ export default function ProductsPage() {
     counts,
     total,
     category,
-    setCategory,
     loading,
     error,
     retry,
   } = useProducts();
+  const [, setSearchParams] = useSearchParams();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   function handleCategoryChange(next: string) {
-    setCategory(next);
+    // The URL param is the single source of truth; the hook picks it up.
+    setSearchParams(next ? { categoria: next } : {});
     setVisibleCount(PAGE_SIZE);
   }
 
@@ -45,9 +40,7 @@ export default function ProductsPage() {
   const hasMore = visibleCount < products.length;
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;
-  const title = category
-    ? (CATEGORY_DISPLAY_NAMES[category] ?? category)
-    : 'Todos los productos';
+  const title = category ? getCategoryDisplayName(category) : 'Todos los productos';
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -88,7 +81,8 @@ export default function ProductsPage() {
           {loading ? 'Cargando productos…' : countLabel}
         </p>
       </div>
-      <div className="mt-4">
+      {/* Mobile-only: the navbar category bar owns md+. */}
+      <div className="mt-4 md:hidden">
         <CategoryFilter
           categories={categories}
           value={category}

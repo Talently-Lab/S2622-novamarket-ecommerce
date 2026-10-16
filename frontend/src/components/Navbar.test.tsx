@@ -1,12 +1,22 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext.tsx';
+import { getProducts } from '../services/productService.ts';
+import { system } from '../theme/system.ts';
+import ProductsPage from '../pages/ProductsPage.tsx';
 import Navbar from './Navbar.tsx';
 
-function renderNavbar(props: { count?: number } = {}) {
+vi.mock('../services/productService.ts', () => ({
+  getProducts: vi.fn(),
+}));
+
+const mockedGetProducts = vi.mocked(getProducts);
+
+function renderNavbar(props: { count?: number } = {}, initialEntry = '/') {
   render(
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <AuthProvider>
         <Navbar count={props.count} />
         <Routes>
@@ -18,6 +28,10 @@ function renderNavbar(props: { count?: number } = {}) {
     </MemoryRouter>,
   );
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('Navbar', () => {
   it('shows the NovaMarket brand on mobile and desktop bars', () => {
@@ -57,17 +71,96 @@ describe('Navbar', () => {
     expect(await screen.findByText('Iniciar sesión')).toBeInTheDocument();
   });
 
-  it('shows the Figma categories with Todos as a button', () => {
+  it('shows the real categories with Todos as a link', () => {
     renderNavbar();
 
-    expect(
-      screen.getByRole('button', { name: 'Todos' }),
-    ).toBeInTheDocument();
-    for (const category of ['Periféricos', 'Audio', 'Accesorios', 'Ofertas']) {
-      expect(
-        screen.getByRole('link', { name: category }),
-      ).toHaveAttribute('href', '/productos');
+    expect(screen.getByRole('link', { name: 'Todos' })).toHaveAttribute(
+      'href',
+      '/productos',
+    );
+    expect(screen.getByRole('link', { name: 'Periféricos' })).toHaveAttribute(
+      'href',
+      '/productos?categoria=perifericos',
+    );
+    expect(screen.getByRole('link', { name: 'Accesorios' })).toHaveAttribute(
+      'href',
+      '/productos?categoria=accesorios',
+    );
+    expect(screen.getByRole('link', { name: 'Gadgets' })).toHaveAttribute(
+      'href',
+      '/productos?categoria=gadgets',
+    );
+    for (const stale of ['Audio', 'Ofertas', 'Gadges']) {
+      expect(screen.queryByRole('link', { name: stale })).toBeNull();
     }
+  });
+
+  it('marks the selected category with the orange underline', () => {
+    renderNavbar({}, '/productos?categoria=gadgets');
+
+    const bar = screen.getByRole('navigation', { name: 'Categorías' });
+    const selected = within(bar).getByRole('link', { name: 'Gadgets' });
+    expect(selected.className).toContain('underline');
+    expect(selected.className).toContain('decoration-accion-acento');
+
+    for (const name of ['Todos', 'Periféricos', 'Accesorios']) {
+      const link = within(bar).getByRole('link', { name });
+      expect(link.className).not.toContain('decoration-accion-acento');
+    }
+  });
+
+  it('marks Todos when no categoria param is present', () => {
+    renderNavbar({}, '/productos');
+
+    const bar = screen.getByRole('navigation', { name: 'Categorías' });
+    const todos = within(bar).getByRole('link', { name: 'Todos' });
+    expect(todos.className).toContain('underline');
+    expect(todos.className).toContain('decoration-accion-acento');
+  });
+
+  it('navigates with params and filters the catalog', async () => {
+    mockedGetProducts.mockImplementation(async (category?: string) => {
+      if (category === 'accesorios') {
+        return [
+          {
+            id: 'mongo-id-1',
+            name: 'Producto 1',
+            description: 'Descripcion 1',
+            price: 1000,
+            stock: 10,
+            category: 'accesorios',
+            imageUrl:
+              'https://images.unsplash.com/photo-123?auto=format&fit=crop&w=600&q=80',
+          },
+        ];
+      }
+      return [];
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/productos']}>
+        <AuthProvider>
+          <ChakraProvider value={system}>
+            <Navbar />
+            <Routes>
+              <Route path="/productos" element={<ProductsPage />} />
+            </Routes>
+          </ChakraProvider>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    const bar = screen.getByRole('navigation', { name: 'Categorías' });
+    fireEvent.click(within(bar).getByRole('link', { name: 'Accesorios' }));
+
+    expect(await screen.findByText('Producto 1')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Accesorios' }),
+    ).toBeInTheDocument();
+    expect(mockedGetProducts).toHaveBeenCalledWith(
+      'accesorios',
+      expect.any(AbortSignal),
+    );
   });
 
   it('shows the default cart badge count from Figma', () => {

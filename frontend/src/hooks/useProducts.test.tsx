@@ -1,4 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { MemoryRouter, useSearchParams } from 'react-router';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../services/api.ts';
 import { getProducts } from '../services/productService.ts';
@@ -24,6 +26,25 @@ function product(overrides: Partial<Product> = {}): Product {
   };
 }
 
+type SetParams = (next: Record<string, string>) => void;
+
+function Probe({ onParams }: { onParams: (setParams: SetParams) => void }) {
+  const [, setSearchParams] = useSearchParams();
+  onParams(setSearchParams as unknown as SetParams);
+  return null;
+}
+
+function wrapper(initialEntry: string, onParams?: (setParams: SetParams) => void) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <MemoryRouter initialEntries={[initialEntry]}>
+        {onParams ? <Probe onParams={onParams} /> : null}
+        {children}
+      </MemoryRouter>
+    );
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -35,7 +56,9 @@ describe('useProducts', () => {
       product({ id: '2', category: 'accesorios' }),
     ]);
 
-    const { result } = renderHook(() => useProducts());
+    const { result } = renderHook(() => useProducts(), {
+      wrapper: wrapper('/productos'),
+    });
 
     expect(result.current.loading).toBe(true);
 
@@ -43,16 +66,56 @@ describe('useProducts', () => {
 
     expect(result.current.products).toHaveLength(2);
     expect(result.current.categories).toEqual(['accesorios', 'gadgets']);
+    expect(result.current.category).toBe('');
     expect(result.current.error).toBeNull();
   });
 
-  it('re-requests the service when the category changes', async () => {
+  it('reads the categoria URL param as the filter', async () => {
+    mockedGetProducts.mockImplementation(async (category?: string) =>
+      category ? [product({ category })] : [product()],
+    );
+
+    const { result } = renderHook(() => useProducts(), {
+      wrapper: wrapper('/productos?categoria=gadgets'),
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.category).toBe('gadgets');
+    expect(mockedGetProducts).toHaveBeenCalledWith(
+      'gadgets',
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('treats an unknown categoria slug as no filter', async () => {
     mockedGetProducts.mockResolvedValue([]);
-    const { result } = renderHook(() => useProducts());
+
+    const { result } = renderHook(() => useProducts(), {
+      wrapper: wrapper('/productos?categoria=bogus'),
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.category).toBe('');
+    expect(mockedGetProducts).toHaveBeenCalledWith(
+      undefined,
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('re-requests the service when the categoria param changes', async () => {
+    mockedGetProducts.mockResolvedValue([]);
+    let setParams!: SetParams;
+    const { result } = renderHook(() => useProducts(), {
+      wrapper: wrapper('/productos', (set) => {
+        setParams = set;
+      }),
+    });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     act(() => {
-      result.current.setCategory('gadgets');
+      setParams({ categoria: 'gadgets' });
     });
 
     await waitFor(() =>
@@ -61,13 +124,16 @@ describe('useProducts', () => {
         expect.any(AbortSignal),
       ),
     );
+    expect(result.current.category).toBe('gadgets');
   });
 
   it('exposes the error and recovers through retry', async () => {
     mockedGetProducts.mockRejectedValueOnce(
       new ApiError('No se pudieron cargar los productos', 500),
     );
-    const { result } = renderHook(() => useProducts());
+    const { result } = renderHook(() => useProducts(), {
+      wrapper: wrapper('/productos'),
+    });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe('No se pudieron cargar los productos');
@@ -87,14 +153,24 @@ describe('useProducts', () => {
       resolveFirst = resolve;
     });
     mockedGetProducts.mockReturnValueOnce(first);
-    mockedGetProducts.mockResolvedValueOnce([product({ id: 'second' })]);
+    mockedGetProducts.mockResolvedValue([product({ id: 'second' })]);
 
-    const { result } = renderHook(() => useProducts());
+    let setParams!: SetParams;
+    const { result } = renderHook(() => useProducts(), {
+      wrapper: wrapper('/productos', (set) => {
+        setParams = set;
+      }),
+    });
     act(() => {
-      result.current.setCategory('gadgets');
+      setParams({ categoria: 'gadgets' });
     });
 
-    await waitFor(() => expect(mockedGetProducts).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(mockedGetProducts).toHaveBeenCalledWith(
+        'gadgets',
+        expect.any(AbortSignal),
+      ),
+    );
     act(() => {
       resolveFirst([product({ id: 'stale' })]);
     });

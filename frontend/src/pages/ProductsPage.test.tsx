@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../services/api.ts';
 import { getProducts } from '../services/productService.ts';
@@ -25,11 +26,13 @@ function product(index: number, category = 'accesorios'): Product {
   };
 }
 
-function renderPage() {
+function renderPage(initialEntry = '/productos') {
   return render(
-    <ChakraProvider value={system}>
-      <ProductsPage />
-    </ChakraProvider>,
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <ChakraProvider value={system}>
+        <ProductsPage />
+      </ChakraProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -357,5 +360,41 @@ describe('ProductsPage', () => {
     );
 
     expect(await screen.findByText('Sin resultados')).toBeInTheDocument();
+  });
+
+  it('applies the categoria URL param on load (deep link)', async () => {
+    const catalog = [product(1, 'accesorios'), product(2, 'gadgets')];
+    mockedGetProducts.mockImplementation(async (category?: string) =>
+      category
+        ? catalog.filter((item) => item.category === category)
+        : [...catalog],
+    );
+
+    renderPage('/productos?categoria=gadgets');
+    await screen.findByText('Producto 2');
+
+    expect(
+      screen.getByRole('heading', { name: 'Gadgets' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('1 producto')).toBeInTheDocument();
+    expect(mockedGetProducts).toHaveBeenCalledWith(
+      'gadgets',
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('treats an unknown categoria slug as no filter', async () => {
+    mockedGetProducts.mockResolvedValueOnce([product(1, 'accesorios')]);
+
+    renderPage('/productos?categoria=bogus');
+    await screen.findByText('Producto 1');
+
+    expect(
+      screen.getByRole('heading', { name: /todos los productos/i }),
+    ).toBeInTheDocument();
+    expect(mockedGetProducts).toHaveBeenCalledWith(
+      undefined,
+      expect.any(AbortSignal),
+    );
   });
 });
