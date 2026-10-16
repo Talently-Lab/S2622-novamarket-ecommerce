@@ -34,6 +34,12 @@ function Probe({ onParams }: { onParams: (setParams: SetParams) => void }) {
   return null;
 }
 
+function LocationProbe({ onSearch }: { onSearch: (search: string) => void }) {
+  const [searchParams] = useSearchParams();
+  onSearch(searchParams.toString());
+  return null;
+}
+
 function wrapper(initialEntry: string, onParams?: (setParams: SetParams) => void) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
@@ -102,6 +108,31 @@ describe('useProducts', () => {
       undefined,
       expect.any(AbortSignal),
     );
+  });
+
+  it('strips a bogus categoria param once the catalog is known', async () => {
+    mockedGetProducts.mockResolvedValue([product()]);
+
+    let lastSearch = 'untouched';
+    function Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <MemoryRouter initialEntries={['/productos?categoria=mecanica']}>
+          <LocationProbe onSearch={(search) => (lastSearch = search)} />
+          {children}
+        </MemoryRouter>
+      );
+    }
+
+    const { result } = renderHook(() => useProducts(), {
+      wrapper: Wrapper,
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Full catalog shown, and the lying param is gone (replaced, not pushed).
+    expect(result.current.products).toHaveLength(1);
+    expect(result.current.category).toBe('');
+    await waitFor(() => expect(lastSearch).toBe(''));
   });
 
   it('re-requests the service when the categoria param changes', async () => {

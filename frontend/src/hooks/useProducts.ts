@@ -21,19 +21,24 @@ export interface UseProductsResult {
  * API-backed catalog state (SN-249). The `?categoria=` URL param is the single
  * source of truth: writers update search params, this hook only reads them.
  * Unknown slugs are treated as no filter so bad URLs never crash or empty
- * the catalog. Every category selection re-requests the service; stale
+ * the catalog — and the bogus param is stripped (replace) once the catalog
+ * is known, so the URL never lies about the content. Every category
+ * selection re-requests the service; stale
  * responses lose against the latest request id so fast filter changes cannot
  * render outdated results. Categories and counts are captured from unfiltered
  * responses only, so the filter never shrinks to the active filter — plus a
  * one-shot meta fetch so deep links still populate the filter sheet.
  */
 export function useProducts(): UseProductsResult {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const rawCategory = searchParams.get('categoria') ?? '';
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [total, setTotal] = useState(0);
+  // Becomes true once an unfiltered load resolves (even when empty), so a
+  // bogus param is only stripped against known data — never mid-flight.
+  const [metaReady, setMetaReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
@@ -50,6 +55,7 @@ export function useProducts(): UseProductsResult {
       : '';
 
   function captureMeta(items: Product[]) {
+    setMetaReady(true);
     setCategories(Array.from(new Set(items.map((item) => item.category))).sort());
     const nextCounts: Record<string, number> = {};
     for (const item of items) {
@@ -110,6 +116,26 @@ export function useProducts(): UseProductsResult {
       controller.abort();
     };
   }, [hasFilter, metaLoaded, retryToken]);
+
+  // Commerce rule: a slug that matches nothing is a bad URL, not an empty
+  // shelf. Show the full catalog and clean the param (replace, so the back
+  // button never traps the user on the stripped URL).
+  useEffect(() => {
+    if (!metaReady || rawCategory === '') return;
+    const known =
+      KNOWN_CATEGORY_ORDER.includes(rawCategory) ||
+      categories.includes(rawCategory);
+    if (!known) {
+      setSearchParams(
+        (previous) => {
+          const next = new URLSearchParams(previous);
+          next.delete('categoria');
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [metaReady, rawCategory, categories, setSearchParams]);
 
   function retry() {
     setRetryToken((token) => token + 1);
