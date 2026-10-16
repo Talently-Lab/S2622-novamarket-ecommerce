@@ -43,8 +43,14 @@ class AuthService {
         return { token, user: userObject };
     }
 
-    async getCurrentUser() {
+       async getCurrentUser(userId) {
+        const user = await User.findById(userId).select('-password');
 
+        if (!user) {
+            throw new AppError('Usuario no encontrado', 404);
+        }
+
+        return user;
     }
 
     async logoutUser() {

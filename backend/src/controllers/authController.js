@@ -22,9 +22,10 @@ class AuthController {
         }
     }
 
-    async getCurrentUser(req, res, next) {
+        async getCurrentUser(req, res, next) {
         try {
-            return successResponse(res, null, null, 200);
+            const user = await authService.getCurrentUser(req.user.id);
+            return successResponse(res, user, 'Usuario autenticado', 200);
         } catch (error) {
             return errorResponse(res, error);
         }
