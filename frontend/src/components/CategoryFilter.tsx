@@ -15,10 +15,10 @@ export default function CategoryFilter({
   onChange,
 }: CategoryFilterProps) {
   return (
-    <div className="relative w-full">
+    <div className="group relative w-full">
       <div
         aria-hidden="true"
-        className="flex h-12 w-full items-center justify-center gap-3 rounded-md border border-borde-divisor bg-fondo-superficie px-4 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-borde-foco"
+        className="flex h-12 w-full items-center justify-center gap-3 rounded-md border border-borde-divisor bg-fondo-superficie px-4 group-focus-within:outline-2 group-focus-within:outline-offset-2 group-focus-within:outline-borde-foco"
       >
         <span className="text-cuerpo-boton font-semibold text-texto-principal">
           Categorías
@@ -30,7 +30,7 @@ export default function CategoryFilter({
         aria-label="Categorías"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
       >
         <option value="">Todas</option>
         {categories.map((category) => (
