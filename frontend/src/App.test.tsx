@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe('NovaMarket landing page', () => {
-  it('welcomes visitors to NovaMarket on the root route', () => {
+  it('shows the mini-deploy home with banner, categories and featured', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <AuthProvider>
@@ -19,11 +19,17 @@ describe('NovaMarket landing page', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /welcome to novamarket/i }),
+      screen.getByRole('heading', { name: /novamarket: tecnología/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /categorías/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /destacados/i }),
     ).toBeInTheDocument();
   });
 
-  it('shows navigation links to the main sections', () => {
+  it('links the home tiles to the catalog sections', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <AuthProvider>
@@ -32,9 +38,16 @@ describe('NovaMarket landing page', () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole('link', { name: /browse products/i }),
-    ).toBeInTheDocument();
+    const homeTiles = screen.getAllByRole('link', {
+      name: /periféricos/i,
+    });
+    const homeTile = homeTiles.find((link) =>
+      link.getAttribute('href')?.startsWith('/productos?categoria='),
+    );
+    expect(homeTile).toHaveAttribute(
+      'href',
+      '/productos?categoria=perifericos',
+    );
   });
 
   it('renders the CSV-backed product catalog on /productos', async () => {
