@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, apiFetch } from './api.ts';
-import { getProducts } from './productService.ts';
+import { getProducts, getProductsFromApi } from './productService.ts';
+import { products as mockProducts } from '../mocks/products.ts';
 
 vi.mock('./api.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api.ts')>();
@@ -30,11 +31,11 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('productService.getProducts', () => {
+describe('productService.getProductsFromApi', () => {
   it('maps backend DTO fields to the frontend Product shape', async () => {
     mockedApiFetch.mockResolvedValueOnce(envelope([backendDto()]));
 
-    const products = await getProducts();
+    const products = await getProductsFromApi();
 
     expect(mockedApiFetch).toHaveBeenCalledWith('/products', {
       signal: undefined,
@@ -55,7 +56,7 @@ describe('productService.getProducts', () => {
   it('treats data:null as an empty result without falling back to mocks', async () => {
     mockedApiFetch.mockResolvedValueOnce(envelope(null));
 
-    const products = await getProducts();
+    const products = await getProductsFromApi();
 
     expect(products).toEqual([]);
   });
@@ -68,7 +69,7 @@ describe('productService.getProducts', () => {
       ]),
     );
 
-    const products = await getProducts('accesorios');
+    const products = await getProductsFromApi('accesorios');
 
     expect(mockedApiFetch).toHaveBeenCalledWith(
       '/products?categoria=accesorios',
@@ -80,7 +81,7 @@ describe('productService.getProducts', () => {
   it('throws ApiError on a non-array data payload instead of succeeding', async () => {
     mockedApiFetch.mockResolvedValueOnce(envelope({ bogus: true }));
 
-    const error = await getProducts().catch((e) => e);
+    const error = await getProductsFromApi().catch((e) => e);
 
     expect(error).toBeInstanceOf(ApiError);
   });
@@ -90,7 +91,7 @@ describe('productService.getProducts', () => {
       envelope([backendDto(), backendDto({ _id: 'bad', precio: 'free' })]),
     );
 
-    const error = await getProducts().catch((e) => e);
+    const error = await getProductsFromApi().catch((e) => e);
 
     expect(error).toBeInstanceOf(ApiError);
   });
@@ -98,9 +99,41 @@ describe('productService.getProducts', () => {
   it('propagates ApiError from failed HTTP responses', async () => {
     mockedApiFetch.mockRejectedValueOnce(new ApiError('Server error', 500));
 
-    const error = await getProducts().catch((e) => e);
+    const error = await getProductsFromApi().catch((e) => e);
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error.status).toBe(500);
+  });
+});
+
+describe('productService.getProducts (temporary CSV source)', () => {
+  it('returns the 20 CSV rows without calling fetch', async () => {
+    const products = await getProducts();
+
+    expect(mockedApiFetch).not.toHaveBeenCalled();
+    expect(products).toHaveLength(20);
+    expect(products).toEqual(mockProducts);
+  });
+
+  it('filters by category locally without calling fetch', async () => {
+    const products = await getProducts('gadgets');
+
+    expect(mockedApiFetch).not.toHaveBeenCalled();
+    expect(products.length).toBeGreaterThan(0);
+    expect(
+      products.every((product) => product.category === 'gadgets'),
+    ).toBe(true);
+  });
+
+  it('respects an aborted signal', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    const error = await getProducts(undefined, controller.signal).catch(
+      (e) => e,
+    );
+
+    expect(error).toBeInstanceOf(DOMException);
+    expect(mockedApiFetch).not.toHaveBeenCalled();
   });
 });

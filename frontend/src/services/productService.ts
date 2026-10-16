@@ -1,5 +1,6 @@
 import { ApiError, apiFetch } from './api.ts';
 import type { Product } from '../types/product.ts';
+import { products as mockProducts } from '../mocks/products.ts';
 
 /** Backend product DTO (Mongo + Spanish field names, observed contract). */
 export interface BackendProductDto {
@@ -44,6 +45,28 @@ function mapProductDto(dto: BackendProductDto): Product {
   };
 }
 
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
+  }
+}
+
+/**
+ * Temporary active catalog source: user-provided CSV fixture (T1a).
+ * No API request is made; `category` is filtered locally.
+ * Switch back to getProductsFromApi once the backend catalog is live.
+ */
+export async function getProducts(
+  category?: string,
+  signal?: AbortSignal,
+): Promise<Product[]> {
+  throwIfAborted(signal);
+  if (category && category.length > 0) {
+    return mockProducts.filter((product) => product.category === category);
+  }
+  return [...mockProducts];
+}
+
 /**
  * Fetch the catalog from GET /api/products.
  * `data: null` means an empty result (never falls back to mocks).
@@ -51,7 +74,7 @@ function mapProductDto(dto: BackendProductDto): Product {
  * because the current backend ignores the query. Malformed payloads
  * throw ApiError instead of resolving as success.
  */
-export async function getProducts(
+export async function getProductsFromApi(
   category?: string,
   signal?: AbortSignal,
 ): Promise<Product[]> {
