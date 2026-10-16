@@ -21,7 +21,7 @@ describe('parseProductsCsv', () => {
     expect(hub?.price).toBe(24300.0);
     expect(hub?.stock).toBe(30);
     expect(hub?.category).toBe('accesorios');
-    expect(hub?.imageUrl).toContain('Hub%20USB%20NovaConnect');
+    expect(hub?.imageUrl).toContain('https://images.unsplash.com/');
   });
 
   it('maps number, category and image fields', () => {
@@ -33,7 +33,7 @@ describe('parseProductsCsv', () => {
     expect(typeof first?.stock).toBe('number');
     expect(first?.stock).toBe(24);
     expect(first?.category).toBe('accesorios');
-    expect(first?.imageUrl).toContain('https://placehold.co/');
+    expect(first?.imageUrl).toContain('https://images.unsplash.com/');
   });
 
   it('handles CRLF endings, doubled quotes and commas in quotes', () => {
