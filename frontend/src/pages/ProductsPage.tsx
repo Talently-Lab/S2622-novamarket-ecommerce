@@ -2,20 +2,24 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '@chakra-ui/react';
 import CategoryFilter from '../components/CategoryFilter.tsx';
+import Icon from '../components/icons/Icon.tsx';
 import ProductCard from '../components/ProductCard.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
+import { useMediaQuery } from '../hooks/useMediaQuery.ts';
 import { useProducts } from '../hooks/useProducts.ts';
 import { getCategoryDisplayName } from '../utils/categories.ts';
 
 const PAGE_SIZE = 10;
 const SKELETON_COUNT = 8;
 const PRIORITY_COUNT = 4;
+const DESKTOP_QUERY = '(min-width: 1024px)';
 
 // API-backed catalog (SN-249, Figma 212:1259). Mobile-first grid with
-// 2 columns from mobile; "Cargar más" paginates client-side over the
-// received set and resets on every filter change. No cart wiring:
-// cards render without onAdd by design.
+// 2 columns from mobile. Below lg the catalog grows with a secondary
+// "Cargar más"; from lg it shows one page at a time with a numbered
+// paginator aligned to the right. Paging resets on every filter change.
+// No cart wiring: cards render without onAdd by design.
 export default function ProductsPage() {
   const {
     products,
@@ -28,21 +32,28 @@ export default function ProductsPage() {
     retry,
   } = useProducts();
   const [, setSearchParams] = useSearchParams();
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  // Single paging cursor: below lg it grows as pages are appended, from lg
+  // it selects which page is shown.
+  const [page, setPage] = useState(1);
 
   function handleCategoryChange(next: string) {
     // The URL param is the single source of truth; the hook picks it up.
     setSearchParams(next ? { categoria: next } : {});
-    setVisibleCount(PAGE_SIZE);
+    setPage(1);
   }
 
   function clearFilter() {
     setSearchParams({});
-    setVisibleCount(PAGE_SIZE);
+    setPage(1);
   }
 
-  const visible = products.slice(0, visibleCount);
-  const hasMore = visibleCount < products.length;
+  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const visible = isDesktop
+    ? products.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : products.slice(0, currentPage * PAGE_SIZE);
+  const hasMore = currentPage < totalPages;
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;
   const title = category ? getCategoryDisplayName(category) : 'Todos los productos';
@@ -147,17 +158,57 @@ export default function ProductsPage() {
               </li>
             ))}
           </ul>
-          {hasMore ? (
+          {!isDesktop && hasMore ? (
             <div className="mt-8 flex justify-center">
               <Button
-                variant="primary"
-                onClick={() =>
-                  setVisibleCount((count) => count + PAGE_SIZE)
-                }
+                variant="secondary"
+                onClick={() => setPage(currentPage + 1)}
               >
                 Cargar más
               </Button>
             </div>
+          ) : null}
+          {isDesktop && totalPages > 1 ? (
+            <nav
+              aria-label="Paginación"
+              className="mt-8 flex justify-end"
+            >
+              <ul className="flex items-center gap-2">
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const pageNumber = index + 1;
+                  const isActive = pageNumber === currentPage;
+                  return (
+                    <li key={pageNumber}>
+                      <button
+                        type="button"
+                        aria-label={`Página ${pageNumber}`}
+                        aria-current={isActive ? 'page' : undefined}
+                        onClick={() => setPage(pageNumber)}
+                        className={
+                          isActive
+                            ? 'flex h-11 w-11 items-center justify-center rounded-md border border-fondo-estructura bg-fondo-estructura text-cuerpo-boton font-semibold text-texto-sobre-estructura'
+                            : 'flex h-11 w-11 items-center justify-center rounded-md border border-borde-divisor bg-fondo-superficie text-cuerpo-boton font-semibold text-texto-principal hover:border-texto-secundario'
+                        }
+                      >
+                        {pageNumber}
+                      </button>
+                    </li>
+                  );
+                })}
+                {hasMore ? (
+                  <li>
+                    <button
+                      type="button"
+                      aria-label="Página siguiente"
+                      onClick={() => setPage(currentPage + 1)}
+                      className="flex h-11 w-11 items-center justify-center rounded-md border border-borde-divisor bg-fondo-superficie text-texto-principal hover:border-texto-secundario"
+                    >
+                      <Icon name="chevron_right" />
+                    </button>
+                  </li>
+                ) : null}
+              </ul>
+            </nav>
           ) : null}
         </>
       )}

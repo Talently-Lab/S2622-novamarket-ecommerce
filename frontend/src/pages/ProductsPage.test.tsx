@@ -36,8 +36,23 @@ function renderPage(initialEntry = '/productos') {
   );
 }
 
+function stubMatchMedia(matches: boolean) {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })) as unknown as typeof window.matchMedia;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // jsdom has no matchMedia: default every test to the mobile layout.
+  stubMatchMedia(false);
 });
 
 describe('ProductsPage', () => {
@@ -419,5 +434,74 @@ describe('ProductsPage', () => {
       undefined,
       expect.any(AbortSignal),
     );
+  });
+
+  it('shows a numbered paginator on desktop instead of load-more', async () => {
+    stubMatchMedia(true);
+    mockedGetProducts.mockResolvedValueOnce(
+      Array.from({ length: 20 }, (_, index) => product(index + 1)),
+    );
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    expect(
+      screen.queryByRole('button', { name: /cargar más/i }),
+    ).not.toBeInTheDocument();
+
+    const pagination = screen.getByRole('navigation', { name: 'Paginación' });
+    expect(
+      within(pagination).getByRole('button', { name: 'Página 1' }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
+    expect(screen.getByText('Producto 1')).toBeInTheDocument();
+    expect(screen.queryByText('Producto 11')).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(pagination).getByRole('button', { name: 'Página 2' }),
+    );
+
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
+    expect(screen.getByText('Producto 11')).toBeInTheDocument();
+    expect(screen.queryByText('Producto 1')).not.toBeInTheDocument();
+    expect(
+      within(pagination).getByRole('button', { name: 'Página 2' }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(
+      within(pagination).queryByRole('button', { name: 'Página siguiente' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('advances with the next arrow on desktop', async () => {
+    stubMatchMedia(true);
+    mockedGetProducts.mockResolvedValueOnce(
+      Array.from({ length: 20 }, (_, index) => product(index + 1)),
+    );
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    const pagination = screen.getByRole('navigation', { name: 'Paginación' });
+    fireEvent.click(
+      within(pagination).getByRole('button', { name: 'Página siguiente' }),
+    );
+
+    expect(screen.getByText('Producto 11')).toBeInTheDocument();
+  });
+
+  it('keeps the secondary Cargar más below lg and renders no paginator', async () => {
+    mockedGetProducts.mockResolvedValueOnce(
+      Array.from({ length: 20 }, (_, index) => product(index + 1)),
+    );
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    expect(
+      screen.getByRole('button', { name: /cargar más/i }),
+    ).toHaveClass('novamarket-button');
+    expect(
+      screen.queryByRole('navigation', { name: 'Paginación' }),
+    ).not.toBeInTheDocument();
   });
 });
