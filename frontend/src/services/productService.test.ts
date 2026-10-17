@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, apiFetch } from './api.ts';
-import { getProductById, getProducts, getProductsFromApi } from './productService.ts';
-import { products as mockProducts } from '../mocks/products.ts';
+import { getProductById, getProductsFromApi } from './productService.ts';
 
 vi.mock('./api.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api.ts')>();
@@ -228,37 +227,5 @@ describe('productService.getProductById', () => {
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error.status).toBe(404);
-  });
-});
-
-describe('productService.getProducts (temporary CSV source)', () => {
-  it('returns the 20 CSV rows without calling fetch', async () => {
-    const products = await getProducts();
-
-    expect(mockedApiFetch).not.toHaveBeenCalled();
-    expect(products).toHaveLength(20);
-    expect(products).toEqual(mockProducts);
-  });
-
-  it('filters by category locally without calling fetch', async () => {
-    const products = await getProducts('gadgets');
-
-    expect(mockedApiFetch).not.toHaveBeenCalled();
-    expect(products.length).toBeGreaterThan(0);
-    expect(
-      products.every((product) => product.category === 'gadgets'),
-    ).toBe(true);
-  });
-
-  it('respects an aborted signal', async () => {
-    const controller = new AbortController();
-    controller.abort();
-
-    const error = await getProducts(undefined, controller.signal).catch(
-      (e) => e,
-    );
-
-    expect(error).toBeInstanceOf(DOMException);
-    expect(mockedApiFetch).not.toHaveBeenCalled();
   });
 });

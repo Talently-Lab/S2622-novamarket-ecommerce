@@ -1,8 +1,37 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
+
+function catalogProducts() {
+  return Array.from({ length: 20 }, (_, index) => ({
+    _id: `mongo-id-${index + 1}`,
+    nombre: `Producto ${index + 1}`,
+    descripcion: `Descripcion ${index + 1}`,
+    precio: 1000 * (index + 1),
+    stock: 10,
+    categoria: 'accesorios',
+    imagenUrl: `https://example.com/product-${index + 1}.png`,
+  }));
+}
+
+beforeEach(() => {
+  const products = catalogProducts();
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+      json: async () => ({
+        ok: true,
+        message: 'Productos encontrados',
+        data: { products, totalProducts: products.length },
+      }),
+    })),
+  );
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -51,29 +80,6 @@ describe('NovaMarket landing page', () => {
   });
 
   it('renders the API-backed product catalog on /productos', async () => {
-    const products = Array.from({ length: 20 }, (_, index) => ({
-      _id: `mongo-id-${index + 1}`,
-      nombre: `Producto ${index + 1}`,
-      descripcion: `Descripcion ${index + 1}`,
-      precio: 1000 * (index + 1),
-      stock: 10,
-      categoria: 'accesorios',
-      imagenUrl: `https://example.com/product-${index + 1}.png`,
-    }));
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({
-        ok: true,
-        status: 200,
-        headers: new Headers({ 'Content-Type': 'application/json' }),
-        json: async () => ({
-          ok: true,
-          message: 'Productos encontrados',
-          data: { products, totalProducts: products.length },
-        }),
-      })),
-    );
-
     render(
       <MemoryRouter initialEntries={['/productos']}>
         <AuthProvider>

@@ -1,15 +1,15 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getProducts } from '../services/productService.ts';
+import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
 import HomeFeatured from './HomeFeatured.tsx';
 
 vi.mock('../services/productService.ts', () => ({
-  getProducts: vi.fn(),
+  getProductsFromApi: vi.fn(),
 }));
 
-const mockedGetProducts = vi.mocked(getProducts);
+const mockedGetProducts = vi.mocked(getProductsFromApi);
 
 const MOCK_PRODUCTS: Product[] = [
   {
@@ -75,7 +75,18 @@ describe('HomeFeatured', () => {
     );
   });
 
-  it('renders the mock products with Novedad badge, name, es-AR price, image and Agregar button', async () => {
+  it('shows card skeletons while the catalog is loading', () => {
+    mockedGetProducts.mockReturnValueOnce(new Promise<Product[]>(() => {}));
+
+    renderFeatured();
+
+    expect(
+      screen.getByRole('heading', { name: 'Destacados' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByTestId('product-card-skeleton')).toHaveLength(4);
+  });
+
+  it('renders the featured products with Novedad badge, name, es-AR price, image and Agregar button', async () => {
     renderFeatured();
 
     expect(await screen.findAllByRole('listitem')).toHaveLength(4);

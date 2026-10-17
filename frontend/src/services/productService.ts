@@ -1,6 +1,5 @@
 import { ApiError, apiFetch } from './api.ts';
 import type { Product } from '../types/product.ts';
-import { products as mockProducts } from '../mocks/products.ts';
 
 /**
  * Backend product DTO (Mongo + Spanish field names, observed contract).
@@ -59,12 +58,6 @@ function mapProductDto(dto: BackendProductDto): Product {
   };
 }
 
-function throwIfAborted(signal?: AbortSignal): void {
-  if (signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError');
-  }
-}
-
 /**
  * Reads `data.products` out of a page payload. Anything else — a missing
  * `products` key, a non-array, or a malformed row — is a contract
@@ -79,22 +72,6 @@ function readProductsPage(data: unknown): BackendProductDto[] {
     throw new ApiError('Invalid products response');
   }
   return products;
-}
-
-/**
- * Temporary active catalog source: user-provided CSV fixture (T1a).
- * No API request is made; `category` is filtered locally.
- * Switch back to getProductsFromApi once the backend catalog is live.
- */
-export async function getProducts(
-  category?: string,
-  signal?: AbortSignal,
-): Promise<Product[]> {
-  throwIfAborted(signal);
-  if (category && category.length > 0) {
-    return mockProducts.filter((product) => product.category === category);
-  }
-  return [...mockProducts];
 }
 
 /**

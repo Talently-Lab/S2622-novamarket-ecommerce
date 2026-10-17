@@ -1,15 +1,31 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { getProducts } from '../services/productService.ts';
+import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
 import { buildImageSrcSet } from '../utils/responsiveImage.ts';
 import Icon from './icons/Icon.tsx';
+import ProductCardSkeleton from './ProductCardSkeleton.tsx';
 
-// Featured picks: the first in-catalog product of each category
-// (accesorios, perifericos, gadgets) plus a second perifericos best-seller,
-// every pick with a valid imageUrl. The "Novedad" badge is a user-kept visual
-// label, not a catalog field.
-const FEATURED_IDS: ReadonlySet<Product['id']> = new Set([1, 2, 3, 6]);
+// Featured picks: one catalog product per category, then the remaining slots
+// filled with the next products that have an image. The catalog has no
+// "featured" flag, so the picks are derived from the catalog order. The
+// "Novedad" badge is a user-kept visual label, not a catalog field.
+const FEATURED_CATEGORIES = ['accesorios', 'perifericos', 'gadgets'] as const;
+const FEATURED_COUNT = 4;
+
+function pickFeatured(items: Product[]): Product[] {
+  const candidates = items.filter((item) => item.imageUrl.length > 0);
+  const picks = FEATURED_CATEGORIES.map((category) =>
+    candidates.find((item) => item.category === category),
+  ).filter((item): item is Product => item !== undefined);
+
+  for (const item of candidates) {
+    if (picks.length >= FEATURED_COUNT) break;
+    if (!picks.includes(item)) picks.push(item);
+  }
+
+  return picks.slice(0, FEATURED_COUNT);
+}
 
 function formatPrice(price: number): string {
   return `$${price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -70,16 +86,10 @@ export default function HomeFeatured() {
 
   useEffect(() => {
     let cancelled = false;
-    getProducts()
+    getProductsFromApi()
       .then((items) => {
         if (cancelled) return;
-        setFeatured(
-          items
-            .filter(
-              (item) => FEATURED_IDS.has(item.id) && item.imageUrl.length > 0,
-            )
-            .slice(0, 4),
-        );
+        setFeatured(pickFeatured(items));
       })
       .catch(() => {
         if (!cancelled) setFeatured([]);
@@ -89,8 +99,9 @@ export default function HomeFeatured() {
     };
   }, []);
 
-  // Hidden while loading and on error/empty: the home never breaks.
-  if (!featured || featured.length === 0) return null;
+  // Hidden on error/empty: the home never breaks. While loading it renders
+  // skeletons so the section does not collapse.
+  if (featured && featured.length === 0) return null;
 
   return (
     <section aria-labelledby="home-featured-title">
@@ -109,9 +120,15 @@ export default function HomeFeatured() {
         </Link>
       </div>
       <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {featured.map((product) => (
-          <FeaturedCard key={product.id} product={product} />
-        ))}
+        {featured === null
+          ? Array.from({ length: FEATURED_COUNT }, (_, index) => (
+              <li key={`featured-skeleton-${index}`}>
+                <ProductCardSkeleton label="Cargando producto destacado" />
+              </li>
+            ))
+          : featured.map((product) => (
+              <FeaturedCard key={product.id} product={product} />
+            ))}
       </ul>
     </section>
   );

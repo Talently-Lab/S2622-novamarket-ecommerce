@@ -16,16 +16,26 @@ tablet and desktop. No cart logic, no fetching.
 ```tsx
 import ProductCard from './components/ProductCard.tsx';
 import ProductCardSkeleton from './components/ProductCardSkeleton.tsx';
-import { products } from './mocks/products.ts';
+
+// A `Product` comes from the API-backed catalog service (`getProductsFromApi`).
+const product = {
+  id: '6ace8d886e3eb92ea0fc9bdc',
+  name: 'Auriculares Bluetooth NovaSound X1',
+  description: 'Auriculares inalámbricos',
+  price: 45999,
+  stock: 24,
+  category: 'accesorios',
+  imageUrl: 'https://placehold.co/600x400/png?text=Producto',
+};
 
 // Default: fires only the callback, nothing else.
-<ProductCard product={products[0]} onAdd={(p) => console.log(p.id)} />;
+<ProductCard product={product} onAdd={(p) => console.log(p.id)} />;
 
 // Added confirmation (e.g. right after the callback fires).
-<ProductCard product={products[0]} added />;
+<ProductCard product={product} added />;
 
 // Out of stock derives from `product.stock <= 0`; CTA is disabled.
-<ProductCard product={{ ...products[0], stock: 0 }} />;
+<ProductCard product={{ ...product, stock: 0 }} />;
 
 // Loading grid: same geometry, `role="status"`, no buttons.
 <ProductCardSkeleton />;
