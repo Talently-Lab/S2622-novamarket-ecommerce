@@ -57,6 +57,11 @@ export default function ProductsPage() {
     ? products.slice((currentPage - 1) * pageSize, currentPage * pageSize)
     : products.slice(0, currentPage * pageSize);
   const hasMore = currentPage < totalPages;
+  // Desktop keeps a full page worth of slots so a short last page does not
+  // collapse the grid and make the paginator jump.
+  const placeholders = isDesktop
+    ? Math.max(0, pageSize - visible.length)
+    : 0;
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;
   const title = category ? getCategoryDisplayName(category) : 'Todos los productos';
@@ -151,13 +156,26 @@ export default function ProductsPage() {
         )
       ) : (
         <>
-          <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
+          <ul
+            // Remounting on page change replays the fade-in entrance.
+            key={isDesktop ? `desktop-page-${currentPage}` : 'catalog'}
+            className="mt-6 grid animate-fade-in grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4"
+          >
             {visible.map((product, index) => (
               <li key={product.id}>
                 <ProductCard
                   product={product}
                   priority={index < PRIORITY_COUNT}
                 />
+              </li>
+            ))}
+            {Array.from({ length: placeholders }, (_, index) => (
+              <li
+                key={`page-spacer-${index}`}
+                aria-hidden="true"
+                className="invisible"
+              >
+                <ProductCardSkeleton />
               </li>
             ))}
           </ul>

@@ -463,6 +463,8 @@ describe('ProductsPage', () => {
 
     // 20 products in pages of 8: the last page holds the remaining 4.
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(4);
+    // Invisible spacers keep the grid two rows tall so nothing jumps.
+    expect(screen.getAllByTestId('product-card-skeleton')).toHaveLength(4);
     expect(screen.getByText('Producto 17')).toBeInTheDocument();
     expect(screen.queryByText('Producto 1')).not.toBeInTheDocument();
     expect(
