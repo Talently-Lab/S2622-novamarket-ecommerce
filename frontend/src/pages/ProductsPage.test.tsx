@@ -3,6 +3,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../services/api.ts';
+import { getProductCategories } from '../services/formdataService.ts';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
 import { system } from '../theme/system.ts';
@@ -12,7 +13,12 @@ vi.mock('../services/productService.ts', () => ({
   getProductsFromApi: vi.fn(),
 }));
 
+vi.mock('../services/formdataService.ts', () => ({
+  getProductCategories: vi.fn(),
+}));
+
 const mockedGetProducts = vi.mocked(getProductsFromApi);
+const mockedCategories = vi.mocked(getProductCategories);
 
 function product(index: number, category = 'accesorios'): Product {
   return {
@@ -52,6 +58,11 @@ function stubMatchMedia(isDesktop: boolean) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockedCategories.mockResolvedValue([
+    { value: 'accesorios', label: 'Accesorios' },
+    { value: 'perifericos', label: 'Perifericos' },
+    { value: 'gadgets', label: 'Gadgets' },
+  ]);
   // jsdom has no matchMedia: default every test to the mobile layout.
   stubMatchMedia(false);
 });
@@ -185,9 +196,11 @@ describe('ProductsPage', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
     const radios = within(dialog).getAllByRole('radio');
+    // The options come from the backend, not from the loaded catalog data.
     expect(radios.map((radio) => radio.getAttribute('value'))).toEqual([
       '',
       'accesorios',
+      'perifericos',
       'gadgets',
     ]);
     expect(

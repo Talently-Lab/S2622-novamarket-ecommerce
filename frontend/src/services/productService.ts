@@ -46,6 +46,23 @@ function isBackendProductDto(value: unknown): value is BackendProductDto {
   );
 }
 
+/**
+ * Write payload for the admin product form, using the English domain names
+ * of `Product`. Kept free of schema imports so the service layer stays
+ * independent of the form validation layer.
+ */
+export interface ProductInput {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  category: string;
+  imageUrl: string;
+}
+
+/** Request body for the write endpoints: the DTO minus its server-assigned id. */
+export type BackendProductInputDto = Omit<BackendProductDto, '_id'>;
+
 function mapProductDto(dto: BackendProductDto): Product {
   return {
     id: dto._id,
@@ -55,6 +72,21 @@ function mapProductDto(dto: BackendProductDto): Product {
     stock: dto.stock,
     category: dto.categoria,
     imageUrl: dto.imagenUrl ?? '',
+  };
+}
+
+/**
+ * Reverse of `mapProductDto`: turns a domain form value into the Spanish
+ * backend body shape the write endpoints expect.
+ */
+export function mapProductInput(input: ProductInput): BackendProductInputDto {
+  return {
+    nombre: input.name,
+    descripcion: input.description,
+    precio: input.price,
+    stock: input.stock,
+    categoria: input.category,
+    imagenUrl: input.imageUrl,
   };
 }
 
@@ -144,6 +176,23 @@ export async function getProductsFromApi(
 }
 
 /**
+ * Reads the flat product object out of a single-product payload and maps it
+ * to the domain type. Shared by every endpoint that returns one product:
+ * GET/POST/PUT `/products/:id`. A missing or malformed `data` is a contract
+ * violation and throws instead of resolving as success.
+ */
+function readProductResponse(response: unknown): Product {
+  const data =
+    typeof response === 'object' && response !== null && 'data' in response
+      ? (response as { data: unknown }).data
+      : undefined;
+  if (!isBackendProductDto(data)) {
+    throw new ApiError('Invalid product response');
+  }
+  return mapProductDto(data);
+}
+
+/**
  * Fetch a single product from GET /api/products/:id.
  * Here `data` is the product object itself, not a `products` page.
  * A missing product surfaces as the ApiError thrown by `apiFetch` (404).
@@ -156,13 +205,44 @@ export async function getProductById(
     `/products/${encodeURIComponent(id)}`,
     { signal },
   );
-  if (
-    typeof response !== 'object' ||
-    response === null ||
-    !('data' in response) ||
-    !isBackendProductDto(response.data)
-  ) {
-    throw new ApiError('Invalid product response');
-  }
-  return mapProductDto(response.data);
+  return readProductResponse(response);
+}
+
+/*
+ * Week-6 API writes (POST/PUT/DELETE /products).
+ *
+ * These are the REAL mutations, ready to be wired in once the backend lands
+ * them. Today the deployed backend product write endpoints are stubs that
+ * return `successResponse(res, null, null, 200)`, so `data` is `null` and
+ * calling these throws `ApiError('Invalid product response')`. That is
+ * expected: the admin UI does NOT call them yet — it goes through the local
+ * driver in `adminProductService` (see that file for the swap notes).
+ */
+
+/** Create a product via POST /api/products and map the created row to domain. */
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const response = await apiFetch<ProductResponse>('/products', {
+    method: 'POST',
+    body: mapProductInput(input),
+  });
+  return readProductResponse(response);
+}
+
+/** Update a product via PUT /api/products/:id and map the row to domain. */
+export async function updateProduct(
+  id: string | number,
+  input: ProductInput,
+): Promise<Product> {
+  const response = await apiFetch<ProductResponse>(
+    `/products/${encodeURIComponent(String(id))}`,
+    { method: 'PUT', body: mapProductInput(input) },
+  );
+  return readProductResponse(response);
+}
+
+/** Delete a product via DELETE /api/products/:id. The backend returns no body. */
+export async function deleteProduct(id: string | number): Promise<void> {
+  await apiFetch<unknown>(`/products/${encodeURIComponent(String(id))}`, {
+    method: 'DELETE',
+  });
 }
