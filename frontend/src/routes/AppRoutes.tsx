@@ -8,6 +8,7 @@ import ProductsPage from '../pages/ProductsPage.tsx';
 import RegisterPage from '../pages/RegisterPage.tsx';
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage.tsx';
 import AdminProductsPage from '../pages/admin/AdminProductsPage.tsx';
+import ProductFormPage from '../pages/admin/ProductFormPage.tsx';
 import PrivateRoute from './PrivateRoute.tsx';
 
 export function AppRoutes() {
@@ -27,6 +28,8 @@ export function AppRoutes() {
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="productos" replace />} />
           <Route path="productos" element={<AdminProductsPage />} />
+          <Route path="productos/nuevo" element={<ProductFormPage />} />
+          <Route path="productos/:id/editar" element={<ProductFormPage />} />
           <Route path="pedidos" element={<AdminOrdersPage />} />
         </Route>
       </Route>
