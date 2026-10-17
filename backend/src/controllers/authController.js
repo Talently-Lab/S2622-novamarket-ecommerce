@@ -9,7 +9,7 @@ class AuthController {
             return successResponse(res, result, 'Usuario registrado correctamente', 201);
 
         } catch (error) {
-            return errorResponse(res, error, error.message, 400);
+            return errorResponse(res, error);
         }
     }
 
@@ -18,15 +18,16 @@ class AuthController {
             const result = await authService.loginUser(req.body);
             return successResponse(res, result, 'Login exitoso', 200);
         } catch (error) {
-            return errorResponse(res, error, error.message, 401);
+            return errorResponse(res, error);
         }
     }
 
-    async getCurrentUser(req, res, next) {
+        async getCurrentUser(req, res, next) {
         try {
-            return successResponse(res, null, null, 200);
+            const user = await authService.getCurrentUser(req.user.id);
+            return successResponse(res, user, 'Usuario autenticado', 200);
         } catch (error) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 
@@ -34,7 +35,7 @@ class AuthController {
         try {
             return successResponse(res, null, null, 200);
         } catch (error) {
-            return errorResponse(res, err, 'Error al comprobar el estado del servidor', 500)
+            return errorResponse(res, error);
         }
     }
 }

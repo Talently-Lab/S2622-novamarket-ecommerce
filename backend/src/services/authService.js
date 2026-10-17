@@ -1,12 +1,13 @@
 import User from "../models/User.js";
 import { generateToken } from "../helpers/jwt.js";
+import { AppError } from "../helpers/customError.js";
 
 class AuthService {
     async createUser(userData) {
         const existingUser = await User.findOne({ email: userData.email });
 
         if (existingUser) {
-            throw new Error('El email ya está registrado');
+            throw new AppError('El correo electrónico ya está en uso', 400);
         }
 
         const user = await User.create(userData);
@@ -24,13 +25,13 @@ class AuthService {
         const user = await User.findOne({ email });
 
         if (!user) {
-            throw new Error('Credenciales inválidas');
+            throw new AppError('Credenciales inválidas', 401);
         }
 
         const isPasswordValid = await user.comparePassword(password);
 
         if (!isPasswordValid) {
-            throw new Error('Credenciales inválidas');
+            throw new AppError('Credenciales inválidas', 401);
         }
 
         const userObject = user.toObject();
@@ -42,8 +43,14 @@ class AuthService {
         return { token, user: userObject };
     }
 
-    async getCurrentUser() {
+       async getCurrentUser(userId) {
+        const user = await User.findById(userId).select('-password');
 
+        if (!user) {
+            throw new AppError('Usuario no encontrado', 404);
+        }
+
+        return user;
     }
 
     async logoutUser() {
