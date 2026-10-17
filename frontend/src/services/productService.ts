@@ -98,35 +98,72 @@ export async function getProducts(
 }
 
 /**
- * Fetch the catalog from GET /api/products.
- * The backend paginates: rows live in `data.products`. `data: null` means
- * an empty result (never falls back to mocks).
- * `category` is sent as a query param and re-applied client-side as a
- * safety net — the server-side filter has not been verified yet. Malformed
- * payloads throw ApiError instead of resolving as success.
+ * Page size used to pull the catalog. Deliberately far larger than the whole
+ * catalog so a single request usually returns everything; the page loop is
+ * the guard against silent truncation if the catalog ever grows past this.
+ */
+const CATALOG_PAGE_SIZE = 100;
+
+/**
+ * Fetch the whole catalog from GET /api/products.
+ * The backend paginates: rows live in `data.products` and `data.totalProducts`
+ * carries the count for the current filters. Pages are requested with a large
+ * `limit` until every row is collected, so a default-limited response can
+ * never silently truncate the catalog. `data: null` means an empty result
+ * (never falls back to mocks). `category` is sent as a query param and the
+ * server filters it. Malformed payloads throw ApiError instead of resolving
+ * as success.
  */
 export async function getProductsFromApi(
   category?: string,
   signal?: AbortSignal,
 ): Promise<Product[]> {
-  const path =
-    category && category.length > 0
-      ? `/products?category=${encodeURIComponent(category)}`
-      : '/products';
-  const response = await apiFetch<ProductsResponse>(path, { signal });
-  if (
-    typeof response !== 'object' ||
-    response === null ||
-    !('data' in response)
-  ) {
-    throw new ApiError('Invalid products response');
+  const rows: BackendProductDto[] = [];
+
+  for (let page = 1; ; page += 1) {
+    const params = new URLSearchParams();
+    params.set('limit', String(CATALOG_PAGE_SIZE));
+    params.set('page', String(page));
+    if (category && category.length > 0) {
+      params.set('category', category);
+    }
+
+    const response = await apiFetch<ProductsResponse>(
+      `/products?${params.toString()}`,
+      { signal },
+    );
+    if (
+      typeof response !== 'object' ||
+      response === null ||
+      !('data' in response)
+    ) {
+      throw new ApiError('Invalid products response');
+    }
+    if (response.data === null) {
+      break;
+    }
+
+    const pageRows = readProductsPage(response.data);
+    rows.push(...pageRows);
+
+    // An empty page means the server has no more rows, even when
+    // `totalProducts` claims otherwise — stop instead of looping forever.
+    if (pageRows.length === 0) {
+      break;
+    }
+
+    const { totalProducts } = response.data;
+    // No usable total: trust the first page as the whole result rather than
+    // looping blindly.
+    if (!Number.isFinite(totalProducts)) {
+      break;
+    }
+    if (rows.length >= totalProducts) {
+      break;
+    }
   }
-  if (response.data === null) return [];
-  const mapped = readProductsPage(response.data).map(mapProductDto);
-  if (category && category.length > 0) {
-    return mapped.filter((product) => product.category === category);
-  }
-  return mapped;
+
+  return rows.map(mapProductDto);
 }
 
 /**

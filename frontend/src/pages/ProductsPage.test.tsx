@@ -3,16 +3,16 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../services/api.ts';
-import { getProducts } from '../services/productService.ts';
+import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
 import { system } from '../theme/system.ts';
 import ProductsPage from './ProductsPage.tsx';
 
 vi.mock('../services/productService.ts', () => ({
-  getProducts: vi.fn(),
+  getProductsFromApi: vi.fn(),
 }));
 
-const mockedGetProducts = vi.mocked(getProducts);
+const mockedGetProducts = vi.mocked(getProductsFromApi);
 
 function product(index: number, category = 'accesorios'): Product {
   return {
@@ -98,7 +98,7 @@ describe('ProductsPage', () => {
 
   it('renders the populated list with the real count and load-more paging', async () => {
     mockedGetProducts.mockResolvedValueOnce(
-      Array.from({ length: 10 }, (_, index) => product(index + 1)),
+      Array.from({ length: 20 }, (_, index) => product(index + 1)),
     );
 
     renderPage();
@@ -106,12 +106,12 @@ describe('ProductsPage', () => {
     expect(
       await screen.findByText('Producto 1', undefined, { timeout: 3000 }),
     ).toBeInTheDocument();
-    expect(screen.getByText('10 productos')).toBeInTheDocument();
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(8);
+    expect(screen.getByText('20 productos')).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
 
     fireEvent.click(screen.getByRole('button', { name: /cargar más/i }));
 
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(20);
     expect(
       screen.queryByRole('button', { name: /cargar más/i }),
     ).not.toBeInTheDocument();
@@ -236,11 +236,12 @@ describe('ProductsPage', () => {
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(await screen.findByText('9 productos')).toBeInTheDocument();
-    // Paging resets to the first page instead of keeping the expanded list.
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(8);
+    // Paging resets to the first page: with a page size of 10 every matching
+    // gadget fits, so there is no load-more control left.
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(9);
     expect(
-      screen.getByRole('button', { name: /cargar más/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: /cargar más/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Gadgets' }),
     ).toBeInTheDocument();

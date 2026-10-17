@@ -8,7 +8,7 @@ import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
 import { useProducts } from '../hooks/useProducts.ts';
 import { getCategoryDisplayName } from '../utils/categories.ts';
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
 const SKELETON_COUNT = 8;
 const PRIORITY_COUNT = 4;
 

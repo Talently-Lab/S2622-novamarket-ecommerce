@@ -28,8 +28,8 @@ function envelope(data: unknown) {
 }
 
 /** A `GET /api/products` page payload, as the backend shapes it. */
-function page(products: unknown[]) {
-  return envelope({ products, totalProducts: products.length });
+function page(products: unknown[], totalProducts = products.length) {
+  return envelope({ products, totalProducts });
 }
 
 beforeEach(() => {
@@ -42,7 +42,7 @@ describe('productService.getProductsFromApi', () => {
 
     const products = await getProductsFromApi();
 
-    expect(mockedApiFetch).toHaveBeenCalledWith('/products', {
+    expect(mockedApiFetch).toHaveBeenCalledWith('/products?limit=100&page=1', {
       signal: undefined,
     });
     expect(products).toEqual([
@@ -74,7 +74,7 @@ describe('productService.getProductsFromApi', () => {
     expect(products).toEqual([]);
   });
 
-  it('sends category as query param and re-filters client-side', async () => {
+  it('sends category as a query param and leaves filtering to the server', async () => {
     mockedApiFetch.mockResolvedValueOnce(
       page([
         backendDto({ _id: 'a', categoria: 'accesorios' }),
@@ -85,9 +85,62 @@ describe('productService.getProductsFromApi', () => {
     const products = await getProductsFromApi('accesorios');
 
     expect(mockedApiFetch).toHaveBeenCalledWith(
-      '/products?category=accesorios',
+      '/products?limit=100&page=1&category=accesorios',
       { signal: undefined },
     );
+    // The server is responsible for filtering now, so rows of other
+    // categories are no longer dropped client-side.
+    expect(products.map((product) => product.id)).toEqual(['a', 'b']);
+  });
+
+  it('collects every page until the reported total is reached', async () => {
+    mockedApiFetch
+      .mockResolvedValueOnce(
+        page(
+          [backendDto({ _id: 'a' }), backendDto({ _id: 'b' })],
+          3,
+        ),
+      )
+      .mockResolvedValueOnce(page([backendDto({ _id: 'c' })]));
+
+    const products = await getProductsFromApi();
+
+    expect(mockedApiFetch).toHaveBeenNthCalledWith(
+      1,
+      '/products?limit=100&page=1',
+      { signal: undefined },
+    );
+    expect(mockedApiFetch).toHaveBeenNthCalledWith(
+      2,
+      '/products?limit=100&page=2',
+      { signal: undefined },
+    );
+    expect(mockedApiFetch).toHaveBeenCalledTimes(2);
+    expect(products.map((product) => product.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('stops when a page comes back empty even if totalProducts is larger', async () => {
+    mockedApiFetch
+      .mockResolvedValueOnce(page([backendDto({ _id: 'a' })], 999))
+      .mockResolvedValueOnce(page([], 999));
+
+    const products = await getProductsFromApi();
+
+    expect(mockedApiFetch).toHaveBeenCalledTimes(2);
+    expect(products.map((product) => product.id)).toEqual(['a']);
+  });
+
+  it('uses the first page alone when totalProducts is not a finite number', async () => {
+    mockedApiFetch.mockResolvedValueOnce(
+      envelope({
+        products: [backendDto({ _id: 'a' })],
+        totalProducts: 'many',
+      }),
+    );
+
+    const products = await getProductsFromApi();
+
+    expect(mockedApiFetch).toHaveBeenCalledTimes(1);
     expect(products.map((product) => product.id)).toEqual(['a']);
   });
 

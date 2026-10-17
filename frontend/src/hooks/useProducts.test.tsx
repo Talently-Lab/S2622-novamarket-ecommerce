@@ -3,15 +3,15 @@ import { MemoryRouter, useSearchParams } from 'react-router';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../services/api.ts';
-import { getProducts } from '../services/productService.ts';
+import { getProductsFromApi } from '../services/productService.ts';
 import { useProducts } from './useProducts.ts';
 import type { Product } from '../types/product.ts';
 
 vi.mock('../services/productService.ts', () => ({
-  getProducts: vi.fn(),
+  getProductsFromApi: vi.fn(),
 }));
 
-const mockedGetProducts = vi.mocked(getProducts);
+const mockedGetProducts = vi.mocked(getProductsFromApi);
 
 function product(overrides: Partial<Product> = {}): Product {
   return {

@@ -3,16 +3,16 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext.tsx';
-import { getProducts } from '../services/productService.ts';
+import { getProductsFromApi } from '../services/productService.ts';
 import { system } from '../theme/system.ts';
 import ProductsPage from '../pages/ProductsPage.tsx';
 import Navbar from './Navbar.tsx';
 
 vi.mock('../services/productService.ts', () => ({
-  getProducts: vi.fn(),
+  getProductsFromApi: vi.fn(),
 }));
 
-const mockedGetProducts = vi.mocked(getProducts);
+const mockedGetProducts = vi.mocked(getProductsFromApi);
 
 function renderNavbar(props: { count?: number } = {}, initialEntry = '/') {
   render(

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { Product } from '../types/product.ts';
-import { getProducts } from '../services/productService.ts';
+import { getProductsFromApi } from '../services/productService.ts';
 import { KNOWN_CATEGORY_ORDER } from '../utils/categories.ts';
 
 export interface UseProductsResult {
@@ -70,7 +70,7 @@ export function useProducts(): UseProductsResult {
     requestId.current += 1;
     const id = requestId.current;
 
-    getProducts(category || undefined, controller.signal)
+    getProductsFromApi(category || undefined, controller.signal)
       .then((items) => {
         if (requestId.current !== id || controller.signal.aborted) return;
         setProducts(items);
@@ -106,7 +106,7 @@ export function useProducts(): UseProductsResult {
   useEffect(() => {
     if (!hasFilter || metaLoaded) return;
     const controller = new AbortController();
-    getProducts(undefined, controller.signal)
+    getProductsFromApi(undefined, controller.signal)
       .then((items) => {
         if (controller.signal.aborted) return;
         captureMeta(items);
