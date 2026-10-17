@@ -7,8 +7,8 @@ import ProductCard from '../components/ProductCard.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
 import { useMediaQuery } from '../hooks/useMediaQuery.ts';
+import { useCategories } from '../hooks/useCategories.ts';
 import { useProducts } from '../hooks/useProducts.ts';
-import { getCategoryDisplayName } from '../utils/categories.ts';
 
 const MOBILE_PAGE_SIZE = 10;
 const DESKTOP_PAGE_SIZE = 8;
@@ -25,7 +25,6 @@ const DESKTOP_QUERY = '(min-width: 1024px)';
 export default function ProductsPage() {
   const {
     products,
-    categories,
     counts,
     total,
     category,
@@ -33,6 +32,7 @@ export default function ProductsPage() {
     error,
     retry,
   } = useProducts();
+  const { categories: categoryOptions, labelFor } = useCategories();
   const [, setSearchParams] = useSearchParams();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   // Single paging cursor: below lg it grows as pages are appended, from lg
@@ -59,7 +59,7 @@ export default function ProductsPage() {
   const hasMore = currentPage < totalPages;
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;
-  const title = category ? getCategoryDisplayName(category) : 'Todos los productos';
+  const title = category ? labelFor(category) : 'Todos los productos';
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -103,7 +103,7 @@ export default function ProductsPage() {
       {/* Mobile-only: the navbar category bar owns md+. */}
       <div className="mt-4 md:hidden">
         <CategoryFilter
-          categories={categories}
+          options={categoryOptions}
           value={category}
           onChange={handleCategoryChange}
           counts={counts}
@@ -136,7 +136,7 @@ export default function ProductsPage() {
       ) : products.length === 0 ? (
         category ? (
           <ProductsEmptyState
-            title={`No hay productos en ${getCategoryDisplayName(category)}`}
+            title={`No hay productos en ${labelFor(category)}`}
             description="Por ahora no tenemos nada acá. Mirá el resto del catálogo."
             action={{
               label: 'Ver todos los productos',
