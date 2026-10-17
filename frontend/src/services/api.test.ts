@@ -69,9 +69,12 @@ describe('apiFetch (SN-99 interceptor del token)', () => {
   it('respuesta 401 con {message} rechaza con ApiError del backend y status 401', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ message: 'Token inválido' }, 401));
 
-    const error = await apiFetch('/auth/me').catch((e) => e);
+    const error = await apiFetch('/auth/me').catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ApiError);
+    if (!(error instanceof ApiError)) {
+      throw new Error('se esperaba un ApiError');
+    }
     expect(error.message).toBe('Token inválido');
     expect(error.status).toBe(401);
   });

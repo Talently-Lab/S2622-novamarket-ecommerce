@@ -164,3 +164,7 @@ dist
 
 # Local ODD task tracking (local-only, mirrored in Engram)
 odd/
+
+# Local tooling artifacts (CodeGraph index, gentle-ai skill cache)
+.atl/
+.codegraph/

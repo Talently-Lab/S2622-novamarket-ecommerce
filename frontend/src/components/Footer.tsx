@@ -1,18 +1,18 @@
 export default function Footer() {
   return (
-    <footer className="w-full border-t border-zinc-200 bg-zinc-100 p-8 font-sans text-zinc-900">
-      <div className="mx-auto flex max-w-[390px] flex-col gap-4 md:max-w-none">
+    <footer className="flex w-full justify-center border-t border-borde-divisor-estructura bg-fondo-estructura px-4 py-8 font-sans text-texto-sobre-estructura md:px-20">
+      <div className="flex w-full max-w-[1280px] flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <div className="w-fit rounded border border-zinc-400 px-3 py-1 text-sm font-semibold tracking-wider">
+          <div className="w-fit rounded border border-borde-divisor-estructura px-3 py-1 text-sm font-semibold tracking-wider">
             NovaMarket
           </div>
-          <p className="m-0 text-sm leading-5 text-zinc-600">
+          <p className="m-0 text-sm leading-5 text-texto-sobre-estructura-sec">
             Tecnología para tu setup
           </p>
         </div>
 
         <div className="flex flex-col">
-          <div className="flex h-12 items-center justify-between border-b border-zinc-300 text-sm font-medium">
+          <div className="flex h-12 items-center justify-between border-b border-borde-divisor-estructura text-sm font-medium">
             <span>Categorías</span>
             <svg
               width="20"
@@ -28,7 +28,7 @@ export default function Footer() {
             </svg>
           </div>
 
-          <div className="flex h-12 items-center justify-between border-b border-zinc-300 text-sm font-medium">
+          <div className="flex h-12 items-center justify-between border-b border-borde-divisor-estructura text-sm font-medium">
             <span>Ayuda</span>
             <svg
               width="20"
@@ -44,7 +44,7 @@ export default function Footer() {
             </svg>
           </div>
 
-          <div className="flex h-12 items-center justify-between border-b border-zinc-300 text-sm font-medium">
+          <div className="flex h-12 items-center justify-between border-b border-borde-divisor-estructura text-sm font-medium">
             <span>Mi cuenta</span>
             <svg
               width="20"
@@ -61,7 +61,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="flex gap-4 text-zinc-600">
+        <div className="flex gap-4 text-texto-sobre-estructura-sec">
           <svg
             width="24"
             height="24"
@@ -89,7 +89,7 @@ export default function Footer() {
           </svg>
         </div>
 
-        <p className="m-0 text-xs leading-4 text-zinc-500">
+        <p className="m-0 text-xs leading-4 text-texto-sobre-estructura-sec">
           © 2026 NovaMarket
           <br />
           Sitio de demostración: el checkout es simulado, no se realizan cobros.
