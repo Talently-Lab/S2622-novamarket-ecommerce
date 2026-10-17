@@ -20,7 +20,7 @@ export default function HomeBanner() {
         loading="eager"
         fetchPriority="high"
         decoding="async"
-        className="h-[210px] w-full object-cover md:aspect-[2/1] md:h-auto"
+        className="h-[175px] w-full object-cover md:aspect-[1160/520] md:h-auto"
       />
       {/* Mobile only: soft white fade on the left so the copy stays legible
           over the artwork; desktop's left third is empty already. */}
@@ -28,19 +28,19 @@ export default function HomeBanner() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-r from-fondo-superficie via-fondo-superficie/65 to-transparent md:hidden"
       />
-      <div className="absolute inset-0 flex flex-col items-start justify-center gap-2 p-5 md:max-w-[42%] md:gap-3 md:px-12">
+      <div className="absolute inset-0 flex flex-col items-start justify-center gap-1.5 p-4 md:max-w-[42%] md:gap-3 md:px-12">
         <h1
           id="home-hero-title"
           className="text-titulo-2 font-bold text-texto-principal md:text-display"
         >
           Potenciá tu setup
         </h1>
-        <p className="max-w-[78%] text-cuerpo-chico text-texto-secundario md:max-w-md md:text-cuerpo">
+        <p className="max-w-[80%] text-caption text-texto-secundario md:max-w-md md:text-cuerpo">
           Periféricos, accesorios y gadgets al alcance de tu mano.
         </p>
         <Link
           to="/productos"
-          className="mt-1 flex h-10 items-center justify-center rounded-md bg-accion-primaria px-5 text-cuerpo-chico-label font-semibold text-texto-sobre-accion hover:bg-accion-primaria-hover md:h-12 md:px-6 md:text-cuerpo-boton"
+          className="mt-0.5 flex h-9 items-center justify-center rounded-md bg-accion-primaria px-4 text-cuerpo-chico-label font-semibold text-texto-sobre-accion hover:bg-accion-primaria-hover md:mt-1 md:h-12 md:px-6 md:text-cuerpo-boton"
         >
           Ver productos
         </Link>
