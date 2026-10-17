@@ -10,15 +10,17 @@ import { useMediaQuery } from '../hooks/useMediaQuery.ts';
 import { useProducts } from '../hooks/useProducts.ts';
 import { getCategoryDisplayName } from '../utils/categories.ts';
 
-const PAGE_SIZE = 10;
+const MOBILE_PAGE_SIZE = 10;
+const DESKTOP_PAGE_SIZE = 8;
 const SKELETON_COUNT = 8;
 const PRIORITY_COUNT = 4;
 const DESKTOP_QUERY = '(min-width: 1024px)';
 
 // API-backed catalog (SN-249, Figma 212:1259). Mobile-first grid with
 // 2 columns from mobile. Below lg the catalog grows with a secondary
-// "Cargar más"; from lg it shows one page at a time with a numbered
-// paginator aligned to the right. Paging resets on every filter change.
+// "Cargar más" ten at a time; from lg it shows one page of 8 at a time
+// (two full rows of four) with a numbered paginator aligned to the right.
+// Paging resets on every filter change.
 // No cart wiring: cards render without onAdd by design.
 export default function ProductsPage() {
   const {
@@ -48,11 +50,12 @@ export default function ProductsPage() {
     setPage(1);
   }
 
-  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  const pageSize = isDesktop ? DESKTOP_PAGE_SIZE : MOBILE_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(products.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const visible = isDesktop
-    ? products.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-    : products.slice(0, currentPage * PAGE_SIZE);
+    ? products.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : products.slice(0, currentPage * pageSize);
   const hasMore = currentPage < totalPages;
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;

@@ -436,7 +436,7 @@ describe('ProductsPage', () => {
     );
   });
 
-  it('shows a numbered paginator on desktop instead of load-more', async () => {
+  it('shows a numbered paginator of 8 per page on desktop instead of load-more', async () => {
     stubMatchMedia(true);
     mockedGetProducts.mockResolvedValueOnce(
       Array.from({ length: 20 }, (_, index) => product(index + 1)),
@@ -453,19 +453,20 @@ describe('ProductsPage', () => {
     expect(
       within(pagination).getByRole('button', { name: 'Página 1' }),
     ).toHaveAttribute('aria-current', 'page');
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(8);
     expect(screen.getByText('Producto 1')).toBeInTheDocument();
-    expect(screen.queryByText('Producto 11')).not.toBeInTheDocument();
+    expect(screen.queryByText('Producto 9')).not.toBeInTheDocument();
 
     fireEvent.click(
-      within(pagination).getByRole('button', { name: 'Página 2' }),
+      within(pagination).getByRole('button', { name: 'Página 3' }),
     );
 
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
-    expect(screen.getByText('Producto 11')).toBeInTheDocument();
+    // 20 products in pages of 8: the last page holds the remaining 4.
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(4);
+    expect(screen.getByText('Producto 17')).toBeInTheDocument();
     expect(screen.queryByText('Producto 1')).not.toBeInTheDocument();
     expect(
-      within(pagination).getByRole('button', { name: 'Página 2' }),
+      within(pagination).getByRole('button', { name: 'Página 3' }),
     ).toHaveAttribute('aria-current', 'page');
     expect(
       within(pagination).queryByRole('button', { name: 'Página siguiente' }),
@@ -486,7 +487,8 @@ describe('ProductsPage', () => {
       within(pagination).getByRole('button', { name: 'Página siguiente' }),
     );
 
-    expect(screen.getByText('Producto 11')).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(8);
+    expect(screen.getByText('Producto 9')).toBeInTheDocument();
   });
 
   it('keeps the secondary Cargar más below lg and renders no paginator', async () => {
@@ -497,6 +499,8 @@ describe('ProductsPage', () => {
     renderPage();
     await screen.findByText('Producto 1');
 
+    // Mobile keeps ten per load; only desktop paginates by 8.
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
     expect(
       screen.getByRole('button', { name: /cargar más/i }),
     ).toHaveClass('novamarket-button');
