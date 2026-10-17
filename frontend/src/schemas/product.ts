@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { KNOWN_CATEGORY_ORDER } from '../utils/categories.ts';
 
 /**
  * Rejects input that would silently coerce to a number when the field is
@@ -19,8 +18,6 @@ function blankToNaN(value: unknown): unknown {
 
 const PRICE_MESSAGE = 'El precio debe ser mayor a 0';
 const STOCK_MESSAGE = 'El stock debe ser un número entero mayor o igual a 0';
-
-const categoryValues = KNOWN_CATEGORY_ORDER as [string, ...string[]];
 
 /**
  * Admin product form schema (SN-251). Field names are the English domain
@@ -47,7 +44,13 @@ export const productSchema = z.object({
       .int(STOCK_MESSAGE)
       .min(0, STOCK_MESSAGE),
   ),
-  category: z.enum(categoryValues, { error: 'Seleccioná una categoría' }),
+  // Only "something was chosen" is enforced here: the valid values are the
+  // backend enum (`GET /api/formdata/products`), so hardcoding them would
+  // reject any category the backend adds later.
+  category: z
+    .string({ error: 'Seleccioná una categoría' })
+    .trim()
+    .min(1, 'Seleccioná una categoría'),
   imageUrl: z
     .string()
     .optional()

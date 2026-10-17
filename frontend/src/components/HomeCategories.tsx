@@ -1,11 +1,14 @@
 import { Link } from 'react-router';
-import { CATEGORY_DISPLAY_NAMES } from '../utils/categories.ts';
+import { useCategories } from '../hooks/useCategories.ts';
 
-// Category tiles for the home mini-deploy: the three canonical slugs
-// plus a "Ver todo" tile. Slugs stay in sync with categories.ts.
-const HOME_CATEGORY_SLUGS = ['perifericos', 'accesorios', 'gadgets'] as const;
-
+/**
+ * Category tiles for the home. The options and their labels come from the
+ * backend enum (`GET /api/formdata/products`), so a category added on the
+ * backend shows up here without a code change. "Ver todo" always comes last.
+ */
 export default function HomeCategories() {
+  const { categories } = useCategories();
+
   return (
     <section aria-labelledby="home-categories-title">
       <h2
@@ -15,10 +18,10 @@ export default function HomeCategories() {
         Categorías
       </h2>
       <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {HOME_CATEGORY_SLUGS.map((slug) => (
-          <li key={slug}>
+        {categories.map((option) => (
+          <li key={option.value}>
             <Link
-              to={`/productos?categoria=${slug}`}
+              to={`/productos?categoria=${option.value}`}
               className="flex min-h-11 flex-col overflow-hidden rounded-lg bg-fondo-superficie"
             >
               <span
@@ -26,7 +29,7 @@ export default function HomeCategories() {
                 className="block aspect-[4/3] w-full bg-fondo-deshabilitado"
               />
               <span className="block px-3 py-2 text-cuerpo-chico font-medium text-texto-secundario">
-                {CATEGORY_DISPLAY_NAMES[slug]}
+                {option.label}
               </span>
             </Link>
           </li>

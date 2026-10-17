@@ -117,13 +117,17 @@ describe('productSchema', () => {
     expect(result.data.stock).toBe(0);
   });
 
-  it('requires a known category', () => {
+  it('requires a category, but the backend owns the valid values', () => {
     expect(messages(validInput({ category: undefined }))).toContain(
       'Seleccioná una categoría',
     );
-    expect(messages(validInput({ category: 'bogus' }))).toContain(
+    expect(messages(validInput({ category: '' }))).toContain(
       'Seleccioná una categoría',
     );
+
+    // A slug the backend adds later must not be rejected client-side.
+    const result = productSchema.safeParse(validInput({ category: 'novedades' }));
+    expect(result.success).toBe(true);
   });
 
   it('rejects an invalid imageUrl but accepts an empty one', () => {
