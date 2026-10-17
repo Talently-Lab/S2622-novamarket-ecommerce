@@ -36,9 +36,10 @@ function renderPage(initialEntry = '/productos') {
   );
 }
 
-function stubMatchMedia(matches: boolean) {
+function stubMatchMedia(isDesktop: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches,
+    // Only the desktop query matches; reduced motion is never requested here.
+    matches: query.includes('prefers-reduced-motion') ? false : isDesktop,
     media: query,
     onchange: null,
     addEventListener: vi.fn(),
@@ -53,6 +54,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   // jsdom has no matchMedia: default every test to the mobile layout.
   stubMatchMedia(false);
+  // jsdom does not implement scrollIntoView.
+  Object.defineProperty(Element.prototype, 'scrollIntoView', {
+    value: vi.fn(),
+    configurable: true,
+    writable: true,
+  });
 });
 
 describe('ProductsPage', () => {
@@ -489,6 +496,30 @@ describe('ProductsPage', () => {
 
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(8);
     expect(screen.getByText('Producto 9')).toBeInTheDocument();
+  });
+
+  it('scrolls the grid into view on desktop page change, not on mount', async () => {
+    stubMatchMedia(true);
+    mockedGetProducts.mockResolvedValueOnce(
+      Array.from({ length: 20 }, (_, index) => product(index + 1)),
+    );
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    const scrollIntoView = vi.mocked(Element.prototype.scrollIntoView);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    const pagination = screen.getByRole('navigation', { name: 'Paginación' });
+    fireEvent.click(
+      within(pagination).getByRole('button', { name: 'Página siguiente' }),
+    );
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
   });
 
   it('keeps the secondary Cargar más below lg and renders no paginator', async () => {

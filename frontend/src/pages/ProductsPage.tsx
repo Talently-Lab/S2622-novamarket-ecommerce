@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '@chakra-ui/react';
 import CategoryFilter from '../components/CategoryFilter.tsx';
@@ -57,6 +57,28 @@ export default function ProductsPage() {
     ? products.slice((currentPage - 1) * pageSize, currentPage * pageSize)
     : products.slice(0, currentPage * pageSize);
   const hasMore = currentPage < totalPages;
+
+  // Desktop pagination replaces the grid instead of appending, so bring the
+  // first row back into view. Skipped on mount and on mobile "Cargar más".
+  const gridRef = useRef<HTMLUListElement>(null);
+  const lastPage = useRef(currentPage);
+
+  useEffect(() => {
+    if (lastPage.current === currentPage) return;
+    lastPage.current = currentPage;
+    if (!isDesktop) return;
+
+    const grid = gridRef.current;
+    if (!grid || typeof grid.scrollIntoView !== 'function') return;
+
+    const reducedMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    grid.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  }, [currentPage, isDesktop]);
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;
   const title = category ? getCategoryDisplayName(category) : 'Todos los productos';
@@ -154,6 +176,7 @@ export default function ProductsPage() {
           <ul
             // Remounting on page change replays the fade-in entrance.
             key={isDesktop ? `desktop-page-${currentPage}` : 'catalog'}
+            ref={gridRef}
             className="mt-6 grid animate-fade-in grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4"
           >
             {visible.map((product, index) => (
