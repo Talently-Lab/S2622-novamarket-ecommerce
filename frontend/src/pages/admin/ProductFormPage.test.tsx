@@ -8,6 +8,7 @@ import {
   listAdminProducts,
   updateAdminProduct,
 } from '../../services/adminProductService.ts';
+import { getProductCategories } from '../../services/formdataService.ts';
 import { system } from '../../theme/system.ts';
 import type { Product } from '../../types/product.ts';
 
@@ -17,9 +18,14 @@ vi.mock('../../services/adminProductService.ts', () => ({
   updateAdminProduct: vi.fn(),
 }));
 
+vi.mock('../../services/formdataService.ts', () => ({
+  getProductCategories: vi.fn(),
+}));
+
 const mockedList = vi.mocked(listAdminProducts);
 const mockedCreate = vi.mocked(createAdminProduct);
 const mockedUpdate = vi.mocked(updateAdminProduct);
+const mockedCategories = vi.mocked(getProductCategories);
 
 const saved: Product = {
   id: 'mongo-id-1',
@@ -48,10 +54,12 @@ function renderForm(initialEntry = '/admin/productos/nuevo') {
   );
 }
 
-function fillValidForm() {
+async function fillValidForm() {
   fireEvent.change(screen.getByLabelText('Nombre'), {
     target: { value: 'Teclado NovaType K7' },
   });
+  // The category options come from the backend request.
+  await screen.findByRole('option', { name: 'Perifericos' });
   fireEvent.change(screen.getByLabelText('Categoría'), {
     target: { value: 'perifericos' },
   });
@@ -66,6 +74,11 @@ function fillValidForm() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockedCategories.mockResolvedValue([
+    { value: 'perifericos', label: 'Perifericos' },
+    { value: 'accesorios', label: 'Accesorios' },
+    { value: 'gadgets', label: 'Gadgets' },
+  ]);
   URL.createObjectURL = vi.fn(() => 'blob:http://localhost/preview');
   URL.revokeObjectURL = vi.fn();
 });
@@ -103,7 +116,7 @@ describe('ProductFormPage', () => {
     mockedCreate.mockResolvedValueOnce(saved);
     renderForm();
 
-    fillValidForm();
+    await fillValidForm();
     fireEvent.click(screen.getByRole('button', { name: 'Guardar producto' }));
 
     await waitFor(() =>
@@ -123,7 +136,7 @@ describe('ProductFormPage', () => {
     mockedCreate.mockResolvedValueOnce(saved);
     renderForm();
 
-    fillValidForm();
+    await fillValidForm();
     fireEvent.change(screen.getByLabelText(/specs clave/i), {
       target: { value: 'inalámbrico, RGB' },
     });
@@ -181,7 +194,7 @@ describe('ProductFormPage', () => {
     mockedCreate.mockResolvedValueOnce(saved);
     renderForm();
 
-    fillValidForm();
+    await fillValidForm();
     const file = new File(['x'], 'foto.png', { type: 'image/png' });
     fireEvent.change(screen.getByLabelText(/subir imagen/i), {
       target: { files: [file] },

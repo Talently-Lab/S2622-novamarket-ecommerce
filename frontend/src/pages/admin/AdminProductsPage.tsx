@@ -8,15 +8,12 @@ import {
 } from '../../components/admin/ProductsTable.tsx';
 import Icon from '../../components/icons/Icon.tsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.ts';
+import { useCategories } from '../../hooks/useCategories.ts';
 import {
   deleteAdminProduct,
   listAdminProducts,
 } from '../../services/adminProductService.ts';
 import type { Product } from '../../types/product.ts';
-import {
-  getCategoryDisplayName,
-  orderCategoryOptions,
-} from '../../utils/categories.ts';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
 const PAGE_SIZE = 8;
@@ -31,6 +28,7 @@ type LoadStatus = 'loading' | 'ready' | 'error';
 export default function AdminProductsPage() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const navigate = useNavigate();
+  const { categories, labelFor } = useCategories();
 
   const [reloadToken, setReloadToken] = useState(0);
   const [products, setProducts] = useState<Product[]>([]);
@@ -59,11 +57,6 @@ export default function AdminProductsPage() {
       cancelled = true;
     };
   }, [reloadToken]);
-
-  const categoryOptions = useMemo(
-    () => orderCategoryOptions(products.map((product) => product.category)),
-    [products],
-  );
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -166,11 +159,10 @@ export default function AdminProductsPage() {
               }}
               className="h-12 w-full appearance-none rounded-md border border-borde-divisor bg-fondo-superficie pr-10 pl-4 text-cuerpo text-texto-principal focus:outline-2 focus:outline-borde-foco"
             >
-              {categoryOptions.map((slug) => (
-                <option key={slug === '' ? 'all' : slug} value={slug}>
-                  {slug === ''
-                    ? 'Todas las categorías'
-                    : getCategoryDisplayName(slug)}
+              <option value="">Todas las categorías</option>
+              {categories.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -235,6 +227,7 @@ export default function AdminProductsPage() {
           isDesktop ? (
             <ProductsTable
               products={visibleProducts}
+              labelFor={labelFor}
               onEdit={(product) =>
                 navigate(`/admin/productos/${String(product.id)}/editar`)
               }
@@ -243,6 +236,7 @@ export default function AdminProductsPage() {
           ) : (
             <ProductsList
               products={visibleProducts}
+              labelFor={labelFor}
               onEdit={(product) =>
                 navigate(`/admin/productos/${String(product.id)}/editar`)
               }

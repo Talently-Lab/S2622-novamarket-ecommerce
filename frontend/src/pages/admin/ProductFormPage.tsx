@@ -4,13 +4,13 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { Button } from '@chakra-ui/react';
 import { SharedInput } from '../../components/ui/Input.tsx';
 import Icon from '../../components/icons/Icon.tsx';
+import { useCategories } from '../../hooks/useCategories.ts';
 import { productSchema } from '../../schemas/product.ts';
 import {
   createAdminProduct,
   listAdminProducts,
   updateAdminProduct,
 } from '../../services/adminProductService.ts';
-import { getCategoryDisplayName, KNOWN_CATEGORY_ORDER } from '../../utils/categories.ts';
 
 /** Raw text values as the inputs hold them; the schema coerces price/stock. */
 interface FormValues {
@@ -48,6 +48,7 @@ export default function ProductFormPage() {
   const { id } = useParams();
   const isEdit = id !== undefined;
   const navigate = useNavigate();
+  const { categories, status: categoriesStatus } = useCategories();
 
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -217,10 +218,16 @@ export default function ProductFormPage() {
                     errors.category ? 'border-borde-error' : 'border-borde-input'
                   }`}
                 >
-                  <option value="">Elegí categoría</option>
-                  {KNOWN_CATEGORY_ORDER.map((slug) => (
-                    <option key={slug} value={slug}>
-                      {getCategoryDisplayName(slug)}
+                  <option value="">
+                    {categoriesStatus === 'loading'
+                      ? 'Cargando categorías…'
+                      : categoriesStatus === 'error'
+                        ? 'No pudimos cargar las categorías'
+                        : 'Elegí categoría'}
+                  </option>
+                  {categories.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>

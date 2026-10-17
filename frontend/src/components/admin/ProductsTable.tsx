@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { Product } from '../../types/product.ts';
-import { getCategoryDisplayName } from '../../utils/categories.ts';
 import { formatPrice } from '../../utils/format.ts';
 import Icon from '../icons/Icon.tsx';
 
@@ -8,6 +7,8 @@ export interface ProductsViewProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  /** Category display label resolved from the backend options. */
+  labelFor: (value: string) => string;
 }
 
 /**
@@ -71,6 +72,7 @@ export function ProductsTable({
   products,
   onEdit,
   onDelete,
+  labelFor,
 }: ProductsViewProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-borde-divisor bg-fondo-superficie">
@@ -106,7 +108,7 @@ export function ProductsTable({
                 </span>
               </td>
               <td className="px-4 py-3 text-cuerpo text-texto-secundario">
-                {getCategoryDisplayName(product.category)}
+                {labelFor(product.category)}
               </td>
               <td className="px-4 py-3 text-precio font-bold text-texto-principal">
                 {formatPrice(product.price)}
@@ -136,6 +138,7 @@ export function ProductsList({
   products,
   onEdit,
   onDelete,
+  labelFor,
 }: ProductsViewProps) {
   return (
     <ul className="flex flex-col">
@@ -150,8 +153,7 @@ export function ProductsList({
               {product.name}
             </p>
             <p className="text-cuerpo-chico text-texto-secundario">
-              {getCategoryDisplayName(product.category)} · Stock:{' '}
-              {product.stock} u.
+              {labelFor(product.category)} · Stock: {product.stock} u.
             </p>
             <p className="text-precio font-bold text-texto-principal">
               {formatPrice(product.price)}

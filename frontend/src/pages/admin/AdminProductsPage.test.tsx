@@ -7,6 +7,7 @@ import {
   deleteAdminProduct,
   listAdminProducts,
 } from '../../services/adminProductService.ts';
+import { getProductCategories } from '../../services/formdataService.ts';
 import { system } from '../../theme/system.ts';
 import type { Product } from '../../types/product.ts';
 
@@ -15,8 +16,13 @@ vi.mock('../../services/adminProductService.ts', () => ({
   deleteAdminProduct: vi.fn(),
 }));
 
+vi.mock('../../services/formdataService.ts', () => ({
+  getProductCategories: vi.fn(),
+}));
+
 const mockedList = vi.mocked(listAdminProducts);
 const mockedDelete = vi.mocked(deleteAdminProduct);
+const mockedCategories = vi.mocked(getProductCategories);
 
 function product(index: number, category = 'accesorios'): Product {
   return {
@@ -70,6 +76,11 @@ function renderPage(initialEntry = '/admin/productos') {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockedCategories.mockResolvedValue([
+    { value: 'accesorios', label: 'Accesorios' },
+    { value: 'perifericos', label: 'Perifericos' },
+    { value: 'gadgets', label: 'Gadgets' },
+  ]);
   // jsdom has no matchMedia: default every test to the mobile layout.
   stubMatchMedia(false);
 });
@@ -146,6 +157,7 @@ describe('AdminProductsPage', () => {
 
     renderPage();
     await screen.findByText('Producto 1');
+    await screen.findByRole('option', { name: 'Gadgets' });
 
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: 'gadgets' },
