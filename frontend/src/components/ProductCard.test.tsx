@@ -201,4 +201,11 @@ describe('ProductCard image fallback', () => {
     expect(icon.className).toContain('text-4xl');
     expect(icon.className).toContain('text-texto-principal');
   });
+
+  it('shows the placeholder when imageUrl is empty', () => {
+    renderCard(<ProductCard product={{ ...baseProduct, imageUrl: '' }} />);
+
+    expect(screen.queryByAltText(baseProduct.name)).not.toBeInTheDocument();
+    expect(screen.getByText('image_not_supported')).toBeInTheDocument();
+  });
 });

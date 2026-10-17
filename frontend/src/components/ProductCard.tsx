@@ -40,6 +40,10 @@ export default function ProductCard({
   priority = false,
 }: ProductCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
+  // `imageUrl` can be empty when the backend omits `imagenUrl` (it is not
+  // `required` in the Mongo model). Render the same local placeholder as a
+  // failed load instead of an empty `src`.
+  const showImagePlaceholder = imageFailed || product.imageUrl.length === 0;
   const variant = getProductCardVariant(product, added);
   const nameId = `product-card-${product.id}-name`;
 
@@ -49,7 +53,7 @@ export default function ProductCard({
       data-variant={variant}
       className="flex w-full flex-col overflow-hidden rounded-2xl border border-borde-divisor bg-fondo-superficie"
     >
-      {imageFailed ? (
+      {showImagePlaceholder ? (
         <div
           role="img"
           aria-label={product.name}
