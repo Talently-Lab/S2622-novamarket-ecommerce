@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
+import { formatPrice } from '../utils/format.ts';
 import { buildImageSrcSet } from '../utils/responsiveImage.ts';
 import Icon from './icons/Icon.tsx';
 import ProductCardSkeleton from './ProductCardSkeleton.tsx';
@@ -25,10 +26,6 @@ function pickFeatured(items: Product[]): Product[] {
   }
 
   return picks.slice(0, FEATURED_COUNT);
-}
-
-function formatPrice(price: number): string {
-  return `$${price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 }
 
 function FeaturedCard({ product }: { product: Product }) {
