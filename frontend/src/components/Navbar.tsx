@@ -77,6 +77,7 @@ function SessionLinks({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
 
   function handleLogout() {
+    localStorage.removeItem('token');
     logout();
     onNavigate?.();
     navigate('/');
