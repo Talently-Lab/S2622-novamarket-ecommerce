@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { Product } from '../types/product.ts';
 import { getProductsFromApi } from '../services/productService.ts';
-import { KNOWN_CATEGORY_ORDER } from '../utils/categories.ts';
+import { KNOWN_CATEGORY_SLUGS } from '../utils/categories.ts';
 
 export interface UseProductsResult {
   products: Product[];
@@ -49,7 +49,7 @@ export function useProducts(): UseProductsResult {
   // unfiltered load, while bogus slugs stay unfiltered.
   const category =
     rawCategory !== '' &&
-    (KNOWN_CATEGORY_ORDER.includes(rawCategory) ||
+    (KNOWN_CATEGORY_SLUGS.includes(rawCategory) ||
       categories.includes(rawCategory))
       ? rawCategory
       : '';
@@ -123,7 +123,7 @@ export function useProducts(): UseProductsResult {
   useEffect(() => {
     if (!metaReady || rawCategory === '') return;
     const known =
-      KNOWN_CATEGORY_ORDER.includes(rawCategory) ||
+      KNOWN_CATEGORY_SLUGS.includes(rawCategory) ||
       categories.includes(rawCategory);
     if (!known) {
       setSearchParams(

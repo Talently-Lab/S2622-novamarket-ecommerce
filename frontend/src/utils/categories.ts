@@ -1,32 +1,15 @@
 /**
- * Shared category catalog: slugs are the URL/data contract (`?categoria=<slug>`),
- * display names are UI-only. Canonical order is Todos first, then the known
- * slugs in screenshot order; unknown slugs append in data order so new
- * categories still appear without code changes.
+ * Category slugs accepted by the pre-load URL validation in `useProducts`.
+ *
+ * This is NOT the source of truth for catalog categories. The source of truth
+ * is the backend (`GET /api/formdata/products`), consumed through
+ * `src/hooks/useCategories.ts`, which owns the values, the labels and their
+ * order.
+ *
+ * This list is only a hint so a deep link such as `?categoria=perifericos` is
+ * accepted on the first paint instead of waiting for the unfiltered catalog to
+ * arrive. A slug missing here but present in the data still resolves once the
+ * catalog loads, so this list going stale is not a defect — at worst it costs
+ * one extra request.
  */
-export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
-  perifericos: 'Periféricos',
-  accesorios: 'Accesorios',
-  gadgets: 'Gadgets',
-};
-
-export const KNOWN_CATEGORY_ORDER = ['perifericos', 'accesorios', 'gadgets'];
-
-export function getCategoryDisplayName(slug: string): string {
-  return CATEGORY_DISPLAY_NAMES[slug] ?? slug;
-}
-
-/**
- * Full option list for category controls. `''` means "Todos" and always
- * comes first; known slugs follow in canonical order; unknown slugs append
- * in data order.
- */
-export function orderCategoryOptions(categories: string[]): string[] {
-  const known = KNOWN_CATEGORY_ORDER.filter((slug) =>
-    categories.includes(slug),
-  );
-  const unknown = categories.filter(
-    (slug) => !KNOWN_CATEGORY_ORDER.includes(slug),
-  );
-  return ['', ...known, ...unknown];
-}
+export const KNOWN_CATEGORY_SLUGS = ['perifericos', 'accesorios', 'gadgets'];
