@@ -1,27 +1,30 @@
 import { z } from 'zod';
 
+// Validation messages are user-facing UI copy, so they stay in Spanish
+// (identifiers and comments stay in English).
+
 export const loginSchema = z.object({
   email: z
     .string()
-    .min(1, 'Email is required')
-    .email('Enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+    .min(1, 'El email es obligatorio')
+    .email('Ingresá un email válido'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
   .object({
-    name: z.string().min(1, 'Name is required'),
+    name: z.string().min(1, 'El nombre es obligatorio'),
     email: z
       .string()
-      .min(1, 'Email is required')
-      .email('Enter a valid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+      .min(1, 'El email es obligatorio')
+      .email('Ingresá un email válido'),
+    password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    confirmPassword: z.string().min(1, 'Confirmá tu contraseña'),
   })
   .refine((values) => values.password === values.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'Las contraseñas no coinciden',
     path: ['confirmPassword'],
   });
 

@@ -44,7 +44,7 @@ export default function RegisterPage() {
       navigate(newUser.role === 'admin' ? '/admin' : '/');
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'Registration failed',
+        error instanceof Error ? error.message : 'No pudimos crear la cuenta.',
       );
     } finally {
       setPending(false);
@@ -56,10 +56,10 @@ export default function RegisterPage() {
   return (
     <main className="mx-auto max-w-md px-6 py-12">
       <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-        Sign up
+        Crear cuenta
       </h1>
       <p className="mt-2 text-slate-600">
-        Low-fi registration placeholder. Validation runs on submit.
+        Pantalla de registro en baja fidelidad. La validación corre al enviar.
       </p>
       <form
         onSubmit={handleSubmit}
@@ -71,7 +71,7 @@ export default function RegisterPage() {
             htmlFor="register-name"
             className="block text-sm font-medium text-slate-700"
           >
-            Name
+            Nombre
           </label>
           <input
             id="register-name"
@@ -107,7 +107,7 @@ export default function RegisterPage() {
             htmlFor="register-password"
             className="block text-sm font-medium text-slate-700"
           >
-            Password
+            Contraseña
           </label>
           <input
             id="register-password"
@@ -125,7 +125,7 @@ export default function RegisterPage() {
             htmlFor="register-confirm"
             className="block text-sm font-medium text-slate-700"
           >
-            Confirm password
+            Confirmar contraseña
           </label>
           <input
             id="register-confirm"
@@ -145,7 +145,7 @@ export default function RegisterPage() {
           disabled={disabled}
           className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {pending ? 'Creating account...' : 'Create account'}
+          {pending ? 'Creando cuenta...' : 'Crear cuenta'}
         </button>
         {formError ? (
           <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
