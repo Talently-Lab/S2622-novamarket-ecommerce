@@ -3,6 +3,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext.tsx';
+import { getProductCategories } from '../services/formdataService.ts';
 import { getProductsFromApi } from '../services/productService.ts';
 import { system } from '../theme/system.ts';
 import ProductsPage from '../pages/ProductsPage.tsx';
@@ -12,7 +13,12 @@ vi.mock('../services/productService.ts', () => ({
   getProductsFromApi: vi.fn(),
 }));
 
+vi.mock('../services/formdataService.ts', () => ({
+  getProductCategories: vi.fn(),
+}));
+
 const mockedGetProducts = vi.mocked(getProductsFromApi);
+const mockedCategories = vi.mocked(getProductCategories);
 
 function renderNavbar(props: { count?: number } = {}, initialEntry = '/') {
   render(
@@ -31,6 +37,11 @@ function renderNavbar(props: { count?: number } = {}, initialEntry = '/') {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockedCategories.mockResolvedValue([
+    { value: 'accesorios', label: 'Accesorios' },
+    { value: 'perifericos', label: 'Perifericos' },
+    { value: 'gadgets', label: 'Gadgets' },
+  ]);
 });
 
 describe('Navbar', () => {
@@ -71,40 +82,38 @@ describe('Navbar', () => {
     expect(await screen.findByText('Iniciar sesión')).toBeInTheDocument();
   });
 
-  it('shows the real categories with Todos as a link', () => {
+  it('shows the real categories with Todos as a link', async () => {
     renderNavbar();
 
     expect(screen.getByRole('link', { name: 'Todos' })).toHaveAttribute(
       'href',
       '/productos',
     );
-    expect(screen.getByRole('link', { name: 'Periféricos' })).toHaveAttribute(
-      'href',
-      '/productos?categoria=perifericos',
-    );
-    expect(screen.getByRole('link', { name: 'Accesorios' })).toHaveAttribute(
-      'href',
-      '/productos?categoria=accesorios',
-    );
-    expect(screen.getByRole('link', { name: 'Gadgets' })).toHaveAttribute(
-      'href',
-      '/productos?categoria=gadgets',
-    );
+    // Category links arrive with the backend options.
+    expect(
+      await screen.findByRole('link', { name: 'Perifericos' }),
+    ).toHaveAttribute('href', '/productos?categoria=perifericos');
+    expect(
+      await screen.findByRole('link', { name: 'Accesorios' }),
+    ).toHaveAttribute('href', '/productos?categoria=accesorios');
+    expect(
+      await screen.findByRole('link', { name: 'Gadgets' }),
+    ).toHaveAttribute('href', '/productos?categoria=gadgets');
     for (const stale of ['Audio', 'Ofertas', 'Gadges']) {
       expect(screen.queryByRole('link', { name: stale })).toBeNull();
     }
   });
 
-  it('marks the selected category with the orange underline', () => {
+  it('marks the selected category with the orange underline', async () => {
     renderNavbar({}, '/productos?categoria=gadgets');
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
-    const selected = within(bar).getByRole('link', { name: 'Gadgets' });
+    const selected = await within(bar).findByRole('link', { name: 'Gadgets' });
     expect(selected.className).toContain('underline');
     expect(selected.className).toContain('decoration-accion-acento');
 
-    for (const name of ['Todos', 'Periféricos', 'Accesorios']) {
-      const link = within(bar).getByRole('link', { name });
+    for (const name of ['Todos', 'Perifericos', 'Accesorios']) {
+      const link = await within(bar).findByRole('link', { name });
       expect(link.className).not.toContain('decoration-accion-acento');
     }
   });
@@ -151,7 +160,9 @@ describe('Navbar', () => {
     );
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
-    fireEvent.click(within(bar).getByRole('link', { name: 'Accesorios' }));
+    fireEvent.click(
+      await within(bar).findByRole('link', { name: 'Accesorios' }),
+    );
 
     expect(await screen.findByText('Producto 1')).toBeInTheDocument();
     expect(

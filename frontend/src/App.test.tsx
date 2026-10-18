@@ -18,18 +18,35 @@ function catalogProducts() {
 
 beforeEach(() => {
   const products = catalogProducts();
+  // URL-aware stub: the app now asks two endpoints (catalog + formdata
+  // categories), so a stub that ignores its argument would answer the wrong
+  // shape to one of them.
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      headers: new Headers({ 'Content-Type': 'application/json' }),
-      json: async () => ({
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const body = url.includes('/formdata/products')
+        ? {
+            ok: true,
+            message: 'Categorías de productos',
+            data: [
+              { value: 'accesorios', label: 'Accesorios' },
+              { value: 'perifericos', label: 'Perifericos' },
+              { value: 'gadgets', label: 'Gadgets' },
+            ],
+          }
+        : {
+            ok: true,
+            message: 'Productos encontrados',
+            data: { products, totalProducts: products.length },
+          };
+      return {
         ok: true,
-        message: 'Productos encontrados',
-        data: { products, totalProducts: products.length },
-      }),
-    })),
+        status: 200,
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        json: async () => body,
+      };
+    }),
   );
 });
 
@@ -58,7 +75,7 @@ describe('NovaMarket landing page', () => {
     ).toBeInTheDocument();
   });
 
-  it('links the home tiles to the catalog sections', () => {
+  it('links the home tiles to the catalog sections', async () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <AuthProvider>
@@ -67,8 +84,9 @@ describe('NovaMarket landing page', () => {
       </MemoryRouter>,
     );
 
-    const homeTiles = screen.getAllByRole('link', {
-      name: /periféricos/i,
+    // Labels come from the backend, which does not accent "Perifericos".
+    const homeTiles = await screen.findAllByRole('link', {
+      name: /perifericos/i,
     });
     const homeTile = homeTiles.find((link) =>
       link.getAttribute('href')?.startsWith('/productos?categoria='),
