@@ -25,6 +25,11 @@ beforeEach(() => {
     'fetch',
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
+      // `/products/:id` returns the product object itself, not a page.
+      const detailId = url.match(/\/products\/([^/?]+)$/)?.[1];
+      const detailProduct = detailId
+        ? products.find((product) => product._id === detailId)
+        : undefined;
       const body = url.includes('/formdata/products')
         ? {
             ok: true,
@@ -35,11 +40,17 @@ beforeEach(() => {
               { value: 'gadgets', label: 'Gadgets' },
             ],
           }
-        : {
-            ok: true,
-            message: 'Productos encontrados',
-            data: { products, totalProducts: products.length },
-          };
+        : detailProduct
+          ? {
+              ok: true,
+              message: 'Producto encontrado',
+              data: detailProduct,
+            }
+          : {
+              ok: true,
+              message: 'Productos encontrados',
+              data: { products, totalProducts: products.length },
+            };
       return {
         ok: true,
         status: 200,
@@ -111,5 +122,20 @@ describe('NovaMarket landing page', () => {
     ).toBeInTheDocument();
     expect(await screen.findByText('20 productos')).toBeInTheDocument();
     expect(await screen.findAllByRole('img')).toHaveLength(10);
+  });
+
+  it('renders the product detail page on /productos/:id', async () => {
+    render(
+      <MemoryRouter initialEntries={['/productos/mongo-id-3']}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Producto 3' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Stock disponible: 10 u.')).toBeInTheDocument();
   });
 });

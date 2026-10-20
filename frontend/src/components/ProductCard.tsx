@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
+import { Link } from 'react-router';
 import type { Product } from '../types/product.ts';
 import { formatPrice } from '../utils/format.ts';
 import { buildImageSrcSet } from '../utils/responsiveImage.ts';
@@ -43,6 +44,7 @@ export default function ProductCard({
   const showImagePlaceholder = imageFailed || product.imageUrl.length === 0;
   const variant = getProductCardVariant(product, added);
   const nameId = `product-card-${product.id}-name`;
+  const detailHref = `/productos/${product.id}`;
 
   return (
     <article
@@ -50,37 +52,48 @@ export default function ProductCard({
       data-variant={variant}
       className="flex w-full flex-col overflow-hidden rounded-2xl border border-borde-divisor bg-fondo-superficie"
     >
-      {showImagePlaceholder ? (
-        <div
-          role="img"
-          aria-label={product.name}
-          className="flex aspect-square w-full items-center justify-center bg-fondo-deshabilitado"
-        >
-          <Icon name="image_not_supported" className="text-4xl text-texto-principal" />
+      {/* One link wraps image + title + price so the whole visual block is
+          clickable with a single tab stop. The CTA stays outside the link:
+          nested interactive elements are invalid and break the button. */}
+      <Link
+        to={detailHref}
+        aria-label={product.name}
+        className="group flex flex-col focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-borde-foco"
+      >
+        {showImagePlaceholder ? (
+          <div
+            role="img"
+            aria-label={product.name}
+            className="flex aspect-square w-full items-center justify-center bg-fondo-deshabilitado"
+          >
+            <Icon name="image_not_supported" className="text-4xl text-texto-principal" />
+          </div>
+        ) : (
+          <img
+            src={product.imageUrl}
+            srcSet={buildImageSrcSet(product.imageUrl)}
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            alt={product.name}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : undefined}
+            decoding="async"
+            onError={() => setImageFailed(true)}
+            className="aspect-square w-full bg-fondo-deshabilitado object-cover"
+          />
+        )}
+        <div className="flex flex-col gap-2 px-3 pt-3">
+          <h2
+            id={nameId}
+            className="h-10 line-clamp-2 overflow-hidden text-cuerpo-chico font-normal text-texto-principal group-hover:underline"
+          >
+            {product.name}
+          </h2>
+          <p className="text-precio font-bold text-texto-principal">
+            {formatPrice(product.price)}
+          </p>
         </div>
-      ) : (
-        <img
-          src={product.imageUrl}
-          srcSet={buildImageSrcSet(product.imageUrl)}
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-          alt={product.name}
-          loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : undefined}
-          decoding="async"
-          onError={() => setImageFailed(true)}
-          className="aspect-square w-full bg-fondo-deshabilitado object-cover"
-        />
-      )}
-      <div className="flex flex-col gap-2 p-3">
-        <h2
-          id={nameId}
-          className="h-10 line-clamp-2 overflow-hidden text-cuerpo-chico font-normal text-texto-principal"
-        >
-          {product.name}
-        </h2>
-        <p className="text-precio font-bold text-texto-principal">
-          {formatPrice(product.price)}
-        </p>
+      </Link>
+      <div className="flex flex-col gap-2 p-3 pt-2">
         {/* Width note: the Chakra recipe fixes width at 240px in a cascade
             layer injected after Tailwind's utilities, so neither the
             width style prop nor w-full survive — both CTAs force it inline. */}

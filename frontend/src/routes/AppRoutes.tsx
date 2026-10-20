@@ -4,6 +4,7 @@ import AdminLayout from '../components/admin/AdminLayout.tsx';
 import HomePage from '../pages/HomePage.tsx';
 import LoginPage from '../pages/LoginPage.tsx';
 import NotFoundPage from '../pages/NotFoundPage.tsx';
+import ProductDetailPage from '../pages/ProductDetailPage.tsx';
 import ProductsPage from '../pages/ProductsPage.tsx';
 import RegisterPage from '../pages/RegisterPage.tsx';
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage.tsx';
@@ -17,6 +18,7 @@ export function AppRoutes() {
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/productos" element={<ProductsPage />} />
+        <Route path="/productos/:id" element={<ProductDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />
