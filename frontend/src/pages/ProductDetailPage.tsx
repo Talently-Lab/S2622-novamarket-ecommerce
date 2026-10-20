@@ -19,6 +19,9 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!id) return;
 
+    // Bind the narrowed route param: narrowing is not carried into the async
+    // closure below, so `id` would widen back to `string | undefined`.
+    const productId = id;
     const controller = new AbortController();
 
     async function loadProduct() {
@@ -26,7 +29,7 @@ export default function ProductDetailPage() {
       setError(null);
 
       try {
-        const data = await getProductById(id, controller.signal);
+        const data = await getProductById(productId, controller.signal);
         if (controller.signal.aborted) return;
         setProduct(data);
         setLoading(false);
