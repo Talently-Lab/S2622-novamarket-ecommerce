@@ -18,34 +18,34 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    let cancelled = false;
+
+    const controller = new AbortController();
 
     async function loadProduct() {
       setLoading(true);
       setError(null);
 
       try {
-        const data = await getProductById(id!);
-        if (!cancelled) {
-          setProduct(data);
-          setLoading(false);
-        }
+        const data = await getProductById(id, controller.signal);
+        if (controller.signal.aborted) return;
+        setProduct(data);
+        setLoading(false);
       } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'No pudimos cargar el detalle del producto.',
-          );
-          setLoading(false);
-        }
+        // An aborted request is a navigation, not a failure to report.
+        if (controller.signal.aborted) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'No pudimos cargar el detalle del producto.',
+        );
+        setLoading(false);
       }
     }
 
-    loadProduct();
+    void loadProduct();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [id]);
 
