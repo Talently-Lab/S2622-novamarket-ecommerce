@@ -48,7 +48,7 @@ export default function RegisterPage() {
       navigate(newUser.role === 'admin' ? '/admin' : '/');
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'Error al registrar la cuenta.',
+        error instanceof Error ? error.message : 'No pudimos crear la cuenta.',
       );
     } finally {
       setPending(false);
@@ -146,7 +146,9 @@ export default function RegisterPage() {
                   : 'border-borde-divisor focus:border-borde-foco'
               }`}
             />
-            <p className="mt-1 text-xs text-texto-secundario">Mínimo 8 caracteres</p>
+            <p className="mt-1 text-xs text-texto-secundario">
+              Mínimo 8 caracteres, con mayúscula, minúscula y número
+            </p>
             {errors.password ? (
               <p className="mt-1 text-xs text-red-500">{errors.password}</p>
             ) : null}
