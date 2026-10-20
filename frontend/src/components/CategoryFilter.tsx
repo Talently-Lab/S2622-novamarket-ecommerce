@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@chakra-ui/react';
 import Icon from './icons/Icon.tsx';
-import {
-  getCategoryDisplayName,
-  orderCategoryOptions,
-} from '../utils/categories.ts';
+import type { CategoryOption } from '../services/formdataService.ts';
 
 interface CategoryFilterProps {
-  categories: string[];
+  /** Backend-owned category options (GET /api/formdata/products). */
+  options: CategoryOption[];
   value: string;
   onChange: (category: string) => void;
   counts: Record<string, number>;
@@ -21,7 +19,7 @@ interface CategoryFilterProps {
 // bottom-anchored full-width panel on mobile and becomes a centered floating
 // card on sm+ (max-w-md with bottom offset and full rounded-xl).
 export default function CategoryFilter({
-  categories,
+  options,
   value,
   onChange,
   counts,
@@ -70,7 +68,12 @@ export default function CategoryFilter({
     }
   }, [open ]);
 
-  const options = orderCategoryOptions(categories);
+  // "Todos" always comes first; the rest are the backend's own options, in the
+  // order its enum defines.
+  const radioOptions: CategoryOption[] = [
+    { value: '', label: 'Todos' },
+    ...options,
+  ];
   const pendingCount = pending === '' ? total : (counts[pending] ?? 0);
   const ctaLabel = `Ver ${pendingCount} ${pendingCount === 1 ? 'producto' : 'productos'}`;
 
@@ -126,20 +129,20 @@ export default function CategoryFilter({
             <div aria-hidden="true" className="border-t border-borde-divisor" />
             <fieldset className="px-4 py-2">
               <legend className="sr-only">Categorías</legend>
-              {options.map((slug) => (
+              {radioOptions.map((option) => (
                 <label
-                  key={slug === '' ? 'all' : slug}
+                  key={option.value === '' ? 'all' : option.value}
                   className="flex cursor-pointer items-center gap-3 py-3 text-cuerpo text-texto-principal"
                 >
                   <input
                     type="radio"
                     name="category-filter"
-                    value={slug}
-                    checked={pending === slug}
-                    onChange={() => setPending(slug)}
+                    value={option.value}
+                    checked={pending === option.value}
+                    onChange={() => setPending(option.value)}
                     className="h-5 w-5 accent-texto-principal"
                   />
-                  {slug === '' ? 'Todos' : getCategoryDisplayName(slug)}
+                  {option.label}
                 </label>
               ))}
             </fieldset>

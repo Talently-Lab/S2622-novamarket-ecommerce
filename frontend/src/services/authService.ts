@@ -90,7 +90,7 @@ export async function login(
     method: 'POST',
     body: { email, password },
   });
-  const data = unwrapAuthData(response, 'Login failed');
+  const data = unwrapAuthData(response, 'No pudimos iniciar sesión.');
   return { user: mapUser(data.user), token: data.token };
 }
 
@@ -108,7 +108,7 @@ export async function register(
     method: 'POST',
     body: { nombre: name, email, password },
   });
-  const data = unwrapAuthData(response, 'Registration failed');
+  const data = unwrapAuthData(response, 'No pudimos crear la cuenta.');
   return { user: mapUser(data.user), token: data.token };
 }
 
@@ -136,7 +136,7 @@ export async function me(): Promise<User> {
       typeof response === 'object' && response !== null && 'message' in response
         ? response.message
         : null;
-    throw new ApiError(message || 'Invalid session', 401);
+    throw new ApiError(message || 'Sesión inválida.', 401);
   }
   return mapUser(raw);
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
 import type { Product } from '../types/product.ts';
+import { formatPrice } from '../utils/format.ts';
 import { buildImageSrcSet } from '../utils/responsiveImage.ts';
 import Icon from './icons/Icon.tsx';
 
@@ -27,10 +28,6 @@ function getProductCardVariant(
   if (product.stock <= 0) return 'out-of-stock';
   if (added) return 'added';
   return 'default';
-}
-
-function formatPrice(price: number): string {
-  return `$${price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 }
 
 export default function ProductCard({

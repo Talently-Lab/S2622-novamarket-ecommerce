@@ -2,10 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../context/AuthContext.tsx';
-import {
-  CATEGORY_DISPLAY_NAMES,
-  KNOWN_CATEGORY_ORDER,
-} from '../utils/categories.ts';
+import { useCategories } from '../hooks/useCategories.ts';
 import Icon from './icons/Icon.tsx';
 
 // TODO(cart): wire `count` to a real cart context once it exists.
@@ -128,12 +125,15 @@ export default function Navbar({ count = 2 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const activeCategory = searchParams.get('categoria') ?? '';
+  // Category names come from the backend enum, not from a local map.
+  const { categories: categoryOptions } = useCategories();
 
   // Mirrors useProducts: bogus slugs mean "no filter", so Todos is selected.
   function isSelected(slug: string) {
     if (slug === '') {
       return (
-        activeCategory === '' || !KNOWN_CATEGORY_ORDER.includes(activeCategory)
+        activeCategory === '' ||
+        !categoryOptions.some((option) => option.value === activeCategory)
       );
     }
     return activeCategory === slug;
@@ -196,13 +196,13 @@ export default function Navbar({ count = 2 }: NavbarProps) {
           >
             Todos
           </Link>
-          {KNOWN_CATEGORY_ORDER.map((slug) => (
+          {categoryOptions.map((option) => (
             <Link
-              key={slug}
-              to={`/productos?categoria=${slug}`}
-              className={desktopCategoryClass(slug, 'text-cuerpo')}
+              key={option.value}
+              to={`/productos?categoria=${option.value}`}
+              className={desktopCategoryClass(option.value, 'text-cuerpo')}
             >
-              {CATEGORY_DISPLAY_NAMES[slug]}
+              {option.label}
             </Link>
           ))}
         </div>
@@ -225,14 +225,14 @@ export default function Navbar({ count = 2 }: NavbarProps) {
             >
               Todos
             </Link>
-            {KNOWN_CATEGORY_ORDER.map((slug) => (
+            {categoryOptions.map((option) => (
               <Link
-                key={slug}
-                to={`/productos?categoria=${slug}`}
+                key={option.value}
+                to={`/productos?categoria=${option.value}`}
                 onClick={() => setMenuOpen(false)}
-                className={`text-cuerpo ${isSelected(slug) ? SELECTED_CATEGORY_CLASS : ''}`}
+                className={`text-cuerpo ${isSelected(option.value) ? SELECTED_CATEGORY_CLASS : ''}`}
               >
-                {CATEGORY_DISPLAY_NAMES[slug]}
+                {option.label}
               </Link>
             ))}
           </div>

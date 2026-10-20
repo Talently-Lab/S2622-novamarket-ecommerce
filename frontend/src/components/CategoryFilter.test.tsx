@@ -4,15 +4,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { system } from '../theme/system.ts';
 import CategoryFilter from './CategoryFilter.tsx';
 
-const CATEGORIES = ['gadgets', 'accesorios', 'perifericos', 'novedades'];
-const COUNTS = { accesorios: 3, perifericos: 5, gadgets: 1, novedades: 2 };
-const TOTAL = 11;
+// The options now come from the backend enum (GET /api/formdata/products),
+// which also owns the label text — hence the unaccented "Perifericos".
+const OPTIONS = [
+  { value: 'accesorios', label: 'Accesorios' },
+  { value: 'perifericos', label: 'Perifericos' },
+  { value: 'gadgets', label: 'Gadgets' },
+];
+const COUNTS = { accesorios: 3, perifericos: 5, gadgets: 1 };
+const TOTAL = 9;
 
 function renderFilter(value = '', onChange = vi.fn()) {
   render(
     <ChakraProvider value={system}>
       <CategoryFilter
-        categories={CATEGORIES}
+        options={OPTIONS}
         value={value}
         onChange={onChange}
         counts={COUNTS}
@@ -46,7 +52,7 @@ describe('CategoryFilter', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('opens the sheet with radios in canonical order and Todos checked by default', () => {
+  it('opens the sheet with the backend options and Todos checked by default', () => {
     renderFilter();
     const { dialog } = openSheet();
 
@@ -58,16 +64,15 @@ describe('CategoryFilter', () => {
     const radios = within(dialog).getAllByRole('radio');
     expect(radios.map((radio) => radio.getAttribute('value'))).toEqual([
       '',
-      'perifericos',
       'accesorios',
+      'perifericos',
       'gadgets',
-      'novedades',
     ]);
     expect(
       within(dialog).getByRole('radio', { name: 'Todos' }),
     ).toBeChecked();
     expect(
-      within(dialog).getByRole('button', { name: /ver 11 productos/i }),
+      within(dialog).getByRole('button', { name: /ver 9 productos/i }),
     ).toBeInTheDocument();
   });
 
@@ -87,7 +92,7 @@ describe('CategoryFilter', () => {
     const { dialog } = openSheet();
 
     fireEvent.click(
-      within(dialog).getByRole('radio', { name: 'Periféricos' }),
+      within(dialog).getByRole('radio', { name: 'Perifericos' }),
     );
 
     expect(onChange).not.toHaveBeenCalled();
@@ -163,7 +168,7 @@ describe('CategoryFilter', () => {
     // Inline width instead of w-full: the Chakra recipe width (240px) wins
     // over the Tailwind utility through cascade layers, so width is forced.
     const cta = within(dialog).getByRole('button', {
-      name: /ver 11 productos/i,
+      name: /ver 9 productos/i,
     });
     expect(cta.style.width).toBe('100%');
   });
