@@ -128,6 +128,19 @@ describe('HomeFeatured', () => {
     ).toBeInTheDocument();
   });
 
+  it('links each featured card image and title to its product detail page', async () => {
+    renderFeatured();
+
+    await screen.findAllByRole('listitem');
+    for (const product of MOCK_PRODUCTS) {
+      const link = screen.getByRole('link', { name: product.name });
+      expect(link).toHaveAttribute('href', `/productos/${product.id}`);
+      expect(
+        within(link).getByRole('img', { name: product.name }),
+      ).toBeInTheDocument();
+    }
+  });
+
   it('keeps the add buttons at the 44px touch target', async () => {
     renderFeatured();
 

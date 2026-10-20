@@ -30,42 +30,54 @@ function pickFeatured(items: Product[]): Product[] {
 
 function FeaturedCard({ product }: { product: Product }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const detailHref = `/productos/${product.id}`;
 
   return (
     <li className="relative flex flex-col overflow-hidden rounded-lg border border-borde-divisor bg-fondo-superficie">
-      <span className="absolute left-2 top-2 rounded-full bg-fondo-exito px-2 py-1 text-caption-badge font-semibold text-texto-sobre-exito">
-        Novedad
-      </span>
-      {imageFailed || !product.imageUrl ? (
-        <div
-          role="img"
-          aria-label={product.name}
-          className="flex aspect-square w-full items-center justify-center bg-fondo-deshabilitado"
-        >
-          <Icon
-            name="image_not_supported"
-            className="text-4xl text-texto-principal"
+      {/* One link wraps badge + image + title + price so the whole block is
+          clickable with a single tab stop. The CTA stays outside the link:
+          nested interactive elements are invalid and break the button. */}
+      <Link
+        to={detailHref}
+        aria-label={product.name}
+        className="group flex flex-col focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-borde-foco"
+      >
+        <span className="absolute left-2 top-2 rounded-full bg-fondo-exito px-2 py-1 text-caption-badge font-semibold text-texto-sobre-exito">
+          Novedad
+        </span>
+        {imageFailed || !product.imageUrl ? (
+          <div
+            role="img"
+            aria-label={product.name}
+            className="flex aspect-square w-full items-center justify-center bg-fondo-deshabilitado"
+          >
+            <Icon
+              name="image_not_supported"
+              className="text-4xl text-texto-principal"
+            />
+          </div>
+        ) : (
+          <img
+            src={product.imageUrl}
+            srcSet={buildImageSrcSet(product.imageUrl)}
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            onError={() => setImageFailed(true)}
+            className="aspect-square w-full bg-fondo-deshabilitado object-cover"
           />
-        </div>
-      ) : (
-        <img
-          src={product.imageUrl}
-          srcSet={buildImageSrcSet(product.imageUrl)}
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-          alt={product.name}
-          loading="lazy"
-          decoding="async"
-          onError={() => setImageFailed(true)}
-          className="aspect-square w-full bg-fondo-deshabilitado object-cover"
-        />
-      )}
-      <span className="flex flex-col gap-2 p-3">
-        <span className="h-10 line-clamp-2 overflow-hidden text-cuerpo-chico font-normal text-texto-principal">
-          {product.name}
+        )}
+        <span className="flex flex-col gap-2 px-3 pt-3">
+          <span className="h-10 line-clamp-2 overflow-hidden text-cuerpo-chico font-normal text-texto-principal group-hover:underline">
+            {product.name}
+          </span>
+          <span className="text-precio font-bold text-texto-principal">
+            {formatPrice(product.price)}
+          </span>
         </span>
-        <span className="text-precio font-bold text-texto-principal">
-          {formatPrice(product.price)}
-        </span>
+      </Link>
+      <span className="flex flex-col gap-2 p-3 pt-2">
         <button
           type="button"
           aria-label={`Agregar ${product.name} al carrito`}
