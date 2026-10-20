@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import ProductCard from './ProductCard.tsx';
 import type { Product } from '../types/product.ts';
@@ -17,7 +18,11 @@ const baseProduct: Product = {
 };
 
 function renderCard(node: ReactNode) {
-  return render(<ChakraProvider value={system}>{node}</ChakraProvider>);
+  return render(
+    <ChakraProvider value={system}>
+      <MemoryRouter>{node}</MemoryRouter>
+    </ChakraProvider>,
+  );
 }
 
 describe('ProductCard variants', () => {
@@ -65,6 +70,14 @@ describe('ProductCard', () => {
     // Inline width: the Chakra recipe width wins over style props and
     // utilities through cascade layers, so it is forced (see component).
     expect(cta.style.width).toBe('100%');
+  });
+
+  it('links the title to the product detail page', () => {
+    renderCard(<ProductCard product={baseProduct} />);
+
+    expect(
+      screen.getByRole('link', { name: baseProduct.name }),
+    ).toHaveAttribute('href', '/productos/1');
   });
 
   it('formats the price for Argentina without visible decimals', () => {

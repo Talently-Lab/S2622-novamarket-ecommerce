@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
+import { Link } from 'react-router';
 import type { Product } from '../types/product.ts';
 import { formatPrice } from '../utils/format.ts';
 import { buildImageSrcSet } from '../utils/responsiveImage.ts';
@@ -76,7 +77,12 @@ export default function ProductCard({
           id={nameId}
           className="h-10 line-clamp-2 overflow-hidden text-cuerpo-chico font-normal text-texto-principal"
         >
-          {product.name}
+          <Link
+            to={`/productos/${product.id}`}
+            className="underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-borde-foco"
+          >
+            {product.name}
+          </Link>
         </h2>
         <p className="text-precio font-bold text-texto-principal">
           {formatPrice(product.price)}
