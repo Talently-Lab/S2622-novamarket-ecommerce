@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
@@ -72,12 +72,17 @@ describe('ProductCard', () => {
     expect(cta.style.width).toBe('100%');
   });
 
-  it('links the title to the product detail page', () => {
+  it('links the image and the title to the product detail page', () => {
     renderCard(<ProductCard product={baseProduct} />);
 
+    const link = screen.getByRole('link', { name: baseProduct.name });
+    expect(link).toHaveAttribute('href', '/productos/1');
     expect(
-      screen.getByRole('link', { name: baseProduct.name }),
-    ).toHaveAttribute('href', '/productos/1');
+      within(link).getByRole('img', { name: baseProduct.name }),
+    ).toBeInTheDocument();
+    expect(
+      within(link).getByRole('heading', { name: baseProduct.name }),
+    ).toBeInTheDocument();
   });
 
   it('formats the price for Argentina without visible decimals', () => {
