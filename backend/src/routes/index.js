@@ -3,7 +3,6 @@ import authRoutes from './authRoutes.js';
 import productRoutes from './productRoutes.js';
 import orderRoutes from './orderRoutes.js';
 import cartRoutes from './cartRoutes.js';
-import checkoutRoutes from './checkoutRoutes.js';
 import formdataRoutes from './formdataRoutes.js';
 
 const router = Router();
