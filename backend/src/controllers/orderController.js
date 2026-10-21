@@ -31,7 +31,9 @@ class OrderController {
 
     async getOrdersByUserId(req, res, next) {
         try {
-            return successResponse(res, null, null, 200);
+            const userId = req.user.id
+            const result = await OrderService.getOrdersByUserId(userId)
+            return successResponse(res, result, "Ordenes obtenidas correctamente", 200);
         } catch (error) {
             return errorResponse(res, error);
         }

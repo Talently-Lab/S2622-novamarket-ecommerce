@@ -1,4 +1,4 @@
-import Product from '../models/Product.js';
+
 import Order from '../models/Order.js';
 import { AppError } from '../helpers/customError.js';
 import mongoose from 'mongoose';
@@ -40,8 +40,8 @@ class OrderService {
                     });
                 }
 
-                if(totalOrden !== data.total){
-                     throw new AppError(`El total dado es distinto al total final`, 400);
+                if (totalOrden !== data.total) {
+                    throw new AppError(`El total dado es distinto al total final`, 400);
                 }
                 const [ordenCreada] = await Order.create(
                     [
@@ -69,6 +69,13 @@ class OrderService {
         } finally {
             session.endSession();
         }
+    }
+
+    async getOrdersByUserId(userId) {
+        const orders = await Order.find({ userId: userId })
+            .populate('items.productId');
+
+        return orders;
     }
 
 

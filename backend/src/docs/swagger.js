@@ -665,6 +665,118 @@ const swaggerDocument = {
         },
       },
     },
+    '/orders/my': {
+      get: {
+        tags: ['Órdenes'],
+        summary: 'Obtener mis órdenes',
+        description:
+          'Devuelve las órdenes asociadas al usuario autenticado. Cada producto de los ítems se incluye poblado con sus datos actuales.',
+        operationId: 'getOrdersByUserId',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          200: {
+            description:
+              'Órdenes del usuario obtenidas correctamente. Si todavía no tiene órdenes, data es un array vacío.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/UserOrdersResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Ordenes obtenidas correctamente',
+                  data: [
+                    {
+                      _id: '507f1f77bcf86cd799439020',
+                      userId: '507f1f77bcf86cd799439099',
+                      items: [
+                        {
+                          _id: '507f1f77bcf86cd799439021',
+                          productId: {
+                            _id: '507f1f77bcf86cd799439011',
+                            nombre: 'Auriculares inalámbricos',
+                            descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                            precio: 55,
+                            stock: 10,
+                            categoria: 'gadgets',
+                            imagenUrl: 'https://example.com/auriculares.jpg',
+                            activo: true,
+                            createdAt: '2026-10-20T10:30:00.000Z',
+                            updatedAt: '2026-10-21T10:30:00.000Z',
+                            __v: 0,
+                          },
+                          nombre: 'Auriculares inalámbricos',
+                          cantidad: 2,
+                          precioHistorico: 50,
+                        },
+                      ],
+                      total: 100,
+                      estado: 'pendiente',
+                      direccionEnvio: {
+                        calle: 'Av. Corrientes 1234',
+                        ciudad: 'Buenos Aires',
+                        provincia: 'Buenos Aires',
+                        codigoPostal: 'C1043',
+                      },
+                      createdAt: '2026-10-21T20:39:26.000Z',
+                      updatedAt: '2026-10-21T20:39:26.000Z',
+                      __v: 0,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno al obtener las órdenes del usuario.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -676,6 +788,131 @@ const swaggerDocument = {
       },
     },
     schemas: {
+      UserOrdersResponse: {
+        type: 'object',
+        required: ['ok', 'message', 'data'],
+        properties: {
+          ok: {
+            type: 'boolean',
+            enum: [true],
+          },
+          message: {
+            type: 'string',
+            example: 'Ordenes obtenidas correctamente',
+          },
+          data: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/UserOrder',
+            },
+          },
+        },
+      },
+      UserOrder: {
+        type: 'object',
+        required: [
+          '_id',
+          'userId',
+          'items',
+          'total',
+          'estado',
+          'direccionEnvio',
+          'createdAt',
+          'updatedAt',
+        ],
+        properties: {
+          _id: {
+            type: 'string',
+            description: 'Identificador de la orden en MongoDB.',
+            example: '507f1f77bcf86cd799439020',
+          },
+          userId: {
+            type: 'string',
+            description: 'Identificador del usuario autenticado propietario de la orden.',
+            example: '507f1f77bcf86cd799439099',
+          },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['productId', 'nombre', 'cantidad', 'precioHistorico'],
+              properties: {
+                _id: {
+                  type: 'string',
+                  description: 'Identificador del subdocumento del ítem.',
+                },
+                productId: {
+                  description: 'Producto asociado, poblado con sus datos actuales.',
+                  nullable: true,
+                  allOf: [
+                    {
+                      $ref: '#/components/schemas/Product',
+                    },
+                  ],
+                },
+                nombre: {
+                  type: 'string',
+                  description: 'Nombre del producto al momento de la compra.',
+                  example: 'Auriculares inalámbricos',
+                },
+                cantidad: {
+                  type: 'integer',
+                  example: 2,
+                },
+                precioHistorico: {
+                  type: 'number',
+                  description: 'Precio unitario al momento de la compra.',
+                  example: 50,
+                },
+              },
+            },
+          },
+          total: {
+            type: 'number',
+            example: 100,
+          },
+          estado: {
+            type: 'string',
+            enum: ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado', 'confirmado'],
+            example: 'pendiente',
+          },
+          direccionEnvio: {
+            type: 'object',
+            required: ['calle', 'ciudad', 'provincia', 'codigoPostal'],
+            properties: {
+              calle: {
+                type: 'string',
+                example: 'Av. Corrientes 1234',
+              },
+              ciudad: {
+                type: 'string',
+                example: 'Buenos Aires',
+              },
+              provincia: {
+                type: 'string',
+                example: 'Buenos Aires',
+              },
+              codigoPostal: {
+                type: 'string',
+                example: 'C1043',
+              },
+            },
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          __v: {
+            type: 'integer',
+            description: 'Versión del documento de MongoDB.',
+            example: 0,
+          },
+        },
+      },
       CreateOrderRequest: {
         type: 'object',
         required: ['items', 'total', 'direccionEnvio'],
