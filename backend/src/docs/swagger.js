@@ -1,5 +1,5 @@
 import { cartTag, cartPaths, cartSchemas } from './cartDocs.js';
-
+import { getAllOrdersOperation, orderAdminPaths, orderAdminSchemas } from './orderAdminDocs.js';
 const swaggerDocument = {
   openapi: '3.0.3',
   info: {
@@ -950,6 +950,7 @@ const swaggerDocument = {
       },
     },
     '/orders/': {
+  get: getAllOrdersOperation,
       post: {
         tags: ['Órdenes'],
         summary: 'Crear una orden de compra',
@@ -1257,6 +1258,7 @@ const swaggerDocument = {
         },
       },
     },
+    ...orderAdminPaths,
     ...cartPaths,
   },
   components: {
@@ -1270,6 +1272,7 @@ const swaggerDocument = {
     },
     schemas: {
       ...cartSchemas,
+      ...orderAdminSchemas,
       CreateProductRequest: {
         type: 'object',
         required: ['nombre', 'precio', 'categoria'],

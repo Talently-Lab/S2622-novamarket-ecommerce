@@ -1,6 +1,8 @@
 import mongoose from 'mongoose'
 const { Schema } = mongoose;
 
+export const ORDER_STATUSES = ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado', 'confirmado'];
+
 const orderSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
@@ -34,7 +36,7 @@ const orderSchema = new Schema({
   },
   estado: {
     type: String,
-    enum: ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado', "confirmado"],
+    enum: ORDER_STATUSES,
     default: 'pendiente'
   },
   direccionEnvio: {
@@ -60,4 +62,3 @@ const orderSchema = new Schema({
 });
 
 export default mongoose.model('Order', orderSchema);
-

@@ -71,15 +71,38 @@ class OrderService {
         }
     }
 
-    async getOrdersByUserId(userId) {
+     async getOrdersByUserId(userId) {
         const orders = await Order.find({ userId: userId })
             .populate('items.productId');
-
+ 
         return orders;
     }
-
-
+ 
+    // ADMIN: devuelve TODOS los pedidos, del más nuevo al más viejo,
+    // con nombre y email del cliente (para la tabla del panel admin).
+    async getAllOrders() {
+        const orders = await Order.find()
+            .populate('userId', 'nombre email')
+            .sort({ createdAt: -1 });
+ 
+        return orders;
+    }
+ 
+    // ADMIN: cambia el estado de un pedido.
+    async updateOrderStatus(orderId, estado) {
+        const order = await Order.findByIdAndUpdate(
+            orderId,
+            { estado },
+            { new: true, runValidators: true }
+        ).populate('userId', 'nombre email');
+ 
+        if (!order) {
+            throw new AppError('Pedido no encontrado', 404);
+        }
+ 
+        return order;
+    }
 }
-
-
+ 
+ 
 export default new OrderService();

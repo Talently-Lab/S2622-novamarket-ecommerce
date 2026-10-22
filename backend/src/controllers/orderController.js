@@ -13,14 +13,15 @@ class OrderController {
         }
     }
 
-    async getOrders(req, res, next) {
+     async getOrders(req, res, next) {
         try {
-            return successResponse(res, null, null, 200);
+            const result = await OrderService.getAllOrders();
+            return successResponse(res, result, "Pedidos obtenidos correctamente", 200);
         } catch (error) {
             return errorResponse(res, error);
         }
     }
-
+ 
     async getOrderById(req, res, next) {
         try {
             return successResponse(res, null, null, 200);
@@ -28,7 +29,18 @@ class OrderController {
             return errorResponse(res, error);
         }
     }
-
+ 
+    async updateOrderStatus(req, res, next) {
+        try {
+            const { id } = req.params;
+            const { estado } = req.body;
+            const result = await OrderService.updateOrderStatus(id, estado);
+            return successResponse(res, result, "Estado del pedido actualizado correctamente", 200);
+        } catch (error) {
+            return errorResponse(res, error);
+        }
+    }
+ 
     async getOrdersByUserId(req, res, next) {
         try {
             const userId = req.user.id
@@ -39,5 +51,5 @@ class OrderController {
         }
     }
 }
-
+ 
 export default new OrderController();
