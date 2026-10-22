@@ -246,6 +246,330 @@ const swaggerDocument = {
       },
     },
     '/products/{id}': {
+      put: {
+        tags: ['Productos'],
+        summary: 'Actualizar producto',
+        description:
+          'Actualiza uno o más campos de un producto activo. Ruta exclusiva para usuarios con rol admin. Solo hace falta enviar los campos que cambian (al menos uno). El campo activo no se puede modificar por aquí.',
+        operationId: 'updateProduct',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            description: 'Identificador del producto. Debe ser un ObjectId de 24 caracteres hexadecimales.',
+            schema: {
+              type: 'string',
+              pattern: '^[0-9a-fA-F]{24}$',
+              example: '507f1f77bcf86cd799439011',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/UpdateProductRequest',
+              },
+              example: {
+                precio: 79.99,
+                stock: 20,
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Producto actualizado correctamente.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductByIdResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Producto actualizado correctamente',
+                  data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    nombre: 'Auriculares inalámbricos',
+                    descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                    precio: 89.99,
+                    stock: 12,
+                    categoria: 'gadgets',
+                    imagenUrl: 'https://example.com/auriculares.jpg',
+                    activo: true,
+                    createdAt: '2026-10-21T10:30:00.000Z',
+                    updatedAt: '2026-10-21T10:30:00.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'El ID no es válido o el cuerpo no pasa la validación.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+              invalidId: {
+                summary: 'ID inválido',
+                value: {
+                  ok: false,
+                  message: 'El ID del producto debe ser un ObjectId válido',
+                  error: null,
+                },
+              },
+              emptyBody: {
+                summary: 'Cuerpo vacío',
+                value: {
+                  ok: false,
+                  message: 'Debes enviar al menos un campo para actualizar',
+                  error: null,
+                },
+              },
+              invalidPrice: {
+                summary: 'Precio inválido',
+                value: {
+                  ok: false,
+                  message: 'El precio debe ser un número',
+                  error: null,
+                },
+              },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          403: {
+            description: 'El usuario autenticado no tiene el rol admin.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'No tienes permisos para realizar esta acción',
+                  error: null,
+                },
+              },
+            },
+          },
+          404: {
+            description: 'No existe un producto activo con ese ID.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Producto no encontrado',
+                  error: 'Producto no encontrado',
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno del servidor.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ['Productos'],
+        summary: 'Eliminar producto (soft delete)',
+        description:
+          'Baja lógica de un producto: no se borra el documento, solo se establece activo en false. Ruta exclusiva para usuarios con rol admin. Después de eliminarlo, el producto deja de aparecer en el listado y en la consulta por ID.',
+        operationId: 'deleteProduct',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            description: 'Identificador del producto. Debe ser un ObjectId de 24 caracteres hexadecimales.',
+            schema: {
+              type: 'string',
+              pattern: '^[0-9a-fA-F]{24}$',
+              example: '507f1f77bcf86cd799439011',
+            },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Producto desactivado correctamente. Devuelve el producto con activo en false.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductByIdResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Producto eliminado correctamente',
+                  data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    nombre: 'Auriculares inalámbricos',
+                    descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                    precio: 89.99,
+                    stock: 12,
+                    categoria: 'gadgets',
+                    imagenUrl: 'https://example.com/auriculares.jpg',
+                    activo: false,
+                    createdAt: '2026-10-21T10:30:00.000Z',
+                    updatedAt: '2026-10-21T10:30:00.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'El ID no es un ObjectId válido.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+              invalidId: {
+                summary: 'ID inválido',
+                value: {
+                  ok: false,
+                  message: 'El ID del producto debe ser un ObjectId válido',
+                  error: null,
+                },
+              },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          403: {
+            description: 'El usuario autenticado no tiene el rol admin.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'No tienes permisos para realizar esta acción',
+                  error: null,
+                },
+              },
+            },
+          },
+          404: {
+            description: 'No existe un producto activo con ese ID.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Producto no encontrado',
+                  error: 'Producto no encontrado',
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno del servidor.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
       get: {
         tags: ['Productos'],
         summary: 'Obtener producto por ID',
@@ -328,6 +652,159 @@ const swaggerDocument = {
       },
     },
     '/products/': {
+      post: {
+        tags: ['Productos'],
+        summary: 'Crear producto',
+        description:
+          'Crea un producto nuevo. Ruta exclusiva para usuarios con rol admin. El producto se crea siempre activo; el campo activo no se puede enviar.',
+        operationId: 'createProduct',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/CreateProductRequest',
+              },
+              example: {
+                nombre: 'Auriculares inalámbricos',
+                descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                precio: 89.99,
+                stock: 12,
+                categoria: 'gadgets',
+                imagenUrl: 'https://example.com/auriculares.jpg',
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Producto creado correctamente.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductByIdResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Producto creado correctamente',
+                  data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    nombre: 'Auriculares inalámbricos',
+                    descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                    precio: 89.99,
+                    stock: 12,
+                    categoria: 'gadgets',
+                    imagenUrl: 'https://example.com/auriculares.jpg',
+                    activo: true,
+                    createdAt: '2026-10-21T10:30:00.000Z',
+                    updatedAt: '2026-10-21T10:30:00.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'El cuerpo no pasa la validación.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+              missingField: {
+                summary: 'Campo requerido faltante',
+                value: {
+                  ok: false,
+                  message: 'El nombre debe ser una cadena de texto',
+                  error: null,
+                },
+              },
+              invalidCategory: {
+                summary: 'Categoría inválida',
+                value: {
+                  ok: false,
+                  message: 'La categoría debe ser una de: accesorios, perifericos, gadgets',
+                  error: null,
+                },
+              },
+              negativePrice: {
+                summary: 'Precio negativo',
+                value: {
+                  ok: false,
+                  message: 'El precio no puede ser negativo',
+                  error: null,
+                },
+              },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          403: {
+            description: 'El usuario autenticado no tiene el rol admin.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'No tienes permisos para realizar esta acción',
+                  error: null,
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno del servidor.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
       get: {
         tags: ['Productos'],
         summary: 'Listar productos',
@@ -788,6 +1265,76 @@ const swaggerDocument = {
       },
     },
     schemas: {
+      CreateProductRequest: {
+        type: 'object',
+        required: ['nombre', 'precio', 'categoria'],
+        properties: {
+          nombre: {
+            type: 'string',
+            minLength: 1,
+            example: 'Auriculares inalámbricos',
+          },
+          descripcion: {
+            type: 'string',
+            example: 'Auriculares Bluetooth con cancelación de ruido',
+          },
+          precio: {
+            type: 'number',
+            minimum: 0,
+            example: 89.99,
+          },
+          stock: {
+            type: 'integer',
+            minimum: 0,
+            default: 0,
+            example: 12,
+          },
+          categoria: {
+            type: 'string',
+            enum: ['accesorios', 'perifericos', 'gadgets'],
+            example: 'gadgets',
+          },
+          imagenUrl: {
+            type: 'string',
+            example: 'https://example.com/auriculares.jpg',
+          },
+        },
+      },
+      UpdateProductRequest: {
+        type: 'object',
+        minProperties: 1,
+        description: 'Se envían solo los campos a modificar; al menos uno.',
+        properties: {
+          nombre: {
+            type: 'string',
+            minLength: 1,
+            example: 'Auriculares inalámbricos Pro',
+          },
+          descripcion: {
+            type: 'string',
+            example: 'Auriculares Bluetooth con cancelación de ruido',
+          },
+          precio: {
+            type: 'number',
+            minimum: 0,
+            example: 79.99,
+          },
+          stock: {
+            type: 'integer',
+            minimum: 0,
+            example: 20,
+          },
+          categoria: {
+            type: 'string',
+            enum: ['accesorios', 'perifericos', 'gadgets'],
+            example: 'gadgets',
+          },
+          imagenUrl: {
+            type: 'string',
+            example: 'https://example.com/auriculares.jpg',
+          },
+        },
+      },
       UserOrdersResponse: {
         type: 'object',
         required: ['ok', 'message', 'data'],

@@ -67,5 +67,28 @@ class ProductService {
     }
 }
 
+async createProduct(data) {
+    return await Product.create(data);
+}
 
+async updateProduct(productId, data) {
+    const product = await Product.findOneAndUpdate(
+        { _id: productId, activo: true },
+        { $set: data },
+        { new: true, runValidators: true }
+    );
+    if (!product) throw new AppError('Producto no encontrado', 404);
+    return product;
+}
+
+// Soft delete: NO borra el documento, solo marca activo: false
+async deleteProduct(productId) {
+    const product = await Product.findOneAndUpdate(
+        { _id: productId, activo: true },
+        { $set: { activo: false } },
+        { new: true }
+    );
+    if (!product) throw new AppError('Producto no encontrado', 404);
+    return product;
+}
 export default new ProductService();
