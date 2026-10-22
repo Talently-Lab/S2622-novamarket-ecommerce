@@ -132,6 +132,7 @@ export default function LoginPage() {
             ¿No tenés cuenta?{' '}
             <Link
               to="/registro"
+              state={{ origen: 'login' }}
               className="font-semibold text-accion-primaria hover:underline"
             >
               Crear cuenta
