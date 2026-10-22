@@ -65,7 +65,7 @@ class ProductService {
 
         return { products, totalProducts };
     }
-}
+
 
 async createProduct(data) {
     return await Product.create(data);
@@ -90,5 +90,6 @@ async deleteProduct(productId) {
     );
     if (!product) throw new AppError('Producto no encontrado', 404);
     return product;
+}
 }
 export default new ProductService();

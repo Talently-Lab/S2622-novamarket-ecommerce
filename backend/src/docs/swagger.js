@@ -1,3 +1,5 @@
+import { cartTag, cartPaths, cartSchemas } from './cartDocs.js';
+
 const swaggerDocument = {
   openapi: '3.0.3',
   info: {
@@ -28,6 +30,7 @@ const swaggerDocument = {
       name: 'Órdenes',
       description: 'Creación y gestión de órdenes de compra.',
     },
+    cartTag,
   ],
   paths: {
     '/auth/register': {
@@ -1254,6 +1257,7 @@ const swaggerDocument = {
         },
       },
     },
+    ...cartPaths,
   },
   components: {
     securitySchemes: {
@@ -1265,6 +1269,7 @@ const swaggerDocument = {
       },
     },
     schemas: {
+      ...cartSchemas,
       CreateProductRequest: {
         type: 'object',
         required: ['nombre', 'precio', 'categoria'],
