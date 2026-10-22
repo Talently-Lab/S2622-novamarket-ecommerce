@@ -1,6 +1,9 @@
 import { z } from 'zod';
+import { ORDER_STATUSES } from '../models/Order.js';
 
-//agregale validacion para que no se puedan repetir productos en el array de items, ya que deberian auto sumarse, no repetirse
+const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
+
+//agregue la validacion para que no se puedan repetir productos en el array de items, ya que deberian auto sumarse, no repetirse
 export const CREATE_ORDER_SCHEMA = z.object({
     items: z.array(z.object({
         productId: z.string().nonempty('productId is required'),
@@ -21,3 +24,17 @@ export const CREATE_ORDER_SCHEMA = z.object({
         codigoPostal: z.string().nonempty('codigoPostal is required')
     })
 })
+
+// PUT /api/orders/:id/status  -> params
+export const ORDER_ID_PARAMS_SCHEMA = z.object({
+    id: z
+        .string('El ID del pedido es requerido')
+        .regex(OBJECT_ID_REGEX, 'El ID del pedido debe ser un ObjectId válido')
+});
+
+// PUT /api/orders/:id/status  -> body
+export const UPDATE_ORDER_STATUS_SCHEMA = z.object({
+    estado: z.enum(ORDER_STATUSES, {
+        error: `El estado es requerido y debe ser uno de: ${ORDER_STATUSES.join(', ')}`
+    })
+});
