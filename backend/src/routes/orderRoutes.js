@@ -2,7 +2,7 @@ import express from "express";
 import OrderController from "../controllers/orderController.js";
 import {authenticate} from "../middleware/verifyToken.js";
 import {authorize} from "../middleware/isAdmin.js"
-import { validateBody } from "../middleware/validateSchema.js";
+import { validateBody, validateParams } from "../middleware/validateSchema.js";
 import { CREATE_ORDER_SCHEMA, ORDER_ID_PARAMS_SCHEMA, UPDATE_ORDER_STATUS_SCHEMA } from "../zodSchemas/order.js";
 
 const router = express.Router();

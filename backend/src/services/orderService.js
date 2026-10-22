@@ -1,5 +1,6 @@
 
 import Order from '../models/Order.js';
+import Product from '../models/Product.js';
 import { AppError } from '../helpers/customError.js';
 import mongoose from 'mongoose';
 
