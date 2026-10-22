@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import Icon from '../../components/icons/Icon.tsx';
-import { ADMIN_ORDERS } from '../../data/adminOrders.ts';
-import type { Order } from '../../data/adminOrders.ts';
 import { useMediaQuery } from '../../hooks/useMediaQuery.ts';
+import {
+  ORDER_STATUSES,
+  getAllOrders,
+  updateOrderStatus,
+} from '../../services/orderService.ts';
+import type { Order, OrderStatus } from '../../services/orderService.ts';
 import { formatPrice } from '../../utils/format.ts';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
@@ -11,45 +16,91 @@ function itemCount(order: Order): number {
   return order.items.length;
 }
 
-function OrderDetail({ order }: { order: Order }) {
+function statusLabel(status: OrderStatus): string {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function StatusSelect({
+  order,
+  disabled,
+  onChange,
+}: {
+  order: Order;
+  disabled: boolean;
+  onChange: (order: Order, status: OrderStatus) => void;
+}) {
   return (
-    <div className="rounded-lg border border-borde-divisor bg-fondo-superficie p-6">
-      <h2 className="text-titulo-3 font-bold text-texto-principal">
-        {order.id}
+    <select
+      aria-label={`Estado del pedido ${order.code}`}
+      value={order.status}
+      disabled={disabled}
+      onChange={(event) => onChange(order, event.target.value as OrderStatus)}
+      className="border-borde-input bg-fondo-superficie text-cuerpo text-texto-principal rounded-md border px-2 py-1 disabled:opacity-60"
+    >
+      {ORDER_STATUSES.map((status) => (
+        <option key={status} value={status}>
+          {statusLabel(status)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function OrderDetail({
+  order,
+  statusControl,
+}: {
+  order: Order;
+  /** Selector de estado. Si falta, el estado se muestra como texto. */
+  statusControl?: ReactNode;
+}) {
+  return (
+    <div className="border-borde-divisor bg-fondo-superficie rounded-lg border p-6">
+      <h2 className="text-titulo-3 text-texto-principal font-bold">
+        {order.code}
       </h2>
-      <dl className="mt-5 grid grid-cols-[5rem_1fr] gap-y-1 text-cuerpo">
+      <dl className="text-cuerpo mt-5 grid grid-cols-[5rem_1fr] gap-y-1">
         <dt className="text-texto-secundario">Fecha</dt>
         <dd className="text-texto-principal">{order.date}</dd>
+        <dt className="text-texto-secundario">Estado</dt>
+        <dd className="text-texto-principal">
+          {statusControl ?? statusLabel(order.status)}
+        </dd>
         <dt className="text-texto-secundario">Cliente</dt>
         <dd className="text-texto-principal">
           <span className="block">{order.customer.name}</span>
           <span className="block">{order.customer.email}</span>
-          <span className="block">{order.customer.phone}</span>
         </dd>
+        <dt className="text-texto-secundario">Envío</dt>
+        <dd className="text-texto-principal">{order.address}</dd>
       </dl>
 
-      <hr className="my-5 border-borde-divisor" />
+      <hr className="border-borde-divisor my-5" />
 
-      <h3 className="text-titulo-3 font-bold text-texto-principal">Productos</h3>
+      <h3 className="text-titulo-3 text-texto-principal font-bold">
+        Productos
+      </h3>
       <ul className="mt-2">
         {order.items.map((item) => (
           <li
             key={item.id}
-            className="flex items-center justify-between gap-4 border-b border-borde-divisor py-3"
+            className="border-borde-divisor flex items-center justify-between gap-4 border-b py-3"
           >
             <span className="text-cuerpo text-texto-principal">
               {item.quantity} x {item.name}
             </span>
-            <span className="text-cuerpo font-bold text-texto-principal">
-              {formatPrice(item.unitPrice * item.quantity)}
+            <span className="text-cuerpo text-texto-principal font-bold">
+              {formatPrice(item.priceAtPurchase * item.quantity)}
             </span>
           </li>
         ))}
       </ul>
 
       <div className="mt-5 flex items-center justify-between">
-        <span className="text-cuerpo font-bold text-texto-principal">Total</span>
-        <span className="text-cuerpo font-bold text-texto-principal">
+        <span className="text-cuerpo text-texto-principal font-bold">
+          Total
+        </span>
+        <span className="text-cuerpo text-texto-principal font-bold">
           {formatPrice(order.total)}
         </span>
       </div>
@@ -61,31 +112,38 @@ function OrderDetail({ order }: { order: Order }) {
 function OrdersTable({
   orders,
   selected,
+  updatingId,
   onSelect,
+  onStatusChange,
 }: {
   orders: Order[];
   selected: Order | null;
+  updatingId: string | null;
   onSelect: (order: Order) => void;
+  onStatusChange: (order: Order, status: OrderStatus) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-borde-divisor bg-fondo-superficie">
+    <div className="border-borde-divisor bg-fondo-superficie overflow-hidden rounded-lg border">
       <table className="w-full border-collapse text-left">
         <thead className="bg-fondo-estructura text-texto-sobre-estructura">
           <tr>
-            <th scope="col" className="px-4 py-3 text-cuerpo-chico-label">
+            <th scope="col" className="text-cuerpo-chico-label px-4 py-3">
               Pedido
             </th>
-            <th scope="col" className="px-4 py-3 text-cuerpo-chico-label">
+            <th scope="col" className="text-cuerpo-chico-label px-4 py-3">
               Fecha
             </th>
-            <th scope="col" className="px-4 py-3 text-cuerpo-chico-label">
+            <th scope="col" className="text-cuerpo-chico-label px-4 py-3">
               Cliente
             </th>
-            <th scope="col" className="px-4 py-3 text-cuerpo-chico-label">
+            <th scope="col" className="text-cuerpo-chico-label px-4 py-3">
               Productos
             </th>
-            <th scope="col" className="px-4 py-3 text-cuerpo-chico-label">
+            <th scope="col" className="text-cuerpo-chico-label px-4 py-3">
               Total
+            </th>
+            <th scope="col" className="text-cuerpo-chico-label px-4 py-3">
+              Estado
             </th>
             <th scope="col" className="w-10 px-4 py-3">
               <span className="sr-only">Ver detalle</span>
@@ -96,7 +154,7 @@ function OrdersTable({
           {orders.map((order) => (
             <tr
               key={order.id}
-              className={`border-t border-borde-divisor ${
+              className={`border-borde-divisor border-t ${
                 order.id === selected?.id ? 'bg-fondo-pagina' : ''
               }`}
             >
@@ -104,28 +162,35 @@ function OrdersTable({
                 <button
                   type="button"
                   onClick={() => onSelect(order)}
-                  aria-label={`Ver pedido ${order.id}`}
-                  className="text-cuerpo font-semibold text-texto-principal"
+                  aria-label={`Ver pedido ${order.code}`}
+                  className="text-cuerpo text-texto-principal font-semibold"
                 >
-                  {order.id}
+                  {order.code}
                 </button>
               </td>
-              <td className="px-4 py-3 text-cuerpo text-texto-secundario">
+              <td className="text-cuerpo text-texto-secundario px-4 py-3">
                 {order.date}
               </td>
-              <td className="px-4 py-3 text-cuerpo text-texto-secundario">
+              <td className="text-cuerpo text-texto-secundario px-4 py-3">
                 {order.customer.name}
               </td>
-              <td className="px-4 py-3 text-cuerpo text-texto-secundario">
+              <td className="text-cuerpo text-texto-secundario px-4 py-3">
                 {itemCount(order)}
               </td>
-              <td className="px-4 py-3 text-cuerpo font-bold text-texto-principal">
+              <td className="text-cuerpo text-texto-principal px-4 py-3 font-bold">
                 {formatPrice(order.total)}
+              </td>
+              <td className="px-4 py-3">
+                <StatusSelect
+                  order={order}
+                  disabled={updatingId === order.id}
+                  onChange={onStatusChange}
+                />
               </td>
               <td className="px-4 py-3 text-right">
                 <Icon
                   name="chevron_right"
-                  className="text-xl text-texto-secundario"
+                  className="text-texto-secundario text-xl"
                 />
               </td>
             </tr>
@@ -147,16 +212,16 @@ function OrdersList({
   return (
     <ul className="mt-6 flex flex-col">
       {orders.map((order) => (
-        <li key={order.id} className="border-b border-borde-divisor">
+        <li key={order.id} className="border-borde-divisor border-b">
           <button
             type="button"
             onClick={() => onSelect(order)}
-            aria-label={`Ver pedido ${order.id}`}
+            aria-label={`Ver pedido ${order.code}`}
             className="flex w-full items-center gap-4 py-3 text-left"
           >
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-cuerpo-boton font-semibold text-texto-principal">
-                {order.id}
+              <span className="text-cuerpo-boton text-texto-principal font-semibold">
+                {order.code}
               </span>
               <span className="text-cuerpo-chico text-texto-secundario">
                 {order.customer.name}
@@ -164,14 +229,17 @@ function OrdersList({
               <span className="text-cuerpo-chico text-texto-secundario">
                 {order.date} · {itemCount(order)} producto
               </span>
+              <span className="text-cuerpo-chico text-texto-secundario font-semibold">
+                {statusLabel(order.status)}
+              </span>
             </span>
             <span className="flex shrink-0 items-center gap-3">
-              <span className="text-cuerpo font-bold text-texto-principal">
+              <span className="text-cuerpo text-texto-principal font-bold">
                 {formatPrice(order.total)}
               </span>
               <Icon
                 name="chevron_right"
-                className="text-xl text-texto-secundario"
+                className="text-texto-secundario text-xl"
               />
             </span>
           </button>
@@ -182,24 +250,107 @@ function OrdersList({
 }
 
 /**
- * Admin orders section (SN-251). No orders API exists yet, so the page reads
- * the static fixture in `src/data/adminOrders.ts`.
+ * Admin orders section. Carga los pedidos con `getAllOrders()` (GET
+ * /api/orders, solo admin) y permite cambiar el estado de cada uno con
+ * `updateOrderStatus()` (PUT /api/orders/:id/status).
  *
- * Desktop is a master-detail: the table on the left and the selected order on
- * the right, defaulting to the newest one. The design only covers the list on
- * mobile, so selecting there swaps the list for a full-width detail with a
- * "‹ Pedidos" back link, matching the create/edit form's navigation pattern.
+ * Desktop es un master-detail: la tabla (con el selector de estado en cada
+ * fila) a la izquierda y el pedido seleccionado a la derecha, por defecto el
+ * más nuevo. En mobile, al seleccionar se reemplaza la lista por el detalle a
+ * ancho completo, con un link "‹ Pedidos" para volver.
+ *
+ * Los precios del detalle son `priceAtPurchase` (precio histórico guardado en
+ * el pedido), nunca el precio actual del catálogo.
  */
 export default function AdminOrdersPage() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadStatus, setLoadStatus] = useState<'loading' | 'ready' | 'error'>(
+    'loading',
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getAllOrders(controller.signal)
+      .then((result) => {
+        setOrders(result);
+        setLoadStatus('ready');
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setLoadStatus('error');
+      });
+    return () => controller.abort();
+  }, []);
 
   const selected =
-    ADMIN_ORDERS.find((order) => order.id === selectedId) ??
-    (isDesktop ? (ADMIN_ORDERS[0] ?? null) : null);
+    orders.find((order) => order.id === selectedId) ??
+    (isDesktop ? (orders[0] ?? null) : null);
 
   function select(order: Order) {
     setSelectedId(order.id);
+  }
+
+  async function changeStatus(order: Order, status: OrderStatus) {
+    if (status === order.status) return;
+    setUpdatingId(order.id);
+    setUpdateError(null);
+    try {
+      const updated = await updateOrderStatus(order.id, status);
+      setOrders((current) =>
+        current.map((row) => (row.id === updated.id ? updated : row)),
+      );
+    } catch {
+      setUpdateError(
+        `No se pudo actualizar el estado del pedido ${order.code}. Intentá de nuevo.`,
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  const title = (
+    <h1 className="text-titulo-2 text-texto-principal font-bold">Pedidos</h1>
+  );
+  const errorBanner = updateError ? (
+    <p role="alert" className="text-cuerpo text-texto-error mt-4">
+      {updateError}
+    </p>
+  ) : null;
+
+  if (loadStatus === 'loading') {
+    return (
+      <>
+        {title}
+        <p role="status" className="text-cuerpo text-texto-secundario mt-6">
+          Cargando pedidos…
+        </p>
+      </>
+    );
+  }
+
+  if (loadStatus === 'error') {
+    return (
+      <>
+        {title}
+        <p role="alert" className="text-cuerpo text-texto-error mt-6">
+          No se pudieron cargar los pedidos. Probá de nuevo más tarde.
+        </p>
+      </>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <>
+        {title}
+        <p className="text-cuerpo text-texto-secundario mt-6">
+          Todavía no hay pedidos.
+        </p>
+      </>
+    );
   }
 
   if (!isDesktop) {
@@ -209,21 +360,31 @@ export default function AdminOrdersPage() {
           <button
             type="button"
             onClick={() => setSelectedId(null)}
-            className="inline-flex items-center text-cuerpo-chico text-texto-secundario"
+            className="text-cuerpo-chico text-texto-secundario inline-flex items-center"
           >
             <Icon name="chevron_left" className="text-xl" />
             Pedidos
           </button>
+          {errorBanner}
           <div className="mt-4">
-            <OrderDetail order={selected} />
+            <OrderDetail
+              order={selected}
+              statusControl={
+                <StatusSelect
+                  order={selected}
+                  disabled={updatingId === selected.id}
+                  onChange={changeStatus}
+                />
+              }
+            />
           </div>
         </>
       );
     }
     return (
       <>
-        <h1 className="text-titulo-2 font-bold text-texto-principal">Pedidos</h1>
-        <OrdersList orders={ADMIN_ORDERS} onSelect={select} />
+        {title}
+        <OrdersList orders={orders} onSelect={select} />
       </>
     );
   }
@@ -231,14 +392,15 @@ export default function AdminOrdersPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
       <div>
-        <h1 className="text-titulo-2 font-bold text-texto-principal">
-          Pedidos
-        </h1>
+        {title}
+        {errorBanner}
         <div className="mt-6">
           <OrdersTable
-            orders={ADMIN_ORDERS}
+            orders={orders}
             selected={selected}
+            updatingId={updatingId}
             onSelect={select}
+            onStatusChange={changeStatus}
           />
         </div>
       </div>
