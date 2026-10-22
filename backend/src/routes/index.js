@@ -4,11 +4,16 @@ import productRoutes from './productRoutes.js';
 import orderRoutes from './orderRoutes.js';
 import cartRoutes from './cartRoutes.js';
 import formdataRoutes from './formdataRoutes.js';
+import mongoose from 'mongoose';
 
 const router = Router();
 
 router.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.status(dbConnected ? 200 : 503).json({
+    status: dbConnected ? 'OK' : 'ERROR',
+    db: dbConnected ? 'connected' : 'disconnected',
+  });
 });
 
 router.use('/auth', authRoutes);
