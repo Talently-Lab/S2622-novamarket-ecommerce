@@ -17,7 +17,7 @@ const app = express();
 
 const corsOptions = {
   origin: process.env.FRONTEND_URL || '*', //URL de front
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT','PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
 };
