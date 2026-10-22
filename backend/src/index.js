@@ -28,6 +28,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.get('/api-docs.json', (req, res) => res.json(swaggerDocument));
+app.get('/', (req, res) => {
+  res.json({ ok: true, message: 'NovaMarket API funcionando', docs: '/api-docs' });
+});
 app.use('/api', routes);
 
 const PORT = process.env.PORT || 3000;
