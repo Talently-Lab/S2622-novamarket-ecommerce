@@ -118,8 +118,36 @@ export const getAllOrdersOperation = {
   },
 };
 
-// PUT /api/orders/{id}/status
+// PUT /api/orders/{id}/status  y  GET /api/formdata/order-status
 export const orderAdminPaths = {
+  '/formdata/order-status': {
+    get: {
+      tags: ['Formularios'],
+      summary: 'Obtener estados de pedidos',
+      description:
+        'Devuelve los estados posibles de un pedido en formato { value, label }, listo para armar el select del panel admin. Se leen del enum del modelo Order, por lo que el back es la única fuente de verdad. Ruta pública.',
+      operationId: 'getOrderStatusOptions',
+      responses: {
+        200: {
+          description: 'Estados de pedidos obtenidos correctamente.',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/OrderStatusOptionsResponse' },
+              example: {
+                ok: true,
+                message: 'Estados de pedidos',
+                data: ORDER_STATUSES.map((value) => ({
+                  value,
+                  label: value.charAt(0).toUpperCase() + value.slice(1),
+                })),
+              },
+            },
+          },
+        },
+        500: serverError,
+      },
+    },
+  },
   '/orders/{id}/status': {
     put: {
       tags: ['Órdenes'],
@@ -202,6 +230,35 @@ const direccionEnvioSchema = {
 };
 
 export const orderAdminSchemas = {
+  OrderStatusOption: {
+    type: 'object',
+    required: ['value', 'label'],
+    properties: {
+      value: {
+        type: 'string',
+        enum: ORDER_STATUSES,
+        description: 'Valor que el front debe enviar en el body de PUT /orders/{id}/status.',
+        example: 'pendiente',
+      },
+      label: {
+        type: 'string',
+        description: 'Texto para mostrar en el select.',
+        example: 'Pendiente',
+      },
+    },
+  },
+  OrderStatusOptionsResponse: {
+    type: 'object',
+    required: ['ok', 'message', 'data'],
+    properties: {
+      ok: { type: 'boolean', enum: [true] },
+      message: { type: 'string', example: 'Estados de pedidos' },
+      data: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/OrderStatusOption' },
+      },
+    },
+  },
   UpdateOrderStatusRequest: {
     type: 'object',
     required: ['estado'],
