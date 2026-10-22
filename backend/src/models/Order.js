@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose'
 const { Schema } = mongoose;
 
 const orderSchema = new Schema({
@@ -34,16 +34,30 @@ const orderSchema = new Schema({
   },
   estado: {
     type: String,
-    enum: ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado'],
+    enum: ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado', "confirmado"],
     default: 'pendiente'
   },
-  fechaInicioCarrito: {
-    type: Date,
-    default: null
+  direccionEnvio: {
+    calle: {
+      type: String,
+      required: true
+    },
+    ciudad: {
+      type: String,
+      required: true
+    },
+    provincia: {
+      type: String,
+      required: true
+    },
+    codigoPostal: {
+      type: String,
+      required: true
+    }
   }
 }, {
   timestamps: true
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+export default mongoose.model('Order', orderSchema);
 
