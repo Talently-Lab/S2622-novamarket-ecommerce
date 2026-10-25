@@ -12,6 +12,15 @@ class FormdataController {
         }
     }
 
+    getOrderStatus(req, res, next) {
+        try {
+            const status = FormdataService.getOrderStatus();
+            return successResponse(res, status, 'Estados de pedidos', 200);
+        } catch (error) {
+            return errorResponse(res, error);
+        }
+    }
+
 }
 
 export default new FormdataController();

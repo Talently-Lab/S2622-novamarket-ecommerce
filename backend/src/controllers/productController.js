@@ -27,29 +27,26 @@ class ProductController {
         }
     }
 
-    async createProduct(req, res, next) {
-        try {
-            return successResponse(res, null, null, 200);
-        } catch (error) {
-            return errorResponse(res, error);
-        }
-    }
+   async createProduct(req, res, next) {
+    try {
+        const product = await ProductService.createProduct(req.body);
+        return successResponse(res, product, 'Producto creado correctamente', 201);
+    } catch (error) { return errorResponse(res, error); }
+}
 
-    async updateProduct(req, res, next) {
-        try {
-            return successResponse(res, null, null, 200);
-        } catch (error) {
-            return errorResponse(res, error);
-        }
-    }
+async updateProduct(req, res, next) {
+    try {
+        const product = await ProductService.updateProduct(req.params.id, req.body);
+        return successResponse(res, product, 'Producto actualizado correctamente', 200);
+    } catch (error) { return errorResponse(res, error); }
+}
 
-    async deleteProduct(req, res, next) {
-        try {
-            return successResponse(res, null, null, 200);
-        } catch (error) {
-            return errorResponse(res, error);
-        }
-    }
+async deleteProduct(req, res, next) {
+    try {
+        const product = await ProductService.deleteProduct(req.params.id);
+        return successResponse(res, product, 'Producto eliminado correctamente', 200);
+    } catch (error) { return errorResponse(res, error); }
+}
 
     async updateProductStock(req, res, next) {
         try {

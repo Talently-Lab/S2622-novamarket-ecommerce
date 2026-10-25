@@ -1,3 +1,5 @@
+import { cartTag, cartPaths, cartSchemas } from './cartDocs.js';
+import { getAllOrdersOperation, orderAdminPaths, orderAdminSchemas } from './orderAdminDocs.js';
 const swaggerDocument = {
   openapi: '3.0.3',
   info: {
@@ -24,6 +26,11 @@ const swaggerDocument = {
       name: 'Productos',
       description: 'Consulta de productos disponibles.',
     },
+    {
+      name: 'Órdenes',
+      description: 'Creación y gestión de órdenes de compra.',
+    },
+    cartTag,
   ],
   paths: {
     '/auth/register': {
@@ -242,6 +249,330 @@ const swaggerDocument = {
       },
     },
     '/products/{id}': {
+      put: {
+        tags: ['Productos'],
+        summary: 'Actualizar producto',
+        description:
+          'Actualiza uno o más campos de un producto activo. Ruta exclusiva para usuarios con rol admin. Solo hace falta enviar los campos que cambian (al menos uno). El campo activo no se puede modificar por aquí.',
+        operationId: 'updateProduct',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            description: 'Identificador del producto. Debe ser un ObjectId de 24 caracteres hexadecimales.',
+            schema: {
+              type: 'string',
+              pattern: '^[0-9a-fA-F]{24}$',
+              example: '507f1f77bcf86cd799439011',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/UpdateProductRequest',
+              },
+              example: {
+                precio: 79.99,
+                stock: 20,
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Producto actualizado correctamente.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductByIdResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Producto actualizado correctamente',
+                  data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    nombre: 'Auriculares inalámbricos',
+                    descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                    precio: 89.99,
+                    stock: 12,
+                    categoria: 'gadgets',
+                    imagenUrl: 'https://example.com/auriculares.jpg',
+                    activo: true,
+                    createdAt: '2026-10-21T10:30:00.000Z',
+                    updatedAt: '2026-10-21T10:30:00.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'El ID no es válido o el cuerpo no pasa la validación.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+              invalidId: {
+                summary: 'ID inválido',
+                value: {
+                  ok: false,
+                  message: 'El ID del producto debe ser un ObjectId válido',
+                  error: null,
+                },
+              },
+              emptyBody: {
+                summary: 'Cuerpo vacío',
+                value: {
+                  ok: false,
+                  message: 'Debes enviar al menos un campo para actualizar',
+                  error: null,
+                },
+              },
+              invalidPrice: {
+                summary: 'Precio inválido',
+                value: {
+                  ok: false,
+                  message: 'El precio debe ser un número',
+                  error: null,
+                },
+              },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          403: {
+            description: 'El usuario autenticado no tiene el rol admin.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'No tienes permisos para realizar esta acción',
+                  error: null,
+                },
+              },
+            },
+          },
+          404: {
+            description: 'No existe un producto activo con ese ID.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Producto no encontrado',
+                  error: 'Producto no encontrado',
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno del servidor.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ['Productos'],
+        summary: 'Eliminar producto (soft delete)',
+        description:
+          'Baja lógica de un producto: no se borra el documento, solo se establece activo en false. Ruta exclusiva para usuarios con rol admin. Después de eliminarlo, el producto deja de aparecer en el listado y en la consulta por ID.',
+        operationId: 'deleteProduct',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            description: 'Identificador del producto. Debe ser un ObjectId de 24 caracteres hexadecimales.',
+            schema: {
+              type: 'string',
+              pattern: '^[0-9a-fA-F]{24}$',
+              example: '507f1f77bcf86cd799439011',
+            },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Producto desactivado correctamente. Devuelve el producto con activo en false.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductByIdResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Producto eliminado correctamente',
+                  data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    nombre: 'Auriculares inalámbricos',
+                    descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                    precio: 89.99,
+                    stock: 12,
+                    categoria: 'gadgets',
+                    imagenUrl: 'https://example.com/auriculares.jpg',
+                    activo: false,
+                    createdAt: '2026-10-21T10:30:00.000Z',
+                    updatedAt: '2026-10-21T10:30:00.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'El ID no es un ObjectId válido.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+              invalidId: {
+                summary: 'ID inválido',
+                value: {
+                  ok: false,
+                  message: 'El ID del producto debe ser un ObjectId válido',
+                  error: null,
+                },
+              },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          403: {
+            description: 'El usuario autenticado no tiene el rol admin.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'No tienes permisos para realizar esta acción',
+                  error: null,
+                },
+              },
+            },
+          },
+          404: {
+            description: 'No existe un producto activo con ese ID.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Producto no encontrado',
+                  error: 'Producto no encontrado',
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno del servidor.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
       get: {
         tags: ['Productos'],
         summary: 'Obtener producto por ID',
@@ -324,6 +655,159 @@ const swaggerDocument = {
       },
     },
     '/products/': {
+      post: {
+        tags: ['Productos'],
+        summary: 'Crear producto',
+        description:
+          'Crea un producto nuevo. Ruta exclusiva para usuarios con rol admin. El producto se crea siempre activo; el campo activo no se puede enviar.',
+        operationId: 'createProduct',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/CreateProductRequest',
+              },
+              example: {
+                nombre: 'Auriculares inalámbricos',
+                descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                precio: 89.99,
+                stock: 12,
+                categoria: 'gadgets',
+                imagenUrl: 'https://example.com/auriculares.jpg',
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Producto creado correctamente.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductByIdResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Producto creado correctamente',
+                  data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    nombre: 'Auriculares inalámbricos',
+                    descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                    precio: 89.99,
+                    stock: 12,
+                    categoria: 'gadgets',
+                    imagenUrl: 'https://example.com/auriculares.jpg',
+                    activo: true,
+                    createdAt: '2026-10-21T10:30:00.000Z',
+                    updatedAt: '2026-10-21T10:30:00.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'El cuerpo no pasa la validación.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+              missingField: {
+                summary: 'Campo requerido faltante',
+                value: {
+                  ok: false,
+                  message: 'El nombre debe ser una cadena de texto',
+                  error: null,
+                },
+              },
+              invalidCategory: {
+                summary: 'Categoría inválida',
+                value: {
+                  ok: false,
+                  message: 'La categoría debe ser una de: accesorios, perifericos, gadgets',
+                  error: null,
+                },
+              },
+              negativePrice: {
+                summary: 'Precio negativo',
+                value: {
+                  ok: false,
+                  message: 'El precio no puede ser negativo',
+                  error: null,
+                },
+              },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          403: {
+            description: 'El usuario autenticado no tiene el rol admin.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'No tienes permisos para realizar esta acción',
+                  error: null,
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno del servidor.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
       get: {
         tags: ['Productos'],
         summary: 'Listar productos',
@@ -465,9 +949,706 @@ const swaggerDocument = {
         },
       },
     },
+    '/orders/': {
+  get: getAllOrdersOperation,
+      post: {
+        tags: ['Órdenes'],
+        summary: 'Crear una orden de compra',
+        description:
+          'Crea una orden para el usuario autenticado con rol client. Verifica los productos y el stock, calcula el total usando los precios vigentes y descuenta el stock dentro de una transacción. El total enviado debe coincidir exactamente con el total calculado.',
+        operationId: 'createOrder',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/CreateOrderRequest',
+              },
+              example: {
+                items: [
+                  {
+                    productId: '507f1f77bcf86cd799439011',
+                    cantidad: 2,
+                  },
+                ],
+                total: 100,
+                direccionEnvio: {
+                  calle: 'Av. Corrientes 1234',
+                  ciudad: 'Buenos Aires',
+                  provincia: 'Buenos Aires',
+                  codigoPostal: 'C1043',
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Orden creada correctamente.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CreateOrderResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Compra realizada correctamente',
+                  data: {
+                    _id: '507f1f77bcf86cd799439020',
+                    userId: '507f1f77bcf86cd799439099',
+                    items: [
+                      {
+                        _id: '507f1f77bcf86cd799439021',
+                        productId: '507f1f77bcf86cd799439011',
+                        nombre: 'Auriculares inalámbricos',
+                        cantidad: 2,
+                        precioHistorico: 50,
+                      },
+                    ],
+                    total: 100,
+                    estado: 'pendiente',
+                    direccionEnvio: {
+                      calle: 'Av. Corrientes 1234',
+                      ciudad: 'Buenos Aires',
+                      provincia: 'Buenos Aires',
+                      codigoPostal: 'C1043',
+                    },
+                    createdAt: '2026-10-21T20:39:26.000Z',
+                    updatedAt: '2026-10-21T20:39:26.000Z',
+                    __v: 0,
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'El cuerpo no cumple las validaciones o el total enviado no coincide con el total calculado.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  validationError: {
+                    summary: 'Error de validación',
+                    value: {
+                      ok: false,
+                      message: 'items array cannot be empty',
+                      error: null,
+                    },
+                  },
+                  totalMismatch: {
+                    summary: 'El total enviado no coincide',
+                    value: {
+                      ok: false,
+                      message: 'El total dado es distinto al total final',
+                      error: 'El total dado es distinto al total final',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          403: {
+            description: 'El usuario autenticado no tiene el rol client.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'No tienes permisos para realizar esta acción',
+                  error: null,
+                },
+              },
+            },
+          },
+          404: {
+            description: 'Uno de los productos indicados no existe.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'El producto con ID 507f1f77bcf86cd799439011 no existe.',
+                  error: 'El producto con ID 507f1f77bcf86cd799439011 no existe.',
+                },
+              },
+            },
+          },
+          409: {
+            description: 'El stock disponible no alcanza para la cantidad solicitada.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Stock insuficiente para Auriculares inalámbricos. Disponibles: 1',
+                  error: 'Stock insuficiente para Auriculares inalámbricos. Disponibles: 1',
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno al crear la orden.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/orders/my': {
+      get: {
+        tags: ['Órdenes'],
+        summary: 'Obtener mis órdenes',
+        description:
+          'Devuelve las órdenes asociadas al usuario autenticado. Cada producto de los ítems se incluye poblado con sus datos actuales.',
+        operationId: 'getOrdersByUserId',
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          200: {
+            description:
+              'Órdenes del usuario obtenidas correctamente. Si todavía no tiene órdenes, data es un array vacío.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/UserOrdersResponse',
+                },
+                example: {
+                  ok: true,
+                  message: 'Ordenes obtenidas correctamente',
+                  data: [
+                    {
+                      _id: '507f1f77bcf86cd799439020',
+                      userId: '507f1f77bcf86cd799439099',
+                      items: [
+                        {
+                          _id: '507f1f77bcf86cd799439021',
+                          productId: {
+                            _id: '507f1f77bcf86cd799439011',
+                            nombre: 'Auriculares inalámbricos',
+                            descripcion: 'Auriculares Bluetooth con cancelación de ruido',
+                            precio: 55,
+                            stock: 10,
+                            categoria: 'gadgets',
+                            imagenUrl: 'https://example.com/auriculares.jpg',
+                            activo: true,
+                            createdAt: '2026-10-20T10:30:00.000Z',
+                            updatedAt: '2026-10-21T10:30:00.000Z',
+                            __v: 0,
+                          },
+                          nombre: 'Auriculares inalámbricos',
+                          cantidad: 2,
+                          precioHistorico: 50,
+                        },
+                      ],
+                      total: 100,
+                      estado: 'pendiente',
+                      direccionEnvio: {
+                        calle: 'Av. Corrientes 1234',
+                        ciudad: 'Buenos Aires',
+                        provincia: 'Buenos Aires',
+                        codigoPostal: 'C1043',
+                      },
+                      createdAt: '2026-10-21T20:39:26.000Z',
+                      updatedAt: '2026-10-21T20:39:26.000Z',
+                      __v: 0,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          401: {
+            description: 'Falta el token de autenticación o es inválido/expiró.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                examples: {
+                  missingToken: {
+                    summary: 'Token requerido',
+                    value: {
+                      ok: false,
+                      message: 'Token requerido',
+                      error: null,
+                    },
+                  },
+                  invalidToken: {
+                    summary: 'Token inválido o expirado',
+                    value: {
+                      ok: false,
+                      message: 'Token inválido o expirado',
+                      error: 'jwt malformed',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Error interno al obtener las órdenes del usuario.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  ok: false,
+                  message: 'Ha ocurrido un error en el servidor',
+                  error: 'Error interno del servidor',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    ...orderAdminPaths,
+    ...cartPaths,
   },
   components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Token JWT obtenido al iniciar sesión.',
+      },
+    },
     schemas: {
+      ...cartSchemas,
+      ...orderAdminSchemas,
+      CreateProductRequest: {
+        type: 'object',
+        required: ['nombre', 'precio', 'categoria'],
+        properties: {
+          nombre: {
+            type: 'string',
+            minLength: 1,
+            example: 'Auriculares inalámbricos',
+          },
+          descripcion: {
+            type: 'string',
+            example: 'Auriculares Bluetooth con cancelación de ruido',
+          },
+          precio: {
+            type: 'number',
+            minimum: 0,
+            example: 89.99,
+          },
+          stock: {
+            type: 'integer',
+            minimum: 0,
+            default: 0,
+            example: 12,
+          },
+          categoria: {
+            type: 'string',
+            enum: ['accesorios', 'perifericos', 'gadgets'],
+            example: 'gadgets',
+          },
+          imagenUrl: {
+            type: 'string',
+            example: 'https://example.com/auriculares.jpg',
+          },
+        },
+      },
+      UpdateProductRequest: {
+        type: 'object',
+        minProperties: 1,
+        description: 'Se envían solo los campos a modificar; al menos uno.',
+        properties: {
+          nombre: {
+            type: 'string',
+            minLength: 1,
+            example: 'Auriculares inalámbricos Pro',
+          },
+          descripcion: {
+            type: 'string',
+            example: 'Auriculares Bluetooth con cancelación de ruido',
+          },
+          precio: {
+            type: 'number',
+            minimum: 0,
+            example: 79.99,
+          },
+          stock: {
+            type: 'integer',
+            minimum: 0,
+            example: 20,
+          },
+          categoria: {
+            type: 'string',
+            enum: ['accesorios', 'perifericos', 'gadgets'],
+            example: 'gadgets',
+          },
+          imagenUrl: {
+            type: 'string',
+            example: 'https://example.com/auriculares.jpg',
+          },
+        },
+      },
+      UserOrdersResponse: {
+        type: 'object',
+        required: ['ok', 'message', 'data'],
+        properties: {
+          ok: {
+            type: 'boolean',
+            enum: [true],
+          },
+          message: {
+            type: 'string',
+            example: 'Ordenes obtenidas correctamente',
+          },
+          data: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/UserOrder',
+            },
+          },
+        },
+      },
+      UserOrder: {
+        type: 'object',
+        required: [
+          '_id',
+          'userId',
+          'items',
+          'total',
+          'estado',
+          'direccionEnvio',
+          'createdAt',
+          'updatedAt',
+        ],
+        properties: {
+          _id: {
+            type: 'string',
+            description: 'Identificador de la orden en MongoDB.',
+            example: '507f1f77bcf86cd799439020',
+          },
+          userId: {
+            type: 'string',
+            description: 'Identificador del usuario autenticado propietario de la orden.',
+            example: '507f1f77bcf86cd799439099',
+          },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['productId', 'nombre', 'cantidad', 'precioHistorico'],
+              properties: {
+                _id: {
+                  type: 'string',
+                  description: 'Identificador del subdocumento del ítem.',
+                },
+                productId: {
+                  description: 'Producto asociado, poblado con sus datos actuales.',
+                  nullable: true,
+                  allOf: [
+                    {
+                      $ref: '#/components/schemas/Product',
+                    },
+                  ],
+                },
+                nombre: {
+                  type: 'string',
+                  description: 'Nombre del producto al momento de la compra.',
+                  example: 'Auriculares inalámbricos',
+                },
+                cantidad: {
+                  type: 'integer',
+                  example: 2,
+                },
+                precioHistorico: {
+                  type: 'number',
+                  description: 'Precio unitario al momento de la compra.',
+                  example: 50,
+                },
+              },
+            },
+          },
+          total: {
+            type: 'number',
+            example: 100,
+          },
+          estado: {
+            type: 'string',
+            enum: ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado', 'confirmado'],
+            example: 'pendiente',
+          },
+          direccionEnvio: {
+            type: 'object',
+            required: ['calle', 'ciudad', 'provincia', 'codigoPostal'],
+            properties: {
+              calle: {
+                type: 'string',
+                example: 'Av. Corrientes 1234',
+              },
+              ciudad: {
+                type: 'string',
+                example: 'Buenos Aires',
+              },
+              provincia: {
+                type: 'string',
+                example: 'Buenos Aires',
+              },
+              codigoPostal: {
+                type: 'string',
+                example: 'C1043',
+              },
+            },
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          __v: {
+            type: 'integer',
+            description: 'Versión del documento de MongoDB.',
+            example: 0,
+          },
+        },
+      },
+      CreateOrderRequest: {
+        type: 'object',
+        required: ['items', 'total', 'direccionEnvio'],
+        properties: {
+          items: {
+            type: 'array',
+            minItems: 1,
+            description:
+              'Productos solicitados. No se permiten IDs de producto duplicados; agrupa las unidades en cantidad.',
+            items: {
+              type: 'object',
+              required: ['productId', 'cantidad'],
+              properties: {
+                productId: {
+                  type: 'string',
+                  minLength: 1,
+                  description: 'ID del producto existente.',
+                  example: '507f1f77bcf86cd799439011',
+                },
+                cantidad: {
+                  type: 'integer',
+                  minimum: 1,
+                  example: 2,
+                },
+              },
+            },
+          },
+          total: {
+            type: 'number',
+            minimum: 0,
+            description:
+              'Total declarado de la compra; debe coincidir exactamente con la suma de los precios vigentes por cantidad.',
+            example: 100,
+          },
+          direccionEnvio: {
+            type: 'object',
+            required: ['calle', 'ciudad', 'provincia', 'codigoPostal'],
+            properties: {
+              calle: {
+                type: 'string',
+                minLength: 1,
+                example: 'Av. Corrientes 1234',
+              },
+              ciudad: {
+                type: 'string',
+                minLength: 1,
+                example: 'Buenos Aires',
+              },
+              provincia: {
+                type: 'string',
+                minLength: 1,
+                example: 'Buenos Aires',
+              },
+              codigoPostal: {
+                type: 'string',
+                minLength: 1,
+                example: 'C1043',
+              },
+            },
+          },
+        },
+      },
+      CreateOrderResponse: {
+        type: 'object',
+        required: ['ok', 'message', 'data'],
+        properties: {
+          ok: {
+            type: 'boolean',
+            enum: [true],
+          },
+          message: {
+            type: 'string',
+            example: 'Compra realizada correctamente',
+          },
+          data: {
+            $ref: '#/components/schemas/Order',
+          },
+        },
+      },
+      Order: {
+        type: 'object',
+        required: [
+          '_id',
+          'userId',
+          'items',
+          'total',
+          'estado',
+          'direccionEnvio',
+          'createdAt',
+          'updatedAt',
+        ],
+        properties: {
+          _id: {
+            type: 'string',
+            description: 'Identificador de la orden en MongoDB.',
+            example: '507f1f77bcf86cd799439020',
+          },
+          userId: {
+            type: 'string',
+            description: 'ID del usuario autenticado que creó la orden.',
+            example: '507f1f77bcf86cd799439099',
+          },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['productId', 'nombre', 'cantidad', 'precioHistorico'],
+              properties: {
+                _id: {
+                  type: 'string',
+                  description: 'Identificador del subdocumento de producto dentro de la orden.',
+                  example: '507f1f77bcf86cd799439021',
+                },
+                productId: {
+                  type: 'string',
+                  description: 'ID del producto comprado.',
+                  example: '507f1f77bcf86cd799439011',
+                },
+                nombre: {
+                  type: 'string',
+                  description: 'Nombre del producto al momento de la compra.',
+                  example: 'Auriculares inalámbricos',
+                },
+                cantidad: {
+                  type: 'integer',
+                  example: 2,
+                },
+                precioHistorico: {
+                  type: 'number',
+                  description: 'Precio unitario al momento de la compra.',
+                  example: 50,
+                },
+              },
+            },
+          },
+          total: {
+            type: 'number',
+            example: 100,
+          },
+          estado: {
+            type: 'string',
+            enum: ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado', 'confirmado'],
+            example: 'pendiente',
+          },
+          direccionEnvio: {
+            type: 'object',
+            required: ['calle', 'ciudad', 'provincia', 'codigoPostal'],
+            properties: {
+              calle: {
+                type: 'string',
+                example: 'Av. Corrientes 1234',
+              },
+              ciudad: {
+                type: 'string',
+                example: 'Buenos Aires',
+              },
+              provincia: {
+                type: 'string',
+                example: 'Buenos Aires',
+              },
+              codigoPostal: {
+                type: 'string',
+                example: 'C1043',
+              },
+            },
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          __v: {
+            type: 'integer',
+            description: 'Versión del documento de MongoDB.',
+            example: 0,
+          },
+        },
+      },
       ProductsListResponse: {
         type: 'object',
         required: ['ok', 'message', 'data'],
