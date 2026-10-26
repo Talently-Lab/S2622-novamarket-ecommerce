@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router';
+import { trackEvent } from '../analytics/trackEvent.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useCategories } from '../hooks/useCategories.ts';
 import Icon from './icons/Icon.tsx';
@@ -200,6 +201,12 @@ export default function Navbar({ count = 2 }: NavbarProps) {
             <Link
               key={option.value}
               to={`/productos?categoria=${option.value}`}
+              onClick={() =>
+                trackEvent('select_category', {
+                  categoria: option.value,
+                  origen: 'filtro',
+                })
+              }
               className={desktopCategoryClass(option.value, 'text-cuerpo')}
             >
               {option.label}
@@ -229,7 +236,13 @@ export default function Navbar({ count = 2 }: NavbarProps) {
               <Link
                 key={option.value}
                 to={`/productos?categoria=${option.value}`}
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  trackEvent('select_category', {
+                    categoria: option.value,
+                    origen: 'filtro',
+                  });
+                }}
                 className={`text-cuerpo ${isSelected(option.value) ? SELECTED_CATEGORY_CLASS : ''}`}
               >
                 {option.label}

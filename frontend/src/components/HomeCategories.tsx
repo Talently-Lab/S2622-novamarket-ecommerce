@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { trackEvent } from '../analytics/trackEvent.ts';
 import { useCategories } from '../hooks/useCategories.ts';
 
 /**
@@ -22,6 +23,12 @@ export default function HomeCategories() {
           <li key={option.value}>
             <Link
               to={`/productos?categoria=${option.value}`}
+              onClick={() =>
+                trackEvent('select_category', {
+                  categoria: option.value,
+                  origen: 'home',
+                })
+              }
               className="flex min-h-11 flex-col overflow-hidden rounded-lg bg-fondo-superficie"
             >
               <span

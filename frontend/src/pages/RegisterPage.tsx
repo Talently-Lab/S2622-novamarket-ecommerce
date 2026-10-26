@@ -1,8 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router';
+import { trackEvent } from '../analytics/trackEvent.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { registerSchema } from '../schemas/auth.ts';
+import { ApiError } from '../services/api.ts';
+
+function getSignUpErrorType(error: unknown): string {
+  if (error instanceof ApiError) {
+    const message = error.message.toLowerCase();
+    if (message.includes('ya está en uso')) return 'email_duplicado';
+    if (message.includes('contraseña')) return 'validacion_password';
+    if (error.status !== undefined && error.status >= 500) {
+      return 'error_servidor';
+    }
+    return 'otro';
+  }
+  return 'error_servidor';
+}
+
+function getValidationErrorType(
+  fieldErrors: Record<string, string>,
+): string {
+  return fieldErrors.password || fieldErrors.confirmPassword
+    ? 'validacion_password'
+    : 'otro';
+}
 
 export default function RegisterPage() {
   const { user, loading: authLoading, register } = useAuth();
@@ -15,6 +38,18 @@ export default function RegisterPage() {
   const [formError, setFormError] = useState('');
   const [pending, setPending] = useState(false);
 
+  const location = useLocation();
+  const signupFormTracked = useRef(false);
+
+  useEffect(() => {
+    if (authLoading || user || signupFormTracked.current) return;
+    signupFormTracked.current = true;
+    const state = location.state as { origen?: string } | null;
+    trackEvent('view_signup_form', {
+      origen: state?.origen ?? 'directo',
+    });
+  }, [authLoading, user, location.state]);
+
   if (user) {
     return <Navigate to={user.role === 'admin' ? '/admin' : '/'} replace />;
   }
@@ -22,6 +57,12 @@ export default function RegisterPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError('');
+
+    trackEvent('submit_sign_up_attempt', {
+      campos_completos: Boolean(
+        name.trim() && email.trim() && password && confirmPassword,
+      ),
+    });
 
     const result = registerSchema.safeParse({
       name,
@@ -37,6 +78,9 @@ export default function RegisterPage() {
         fieldErrors[field] ??= issue.message;
       }
       setErrors(fieldErrors);
+      trackEvent('sign_up_error', {
+        tipo_error: getValidationErrorType(fieldErrors),
+      });
       return;
     }
 
@@ -45,8 +89,15 @@ export default function RegisterPage() {
 
     try {
       const newUser = await register(name, email, password);
+      trackEvent('sign_up_success', {
+        id_usuario: newUser.id,
+        fecha_registro: new Date().toISOString(),
+      });
       navigate(newUser.role === 'admin' ? '/admin' : '/');
     } catch (error) {
+      trackEvent('sign_up_error', {
+        tipo_error: getSignUpErrorType(error),
+      });
       setFormError(
         error instanceof Error ? error.message : 'No pudimos crear la cuenta.',
       );

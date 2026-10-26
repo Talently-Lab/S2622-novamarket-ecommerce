@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '@chakra-ui/react';
+import { trackEvent } from '../analytics/trackEvent.ts';
 import CategoryFilter from '../components/CategoryFilter.tsx';
 import Icon from '../components/icons/Icon.tsx';
 import ProductCard from '../components/ProductCard.tsx';
@@ -9,6 +10,7 @@ import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
 import { useMediaQuery } from '../hooks/useMediaQuery.ts';
 import { useCategories } from '../hooks/useCategories.ts';
 import { useProducts } from '../hooks/useProducts.ts';
+import type { Product } from '../types/product.ts';
 
 const MOBILE_PAGE_SIZE = 10;
 const DESKTOP_PAGE_SIZE = 8;
@@ -21,7 +23,7 @@ const DESKTOP_QUERY = '(min-width: 1024px)';
 // "Cargar más" ten at a time; from lg it shows one page of 8 at a time
 // (two full rows of four) with a numbered paginator aligned to the right.
 // Paging resets on every filter change.
-// No cart wiring: cards render without onAdd by design.
+// Cards emit the add-to-cart event through the page-level handler below.
 export default function ProductsPage() {
   const {
     products,
@@ -40,14 +42,36 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
 
   function handleCategoryChange(next: string) {
+    if (next) {
+      trackEvent('select_category', { categoria: next, origen: 'filtro' });
+    }
     // The URL param is the single source of truth; the hook picks it up.
     setSearchParams(next ? { categoria: next } : {});
     setPage(1);
   }
 
+  function handleAddToCart(product: Product) {
+    trackEvent('click_add_to_cart', {
+      id_producto: product.id,
+      nombre_producto: product.name,
+      precio: product.price,
+      cantidad: 1,
+      origen: 'grilla',
+    });
+  }
+
   function clearFilter() {
     setSearchParams({});
     setPage(1);
+  }
+
+  function goToPage(nextPage: number) {
+    setPage(nextPage);
+    trackEvent('view_item_list', {
+      categoria: category,
+      cantidad_resultados: products.length,
+      pagina: nextPage,
+    });
   }
 
   const pageSize = isDesktop ? DESKTOP_PAGE_SIZE : MOBILE_PAGE_SIZE;
@@ -60,6 +84,19 @@ export default function ProductsPage() {
   const countLabel =
     products.length === 1 ? '1 producto' : `${products.length} productos`;
   const title = category ? labelFor(category) : 'Todos los productos';
+
+  const lastTrackedProducts = useRef<Product[] | null>(null);
+
+  useEffect(() => {
+    if (loading || error) return;
+    if (lastTrackedProducts.current === products) return;
+    lastTrackedProducts.current = products;
+    trackEvent('view_item_list', {
+      categoria: category,
+      cantidad_resultados: products.length,
+      pagina: currentPage,
+    });
+  }, [products, loading, error, category, currentPage]);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -161,6 +198,7 @@ export default function ProductsPage() {
                 <ProductCard
                   product={product}
                   priority={index < PRIORITY_COUNT}
+                  onAdd={handleAddToCart}
                 />
               </li>
             ))}
@@ -169,7 +207,7 @@ export default function ProductsPage() {
             <div className="mt-8 flex justify-center">
               <Button
                 variant="secondary"
-                onClick={() => setPage(currentPage + 1)}
+                onClick={() => goToPage(currentPage + 1)}
               >
                 Cargar más
               </Button>
@@ -190,7 +228,7 @@ export default function ProductsPage() {
                         type="button"
                         aria-label={`Página ${pageNumber}`}
                         aria-current={isActive ? 'page' : undefined}
-                        onClick={() => setPage(pageNumber)}
+                        onClick={() => goToPage(pageNumber)}
                         className={
                           isActive
                             ? 'flex h-11 w-11 items-center justify-center rounded-md border border-fondo-estructura bg-fondo-estructura text-cuerpo-boton font-semibold text-texto-sobre-estructura'
@@ -207,7 +245,7 @@ export default function ProductsPage() {
                     <button
                       type="button"
                       aria-label="Página siguiente"
-                      onClick={() => setPage(currentPage + 1)}
+                      onClick={() => goToPage(currentPage + 1)}
                       className="flex h-11 w-11 items-center justify-center rounded-md border border-borde-divisor bg-fondo-superficie text-texto-principal hover:border-texto-secundario"
                     >
                       <Icon name="chevron_right" />

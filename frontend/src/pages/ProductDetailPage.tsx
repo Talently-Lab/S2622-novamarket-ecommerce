@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Button } from '@chakra-ui/react';
+import { trackEvent } from '../analytics/trackEvent.ts';
 import Icon from '../components/icons/Icon.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import { useCategories } from '../hooks/useCategories.ts';
@@ -33,6 +34,13 @@ export default function ProductDetailPage() {
         if (controller.signal.aborted) return;
         setProduct(data);
         setLoading(false);
+        trackEvent('view_item_detail', {
+          id_producto: data.id,
+          nombre_producto: data.name,
+          categoria: data.category,
+          precio: data.price,
+          en_stock: data.stock > 0,
+        });
       } catch (err) {
         // An aborted request is a navigation, not a failure to report.
         if (controller.signal.aborted) return;
@@ -163,7 +171,13 @@ export default function ProductDetailPage() {
               variant="primary"
               disabled={product.stock <= 0}
               onClick={() => {
-                console.log('Agregar al carrito ID:', product.id);
+                trackEvent('click_add_to_cart', {
+                  id_producto: product.id,
+                  nombre_producto: product.name,
+                  precio: product.price,
+                  cantidad: 1,
+                  origen: 'ficha',
+                });
               }}
               style={{ width: '100%' }}
             >
