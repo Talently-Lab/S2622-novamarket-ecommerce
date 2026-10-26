@@ -95,10 +95,7 @@ describe('productService.getProductsFromApi', () => {
   it('collects every page until the reported total is reached', async () => {
     mockedApiFetch
       .mockResolvedValueOnce(
-        page(
-          [backendDto({ _id: 'a' }), backendDto({ _id: 'b' })],
-          3,
-        ),
+        page([backendDto({ _id: 'a' }), backendDto({ _id: 'b' })], 3),
       )
       .mockResolvedValueOnce(page([backendDto({ _id: 'c' })]));
 

@@ -28,7 +28,11 @@
   --color-gris-0: #ffffff; /* Blanco */
   --color-gris-50: #f8fafc; /* Fondo de pagina */
   --color-gris-200: #e4e4e4; /* Divisores, placeholders */
-  --color-gris-50-a16: color-mix(in srgb, #f8fafc 16%, transparent); /* Divisor sobre azul */
+  --color-gris-50-a16: color-mix(
+    in srgb,
+    #f8fafc 16%,
+    transparent
+  ); /* Divisor sobre azul */
 
   /* ---- Semantics: fondos (fondo/*) ---- */
   --color-fondo-pagina: var(--color-gris-50);

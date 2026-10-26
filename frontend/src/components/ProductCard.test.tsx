@@ -30,9 +30,7 @@ describe('ProductCard variants', () => {
     const { container } = renderCard(<ProductCard product={baseProduct} />);
     const card = container.querySelector('article[data-variant]');
     expect(card).toHaveAttribute('data-variant', 'default');
-    expect(
-      screen.getByRole('button', { name: 'Agregar' }),
-    ).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Agregar' })).toBeEnabled();
   });
 
   it('resolves added when flagged and in stock', () => {
@@ -50,9 +48,7 @@ describe('ProductCard variants', () => {
     );
     const card = container.querySelector('article[data-variant]');
     expect(card).toHaveAttribute('data-variant', 'out-of-stock');
-    expect(
-      screen.getByRole('button', { name: 'Sin stock' }),
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sin stock' })).toBeDisabled();
     expect(screen.queryByText('Agregado')).not.toBeInTheDocument();
   });
 });
@@ -86,9 +82,7 @@ describe('ProductCard', () => {
   });
 
   it('formats the price for Argentina without visible decimals', () => {
-    renderCard(
-      <ProductCard product={{ ...baseProduct, price: 32000 }} />,
-    );
+    renderCard(<ProductCard product={{ ...baseProduct, price: 32000 }} />);
 
     expect(screen.getByText('$32.000')).toBeInTheDocument();
   });
@@ -207,10 +201,9 @@ describe('ProductCard image fallback', () => {
 
     fireEvent.error(screen.getByRole('img', { name: baseProduct.name }));
 
-    expect(screen.queryByRole('img', { name: baseProduct.name })).toHaveAttribute(
-      'aria-label',
-      baseProduct.name,
-    );
+    expect(
+      screen.queryByRole('img', { name: baseProduct.name }),
+    ).toHaveAttribute('aria-label', baseProduct.name);
     expect(screen.queryByAltText(baseProduct.name)).not.toBeInTheDocument();
 
     // Figma placeholder: large dark-navy broken-image icon on gris-200.

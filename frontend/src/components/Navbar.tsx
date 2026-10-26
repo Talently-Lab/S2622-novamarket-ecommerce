@@ -18,23 +18,31 @@ const SELECTED_CATEGORY_CLASS =
 
 function CartButton({ count }: { count: number }) {
   return (
-    <button
-      type="button"
+    <Link
+      to="/carrito"
       aria-label="Carrito"
       className="relative flex h-12 w-12 shrink-0 items-center justify-center"
     >
-      <Icon name="shopping_cart" className="text-2xl text-accion-primaria" />
+      <Icon name="shopping_cart" className="text-accion-primaria text-2xl" />
+      {/* Figma paints the count in the navbar blue over the orange accent,
+          not in white like the other action surfaces. */}
       <span
         aria-label={`${count} productos en el carrito`}
-        className="absolute right-0 top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-accion-acento px-1 text-caption-badge font-semibold text-texto-sobre-accion"
+        className="bg-accion-acento text-caption-badge text-texto-principal absolute top-1 right-0 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-semibold"
       >
         {count}
       </span>
-    </button>
+    </Link>
   );
 }
 
-function SearchForm({ id, className = '' }: { id: string; className?: string }) {
+function SearchForm({
+  id,
+  className = '',
+}: {
+  id: string;
+  className?: string;
+}) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
 
@@ -57,12 +65,12 @@ function SearchForm({ id, className = '' }: { id: string; className?: string }) 
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Buscar productos"
         aria-label="Buscar productos"
-        className="h-12 w-full rounded-lg bg-fondo-superficie pr-12 pl-4 text-cuerpo text-texto-principal placeholder:text-texto-secundario focus:outline-2 focus:outline-borde-foco"
+        className="bg-fondo-superficie text-cuerpo text-texto-principal placeholder:text-texto-secundario focus:outline-borde-foco h-12 w-full rounded-lg pr-12 pl-4 focus:outline-2"
       />
       <button
         type="submit"
         aria-label="Buscar"
-        className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-texto-secundario"
+        className="text-texto-secundario absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center"
       >
         <Icon name="search" className="text-xl" />
       </button>
@@ -145,7 +153,7 @@ export default function Navbar({ count = 2 }: NavbarProps) {
   }
 
   return (
-    <header className="bg-fondo-estructura font-sans text-texto-sobre-estructura">
+    <header className="bg-fondo-estructura text-texto-sobre-estructura font-sans">
       {/* Mobile top bar */}
       <div className="flex h-16 items-center justify-between px-4 md:hidden">
         <button
@@ -171,7 +179,7 @@ export default function Navbar({ count = 2 }: NavbarProps) {
       {/* Desktop top bar */}
       <div className="hidden justify-center px-20 md:flex">
         <div className="flex w-full max-w-[1280px] items-center justify-between gap-8 py-4">
-          <NavLink to="/" className="shrink-0 text-titulo-2 font-bold">
+          <NavLink to="/" className="text-titulo-2 shrink-0 font-bold">
             NovaMarket
           </NavLink>
           <SearchForm id="navbar-search-desktop" className="w-[640px] shrink" />
@@ -185,11 +193,14 @@ export default function Navbar({ count = 2 }: NavbarProps) {
       {/* Divider between top bar and categories */}
       <div
         aria-hidden="true"
-        className="hidden border-t border-borde-divisor-estructura md:block"
+        className="border-borde-divisor-estructura hidden border-t md:block"
       />
 
       {/* Desktop category bar */}
-      <nav aria-label="Categorías" className="hidden justify-center px-20 md:flex">
+      <nav
+        aria-label="Categorías"
+        className="hidden justify-center px-20 md:flex"
+      >
         <div className="flex w-full max-w-[1280px] items-center gap-8 py-6">
           <Link
             to="/productos"
@@ -219,12 +230,12 @@ export default function Navbar({ count = 2 }: NavbarProps) {
       {menuOpen ? (
         <nav
           aria-label="Menú principal"
-          className="border-t border-borde-divisor-estructura px-4 py-4 md:hidden"
+          className="border-borde-divisor-estructura border-t px-4 py-4 md:hidden"
         >
           <div className="flex flex-col items-start gap-3">
             <SessionLinks onNavigate={() => setMenuOpen(false)} />
           </div>
-          <div className="mt-4 flex flex-col items-start gap-3 border-t border-borde-divisor-estructura pt-4">
+          <div className="border-borde-divisor-estructura mt-4 flex flex-col items-start gap-3 border-t pt-4">
             <Link
               to="/productos"
               onClick={() => setMenuOpen(false)}
