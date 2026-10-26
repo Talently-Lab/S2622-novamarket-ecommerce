@@ -15,16 +15,29 @@ console.log(`¿JWT_SECRET existe en el entorno?: ${process.env.JWT_SECRET ? "SÍ
 
 const app = express();
 
-const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', //URL de front
-  methods: ['GET', 'POST', 'PUT','PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200
-};
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173'];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Permite Postman, Swagger y requests sin Origin
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('No permitido por CORS'));
+    },
+    credentials: true,
+  })
+);
 
 connectDB();
-
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.get('/api-docs.json', (req, res) => res.json(swaggerDocument));
