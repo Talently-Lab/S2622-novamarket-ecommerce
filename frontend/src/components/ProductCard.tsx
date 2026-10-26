@@ -50,7 +50,7 @@ export default function ProductCard({
     <article
       aria-labelledby={nameId}
       data-variant={variant}
-      className="flex w-full flex-col overflow-hidden rounded-2xl border border-borde-divisor bg-fondo-superficie"
+      className="border-borde-divisor bg-fondo-superficie flex w-full flex-col overflow-hidden rounded-2xl border"
     >
       {/* One link wraps image + title + price so the whole visual block is
           clickable with a single tab stop. The CTA stays outside the link:
@@ -58,15 +58,18 @@ export default function ProductCard({
       <Link
         to={detailHref}
         aria-label={product.name}
-        className="group flex flex-col focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-borde-foco"
+        className="group focus-visible:outline-borde-foco flex flex-col focus-visible:outline-2 focus-visible:outline-offset-[-2px]"
       >
         {showImagePlaceholder ? (
           <div
             role="img"
             aria-label={product.name}
-            className="flex aspect-square w-full items-center justify-center bg-fondo-deshabilitado"
+            className="bg-fondo-deshabilitado flex aspect-square w-full items-center justify-center"
           >
-            <Icon name="image_not_supported" className="text-4xl text-texto-principal" />
+            <Icon
+              name="image_not_supported"
+              className="text-texto-principal text-4xl"
+            />
           </div>
         ) : (
           <img
@@ -78,17 +81,17 @@ export default function ProductCard({
             fetchPriority={priority ? 'high' : undefined}
             decoding="async"
             onError={() => setImageFailed(true)}
-            className="aspect-square w-full bg-fondo-deshabilitado object-cover"
+            className="bg-fondo-deshabilitado aspect-square w-full object-cover"
           />
         )}
         <div className="flex flex-col gap-2 px-3 pt-3">
           <h2
             id={nameId}
-            className="h-10 line-clamp-2 overflow-hidden text-cuerpo-chico font-normal text-texto-principal group-hover:underline"
+            className="text-cuerpo-chico text-texto-principal line-clamp-2 h-10 overflow-hidden font-normal group-hover:underline"
           >
             {product.name}
           </h2>
-          <p className="text-precio font-bold text-texto-principal">
+          <p className="text-precio text-texto-principal font-bold">
             {formatPrice(product.price)}
           </p>
         </div>
@@ -100,7 +103,7 @@ export default function ProductCard({
         {variant === 'added' ? (
           <p
             role="status"
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-fondo-exito text-cuerpo-boton font-semibold text-texto-sobre-exito"
+            className="bg-fondo-exito text-cuerpo-boton text-texto-sobre-exito flex h-11 w-full items-center justify-center gap-2 rounded-md font-semibold"
           >
             <Icon name="check" />
             Agregado

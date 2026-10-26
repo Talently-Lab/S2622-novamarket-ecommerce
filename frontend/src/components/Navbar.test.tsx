@@ -177,17 +177,17 @@ describe('Navbar', () => {
   it('shows the default cart badge count from Figma', () => {
     renderNavbar();
 
-    expect(
-      screen.getAllByLabelText('2 productos en el carrito'),
-    ).toHaveLength(2);
+    expect(screen.getAllByLabelText('2 productos en el carrito')).toHaveLength(
+      2,
+    );
   });
 
   it('accepts a dynamic cart count', () => {
     renderNavbar({ count: 5 });
 
-    expect(
-      screen.getAllByLabelText('5 productos en el carrito'),
-    ).toHaveLength(2);
+    expect(screen.getAllByLabelText('5 productos en el carrito')).toHaveLength(
+      2,
+    );
   });
 
   it('toggles the mobile menu drawer', async () => {
