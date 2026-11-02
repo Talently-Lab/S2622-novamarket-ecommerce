@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCart } from '../context/CartContext.tsx';
+import { useAddedFeedback } from '../hooks/useAddedFeedback.ts';
 import { Link } from 'react-router';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
@@ -32,9 +33,16 @@ function pickFeatured(
   return picks.slice(0, count);
 }
 
-function FeaturedCard({ product }: { product: Product }) {
+function FeaturedCard({
+  product,
+  added,
+  onAdd,
+}: {
+  product: Product;
+  added: boolean;
+  onAdd: (product: Product) => void;
+}) {
   const [imageFailed, setImageFailed] = useState(false);
-  const { addItem } = useCart();
   const detailHref = `/productos/${product.id}`;
 
   return (
@@ -83,14 +91,26 @@ function FeaturedCard({ product }: { product: Product }) {
         </span>
       </Link>
       <span className="flex flex-col gap-2 p-3 pt-2">
-        <button
-          type="button"
-          onClick={() => addItem(product)}
-          aria-label={`Agregar ${product.name} al carrito`}
-          className="bg-accion-primaria text-cuerpo-boton text-texto-sobre-accion hover:bg-accion-primaria-hover flex h-11 w-full items-center justify-center rounded-md font-semibold"
-        >
-          Agregar
-        </button>
+        {added ? (
+          // Figma `Added-to-cart` (178:1988): green confirmation replaces the
+          // CTA for a moment after the product lands in the cart.
+          <p
+            role="status"
+            className="bg-fondo-exito text-cuerpo-boton text-texto-sobre-exito flex h-11 w-full items-center justify-center gap-2 rounded-md font-semibold"
+          >
+            <Icon name="check" />
+            Agregado
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onAdd(product)}
+            aria-label={`Agregar ${product.name} al carrito`}
+            className="bg-accion-primaria text-cuerpo-boton text-texto-sobre-accion hover:bg-accion-primaria-hover flex h-11 w-full items-center justify-center rounded-md font-semibold"
+          >
+            Agregar
+          </button>
+        )}
       </span>
     </li>
   );
@@ -118,7 +138,14 @@ export default function FeaturedProducts({
   showSeeAll = false,
 }: FeaturedProductsProps) {
   const [featured, setFeatured] = useState<Product[] | null>(null);
+  const { addItem } = useCart();
+  const { addedId, markAdded } = useAddedFeedback();
   const headingId = `featured-${slugifyTitle(title)}`;
+
+  function handleAdd(product: Product) {
+    addItem(product);
+    markAdded(String(product.id));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -165,7 +192,12 @@ export default function FeaturedProducts({
               </li>
             ))
           : featured.map((product) => (
-              <FeaturedCard key={product.id} product={product} />
+              <FeaturedCard
+                key={product.id}
+                product={product}
+                added={addedId === String(product.id)}
+                onAdd={handleAdd}
+              />
             ))}
       </ul>
     </section>

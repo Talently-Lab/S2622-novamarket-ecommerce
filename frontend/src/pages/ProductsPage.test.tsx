@@ -351,6 +351,15 @@ describe('ProductsPage', () => {
     expect(document.body.style.overflow).toBe('hidden');
   });
 
+  it('confirms the add on the card CTA before returning to its idle state', async () => {
+    renderPage();
+
+    const card = (await screen.findAllByRole('article'))[0];
+    fireEvent.click(within(card).getByRole('button', { name: /agregar/i }));
+
+    expect(within(card).getByRole('status')).toHaveTextContent('Agregado');
+  });
+
   it('prioritizes the first cards and lazy-loads the rest', async () => {
     mockedGetProducts.mockResolvedValueOnce(
       Array.from({ length: 8 }, (_, index) => product(index + 1)),

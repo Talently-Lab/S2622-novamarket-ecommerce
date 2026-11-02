@@ -9,9 +9,11 @@ import ProductCard from '../components/ProductCard.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
 import { useCart } from '../context/CartContext.tsx';
+import { useAddedFeedback } from '../hooks/useAddedFeedback.ts';
 import { useMediaQuery } from '../hooks/useMediaQuery.ts';
 import { useCategories } from '../hooks/useCategories.ts';
 import { useProducts } from '../hooks/useProducts.ts';
+import type { Product } from '../types/product.ts';
 
 const MOBILE_PAGE_SIZE = 10;
 const DESKTOP_PAGE_SIZE = 8;
@@ -43,6 +45,12 @@ export default function ProductsPage() {
   } = useProducts();
   const { categories: categoryOptions, labelFor } = useCategories();
   const { addItem } = useCart();
+  const { addedId, markAdded } = useAddedFeedback();
+
+  function handleAdd(product: Product) {
+    addItem(product);
+    markAdded(String(product.id));
+  }
   const [searchParams, setSearchParams] = useSearchParams();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   // Single paging cursor: below lg it grows as pages are appended, from lg
@@ -279,7 +287,8 @@ export default function ProductsPage() {
                       <ProductCard
                         product={product}
                         priority={index < PRIORITY_COUNT}
-                        onAdd={addItem}
+                        added={addedId === String(product.id)}
+                        onAdd={handleAdd}
                       />
                     </li>
                   ))}
