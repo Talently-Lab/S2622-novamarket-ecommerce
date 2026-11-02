@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useCart } from '../context/CartContext.tsx';
 import { Link } from 'react-router';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
@@ -33,6 +34,7 @@ function pickFeatured(
 
 function FeaturedCard({ product }: { product: Product }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const { addItem } = useCart();
   const detailHref = `/productos/${product.id}`;
 
   return (
@@ -83,6 +85,7 @@ function FeaturedCard({ product }: { product: Product }) {
       <span className="flex flex-col gap-2 p-3 pt-2">
         <button
           type="button"
+          onClick={() => addItem(product)}
           aria-label={`Agregar ${product.name} al carrito`}
           className="bg-accion-primaria text-cuerpo-boton text-texto-sobre-accion hover:bg-accion-primaria-hover flex h-11 w-full items-center justify-center rounded-md font-semibold"
         >

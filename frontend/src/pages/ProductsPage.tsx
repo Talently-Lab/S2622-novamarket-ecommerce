@@ -8,6 +8,7 @@ import Icon from '../components/icons/Icon.tsx';
 import ProductCard from '../components/ProductCard.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
+import { useCart } from '../context/CartContext.tsx';
 import { useMediaQuery } from '../hooks/useMediaQuery.ts';
 import { useCategories } from '../hooks/useCategories.ts';
 import { useProducts } from '../hooks/useProducts.ts';
@@ -28,7 +29,6 @@ const SORT_OPTIONS = [
 // a 264px rail next to a three-column grid; below lg the same fields live in
 // the "Filtros" bottom sheet and the grid drops to two columns. The URL is the
 // single source of truth for every filter, so deep links keep working.
-// No cart wiring: cards render without onAdd by design.
 export default function ProductsPage() {
   const {
     products,
@@ -42,6 +42,7 @@ export default function ProductsPage() {
     retry,
   } = useProducts();
   const { categories: categoryOptions, labelFor } = useCategories();
+  const { addItem } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   // Single paging cursor: below lg it grows as pages are appended, from lg
@@ -278,6 +279,7 @@ export default function ProductsPage() {
                       <ProductCard
                         product={product}
                         priority={index < PRIORITY_COUNT}
+                        onAdd={addItem}
                       />
                     </li>
                   ))}

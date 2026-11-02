@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
 import { Link } from 'react-router';
 import FeaturedProducts from '../components/FeaturedProducts.tsx';
+import { useCart } from '../context/CartContext.tsx';
 import Icon from '../components/icons/Icon.tsx';
 import type { CartItem } from '../types/cart.ts';
 import { formatPrice } from '../utils/format.ts';
@@ -12,6 +14,8 @@ export interface CartPageProps {
   onDecrement?: (productId: string) => void;
   onRemove?: (productId: string) => void;
   onCheckout?: () => void;
+  /** Confirmation shown on the empty state after a simulated checkout. */
+  notice?: string;
 }
 
 const noop = () => {};
@@ -118,7 +122,7 @@ function CartRow({
   );
 }
 
-function EmptyCart() {
+function EmptyCart({ notice }: { notice?: string }) {
   return (
     <div className="flex flex-col items-center px-4 py-12 text-center">
       <Icon name="shopping_cart" className="text-texto-secundario text-7xl" />
@@ -128,6 +132,14 @@ function EmptyCart() {
       <p className="text-cuerpo text-texto-secundario mt-2">
         Sumá productos para armar tu setup
       </p>
+      {notice ? (
+        <p
+          role="status"
+          className="bg-fondo-exito text-cuerpo text-texto-sobre-exito mt-4 rounded-md px-4 py-2"
+        >
+          {notice}
+        </p>
+      ) : null}
       <Button
         variant="primary"
         asChild
@@ -143,13 +155,14 @@ function EmptyCart() {
   );
 }
 
-export default function CartPage({
+export function CartView({
   items = [],
   discount = 0,
   onIncrement = noop,
   onDecrement = noop,
   onRemove = noop,
   onCheckout = noop,
+  notice,
 }: CartPageProps) {
   const subtotal = items.reduce(
     (sum, item) => sum + item.unitPrice * item.quantity,
@@ -166,7 +179,7 @@ export default function CartPage({
       }
     >
       {items.length === 0 ? (
-        <EmptyCart />
+        <EmptyCart notice={notice} />
       ) : (
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
           <section aria-label="Productos del carrito">
@@ -248,5 +261,30 @@ export default function CartPage({
         </div>
       )}
     </main>
+  );
+}
+
+/**
+ * Cart page connected to the localStorage cart. The presentational `CartView`
+ * stays exported so the layout can be rendered with injected items.
+ */
+export default function CartPage() {
+  const { items, increment, decrement, remove, clear } = useCart();
+  const [notice, setNotice] = useState<string>();
+
+  function handleCheckout() {
+    clear();
+    setNotice('Compra simulada: no se realizó ningún cobro.');
+  }
+
+  return (
+    <CartView
+      items={items}
+      onIncrement={increment}
+      onDecrement={decrement}
+      onRemove={remove}
+      onCheckout={handleCheckout}
+      notice={notice}
+    />
   );
 }

@@ -9,20 +9,18 @@ import {
 } from 'react-router';
 import { trackEvent } from '../analytics/trackEvent.ts';
 import { useAuth } from '../context/AuthContext.tsx';
+import { useCart } from '../context/CartContext.tsx';
 import { useCategories } from '../hooks/useCategories.ts';
 import Icon from './icons/Icon.tsx';
-
-// TODO(cart): wire `count` to a real cart context once it exists.
-// The default 2 mirrors the Figma badge example, it is not live data.
-interface NavbarProps {
-  count?: number;
-}
 
 // Selected category marker from Nav_categorias.png: orange underline.
 const SELECTED_CATEGORY_CLASS =
   'font-semibold underline decoration-accion-acento decoration-2 underline-offset-4';
 
-function CartButton({ count }: { count: number }) {
+function CartButton() {
+  const { count } = useCart();
+  const label = `${count} ${count === 1 ? 'producto' : 'productos'} en el carrito`;
+
   return (
     <Link
       to="/carrito"
@@ -32,12 +30,14 @@ function CartButton({ count }: { count: number }) {
       <Icon name="shopping_cart" className="text-accion-primaria text-2xl" />
       {/* Figma paints the count in the navbar blue over the orange accent,
           not in white like the other action surfaces. */}
-      <span
-        aria-label={`${count} productos en el carrito`}
-        className="bg-accion-acento text-caption-badge text-texto-principal absolute top-1 right-0 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-semibold"
-      >
-        {count}
-      </span>
+      {count > 0 ? (
+        <span
+          aria-label={label}
+          className="bg-accion-acento text-caption-badge text-texto-principal absolute top-1 right-0 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-semibold"
+        >
+          {count}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -136,7 +136,7 @@ function SessionLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export default function Navbar({ count = 2 }: NavbarProps) {
+export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const { pathname } = useLocation();
@@ -179,7 +179,7 @@ export default function Navbar({ count = 2 }: NavbarProps) {
         <NavLink to="/" className="text-titulo-3 font-bold">
           NovaMarket
         </NavLink>
-        <CartButton count={count} />
+        <CartButton />
       </div>
 
       {/* Mobile search bar */}
@@ -199,7 +199,7 @@ export default function Navbar({ count = 2 }: NavbarProps) {
           />
           <div className="flex shrink-0 items-center gap-4">
             <SessionLinks />
-            <CartButton count={count} />
+            <CartButton />
           </div>
         </div>
       </div>

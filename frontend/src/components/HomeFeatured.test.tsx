@@ -6,6 +6,7 @@ import {
   within,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import { CartProvider } from '../context/CartContext.tsx';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
@@ -59,7 +60,9 @@ const MOCK_PRODUCTS: Product[] = [
 function renderFeatured() {
   return render(
     <MemoryRouter>
-      <HomeFeatured />
+      <CartProvider>
+        <HomeFeatured />
+      </CartProvider>
     </MemoryRouter>,
   );
 }

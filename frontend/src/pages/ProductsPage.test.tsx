@@ -13,6 +13,7 @@ import { getProductCategories } from '../services/formdataService.ts';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
 import { system } from '../theme/system.ts';
+import { CartProvider } from '../context/CartContext.tsx';
 import ProductsPage from './ProductsPage.tsx';
 
 vi.mock('../services/productService.ts', () => ({
@@ -42,7 +43,9 @@ function renderPage(initialEntry = '/productos') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <ChakraProvider value={system}>
-        <ProductsPage />
+        <CartProvider>
+          <ProductsPage />
+        </CartProvider>
       </ChakraProvider>
     </MemoryRouter>,
   );
