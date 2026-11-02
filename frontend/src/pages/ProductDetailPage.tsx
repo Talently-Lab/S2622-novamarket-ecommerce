@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Button } from '@chakra-ui/react';
 import { trackEvent } from '../analytics/trackEvent.ts';
+import AddedAlert from '../components/AddedAlert.tsx';
 import Icon from '../components/icons/Icon.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import { useCart } from '../context/CartContext.tsx';
@@ -172,41 +173,33 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Figma `648:5146` ("Alert Added-to-cart"): the CTA becomes a
-              green confirmation for 2 s, then returns to the button. */}
           <div className="border-borde-divisor mt-8 border-t pt-6">
-            {addedId === String(product.id) ? (
-              <p
-                role="status"
-                className="text-cuerpo-boton bg-fondo-exito text-texto-sobre-exito flex h-12 w-full items-center justify-center gap-2 rounded-md px-4 font-semibold"
-              >
-                <Icon name="check" />
-                Agregado al carrito
-              </p>
-            ) : (
-              <Button
-                variant="primary"
-                disabled={product.stock <= 0}
-                onClick={() => {
-                  trackEvent('click_add_to_cart', {
-                    id_producto: product.id,
-                    nombre_producto: product.name,
-                    precio: product.price,
-                    cantidad: 1,
-                    origen: 'ficha',
-                  });
-                  markAdded(String(product.id));
-                  addItem(product);
-                }}
-                style={{ width: '100%', height: '48px' }}
-              >
-                <Icon name="shopping_cart" className="mr-2 text-xl" />
-                {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
-              </Button>
-            )}
+            <Button
+              variant="primary"
+              disabled={product.stock <= 0}
+              onClick={() => {
+                trackEvent('click_add_to_cart', {
+                  id_producto: product.id,
+                  nombre_producto: product.name,
+                  precio: product.price,
+                  cantidad: 1,
+                  origen: 'ficha',
+                });
+                markAdded(String(product.id));
+                addItem(product);
+              }}
+              style={{ width: '100%', height: '48px' }}
+            >
+              <Icon name="shopping_cart" className="mr-2 text-xl" />
+              {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
+            </Button>
           </div>
         </div>
       </div>
+
+      {/* Figma `648:5146`: the confirmation floats over the page, it is not a
+          state of the CTA. */}
+      <AddedAlert visible={addedId === String(product.id)} />
     </main>
   );
 }

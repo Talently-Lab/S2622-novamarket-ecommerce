@@ -140,7 +140,7 @@ describe('NovaMarket landing page', () => {
     expect(screen.getByText('Stock disponible: 10 u.')).toBeInTheDocument();
   });
 
-  it('confirms the add on the detail page CTA and fills the cart', async () => {
+  it('floats the added confirmation on the detail page and fills the cart', async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={['/productos/mongo-id-3']}>
@@ -150,15 +150,18 @@ describe('NovaMarket landing page', () => {
       </MemoryRouter>,
     );
 
-    await user.click(
-      await screen.findByRole('button', { name: /agregar al carrito/i }),
-    );
+    const cta = await screen.findByRole('button', {
+      name: /agregar al carrito/i,
+    });
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Agregado al carrito',
-    );
-    expect(
-      screen.queryByRole('button', { name: /agregar al carrito/i }),
-    ).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+
+    await user.click(cta);
+
+    const alert = await screen.findByRole('status');
+    expect(alert).toHaveTextContent('Agregado al carrito');
+    // The alert is an overlay: the CTA keeps its own label and stays clickable.
+    expect(cta).toBeInTheDocument();
+    expect(cta).toHaveTextContent('Agregar al carrito');
   });
 });
