@@ -78,7 +78,7 @@ export default function HomeCategories() {
             <span className="flex h-[110px] w-[110px] items-center justify-center rounded-xl bg-[#EDF0F5] md:h-[240px] md:w-[240px]">
               <Icon
                 name="arrow_outward"
-                className="text-texto-principal text-2xl md:text-4xl"
+                className="text-accion-primaria text-[32px]! md:text-[40px]!"
               />
             </span>
             <span className="text-cuerpo-boton text-texto-secundario md:text-titulo-3 text-center font-semibold md:font-bold">
