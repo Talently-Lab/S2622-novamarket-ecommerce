@@ -164,6 +164,33 @@ describe('ProductsPage', () => {
     expect(screen.getByText('0 productos')).toBeInTheDocument();
   });
 
+  it.each([
+    { layout: 'desktop rail', isDesktop: true },
+    { layout: 'mobile filter sheet', isDesktop: false },
+  ])('shows price examples in the $layout inputs', async ({ isDesktop }) => {
+    stubMatchMedia(isDesktop);
+    mockedGetProducts.mockResolvedValueOnce([product(1)]);
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    const filters = isDesktop
+      ? screen
+      : (() => {
+          fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+          return within(screen.getByRole('dialog', { name: 'Filtros' }));
+        })();
+
+    expect(filters.getByRole('textbox', { name: 'Mínimo' })).toHaveAttribute(
+      'placeholder',
+      '$20.000',
+    );
+    expect(filters.getByRole('textbox', { name: 'Máximo' })).toHaveAttribute(
+      'placeholder',
+      '$50.000',
+    );
+  });
+
   it('shows the error state and retries on demand', async () => {
     mockedGetProducts.mockRejectedValueOnce(
       new ApiError('No se pudieron cargar los productos', 500),
@@ -351,13 +378,15 @@ describe('ProductsPage', () => {
     expect(document.body.style.overflow).toBe('hidden');
   });
 
-  it('confirms the add on the card CTA before returning to its idle state', async () => {
+  it('shows both the card confirmation and the added alert after adding a product', async () => {
+    mockedGetProducts.mockResolvedValueOnce([product(1)]);
     renderPage();
 
     const card = (await screen.findAllByRole('article'))[0];
     fireEvent.click(within(card).getByRole('button', { name: /agregar/i }));
 
     expect(within(card).getByRole('status')).toHaveTextContent('Agregado');
+    expect(screen.getByText('Agregado al carrito')).toBeInTheDocument();
   });
 
   it('prioritizes the first cards and lazy-loads the rest', async () => {

@@ -67,9 +67,11 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="max-w-md">
-          <ProductCardSkeleton />
+      <main className="flex w-full justify-center px-4 pt-6 pb-4 md:px-20">
+        <div className="w-full max-w-[1280px]">
+          <div className="max-w-md">
+            <ProductCardSkeleton />
+          </div>
         </div>
       </main>
     );
@@ -77,129 +79,135 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-12 text-center">
-        <h1 className="text-titulo-2 text-texto-principal font-bold">
-          Producto no encontrado
-        </h1>
-        <p className="text-cuerpo text-texto-secundario mt-2">
-          {error ?? 'El producto solicitado no existe.'}
-        </p>
-        <Link
-          to="/productos"
-          className="text-cuerpo-boton text-accion-primaria hover:text-accion-primaria-hover mt-6 inline-flex items-center gap-1 font-semibold underline"
-        >
-          <Icon name="chevron_left" className="text-xl" />
-          Volver al catálogo
-        </Link>
+      <main className="flex w-full justify-center px-4 pt-6 pb-4 text-center md:px-20">
+        <div className="w-full max-w-[1280px]">
+          <h1 className="text-titulo-2 text-texto-principal font-bold">
+            Producto no encontrado
+          </h1>
+          <p className="text-cuerpo text-texto-secundario mt-2">
+            {error ?? 'El producto solicitado no existe.'}
+          </p>
+          <Link
+            to="/productos"
+            className="text-cuerpo-boton text-accion-primaria hover:text-accion-primaria-hover mt-6 inline-flex items-center gap-1 font-semibold underline"
+          >
+            <Icon name="chevron_left" className="text-xl" />
+            Volver al catálogo
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      {/* Navegación / Breadcrumbs */}
-      <nav aria-label="Miga de pan">
-        <ol className="text-caption text-texto-secundario flex items-center gap-1">
-          <li>
-            <Link to="/" className="hover:text-texto-principal underline">
-              Inicio
-            </Link>
-          </li>
-          <li aria-hidden="true">/</li>
-          <li>
-            <Link
-              to={`/productos?categoria=${product.category}`}
-              className="hover:text-texto-principal underline"
-            >
-              {labelFor(product.category)}
-            </Link>
-          </li>
-          <li aria-hidden="true">/</li>
-          <li>
-            <span
-              aria-current="page"
-              className="text-texto-principal font-semibold"
-            >
-              {product.name}
-            </span>
-          </li>
-        </ol>
-      </nav>
-
-      <div className="mt-6 grid gap-8 lg:grid-cols-2">
-        {/* Imagen del producto */}
-        <div className="border-borde-divisor bg-fondo-superficie aspect-square w-full overflow-hidden rounded-xl border">
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
-
-        <div className="flex flex-col justify-between">
-          <div>
-            <span className="text-caption text-texto-secundario font-semibold tracking-wider uppercase">
-              {labelFor(product.category)}
-            </span>
-            <h1 className="text-titulo-1 text-texto-principal mt-1 font-bold">
-              {product.name}
-            </h1>
-            <p className="text-precio text-texto-principal mt-3 font-bold">
-              {formatPrice(product.price)}
-            </p>
-
-            <div className="mt-2 flex items-center gap-2">
+    // Figma `D - Detalle` #648:5087: body `24px 80px 16px` on the shared
+    // 1280px column, with a 560px image and a 48px gutter.
+    <main className="flex w-full justify-center px-4 pt-6 pb-4 md:px-20">
+      <div className="w-full max-w-[1280px]">
+        {/* Navegación / Breadcrumbs */}
+        <nav aria-label="Miga de pan">
+          <ol className="text-caption text-texto-secundario flex items-center gap-1">
+            <li>
+              <Link to="/" className="hover:text-texto-principal underline">
+                Inicio
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <Link
+                to={`/productos?categoria=${product.category}`}
+                className="hover:text-texto-principal underline"
+              >
+                {labelFor(product.category)}
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
               <span
-                className={`inline-block h-2.5 w-2.5 rounded-full ${
-                  product.stock > 0 ? 'bg-green-500' : 'bg-red-500'
-                }`}
-              />
-              <span className="text-cuerpo-chico text-texto-secundario">
-                {product.stock > 0
-                  ? `Stock disponible: ${product.stock} u.`
-                  : 'Sin stock'}
+                aria-current="page"
+                className="text-texto-principal font-semibold"
+              >
+                {product.name}
               </span>
-            </div>
+            </li>
+          </ol>
+        </nav>
 
-            <hr className="border-borde-divisor my-6" />
-
-            <div>
-              <h2 className="text-cuerpo-chico-label text-texto-principal font-bold">
-                Descripción
-              </h2>
-              <p className="text-cuerpo text-texto-secundario mt-2 whitespace-pre-line">
-                {product.description || 'Sin descripción disponible.'}
-              </p>
-            </div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:gap-8 xl:grid-cols-[560px_minmax(0,1fr)] xl:gap-12 xl:pr-12">
+          {/* Imagen del producto */}
+          <div className="border-borde-divisor bg-fondo-superficie aspect-square w-full overflow-hidden rounded-xl border">
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="h-full w-full object-cover"
+            />
           </div>
 
-          <div className="border-borde-divisor mt-8 border-t pt-6">
-            <Button
-              variant="primary"
-              disabled={product.stock <= 0}
-              onClick={() => {
-                trackEvent('click_add_to_cart', {
-                  id_producto: product.id,
-                  nombre_producto: product.name,
-                  precio: product.price,
-                  cantidad: 1,
-                  origen: 'ficha',
-                });
-                markAdded(String(product.id));
-                addItem(product);
-              }}
-              style={{ width: '100%', height: '48px' }}
-            >
-              <Icon name="shopping_cart" className="mr-2 text-xl" />
-              {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
-            </Button>
+          <div className="flex flex-col justify-between">
+            <div>
+              <span className="text-caption text-texto-secundario font-semibold tracking-wider uppercase">
+                {labelFor(product.category)}
+              </span>
+              <h1 className="text-titulo-1 text-texto-principal mt-1 font-bold">
+                {product.name}
+              </h1>
+              <p className="text-precio text-texto-principal mt-3 font-bold">
+                {formatPrice(product.price)}
+              </p>
+
+              <div className="mt-2 flex items-center gap-2">
+                <span
+                  className={`inline-block h-2.5 w-2.5 rounded-full ${
+                    product.stock > 0 ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                />
+                <span className="text-cuerpo-chico text-texto-secundario">
+                  {product.stock > 0
+                    ? `Stock disponible: ${product.stock} u.`
+                    : 'Sin stock'}
+                </span>
+              </div>
+
+              <hr className="border-borde-divisor my-6" />
+
+              <div>
+                <h2 className="text-cuerpo-chico-label text-texto-principal font-bold">
+                  Descripción
+                </h2>
+                <p className="text-cuerpo text-texto-secundario mt-2 whitespace-pre-line">
+                  {product.description || 'Sin descripción disponible.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-borde-divisor mt-8 border-t pt-6">
+              <Button
+                variant="primary"
+                disabled={product.stock <= 0}
+                onClick={() => {
+                  trackEvent('click_add_to_cart', {
+                    id_producto: product.id,
+                    nombre_producto: product.name,
+                    precio: product.price,
+                    cantidad: 1,
+                    origen: 'ficha',
+                  });
+                  markAdded(String(product.id));
+                  addItem(product);
+                }}
+                style={{ width: '100%', height: '48px' }}
+              >
+                <Icon name="shopping_cart" className="mr-2 text-xl" />
+                {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Figma `648:5146`: the confirmation floats over the page, it is not a
+        {/* Figma `648:5146`: the confirmation floats over the page, it is not a
           state of the CTA. */}
-      <AddedAlert visible={addedId === String(product.id)} />
+        <AddedAlert visible={addedId === String(product.id)} />
+      </div>
     </main>
   );
 }

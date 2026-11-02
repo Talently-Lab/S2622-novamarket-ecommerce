@@ -103,6 +103,7 @@ export default function CatalogFilters({
               type="text"
               inputMode="numeric"
               value={min}
+              placeholder="$20.000"
               onChange={(event) => setMin(toDigits(event.target.value))}
               onBlur={commitPrice}
               onKeyDown={(event) => {
@@ -120,6 +121,7 @@ export default function CatalogFilters({
               type="text"
               inputMode="numeric"
               value={max}
+              placeholder="$50.000"
               onChange={(event) => setMax(toDigits(event.target.value))}
               onBlur={commitPrice}
               onKeyDown={(event) => {

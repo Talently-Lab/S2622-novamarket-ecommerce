@@ -5,6 +5,7 @@ import CatalogFilters from '../components/CatalogFilters.tsx';
 import type { CatalogFilterValues } from '../components/CatalogFilters.tsx';
 import CategoryFilter from '../components/CategoryFilter.tsx';
 import Icon from '../components/icons/Icon.tsx';
+import AddedAlert from '../components/AddedAlert.tsx';
 import ProductCard from '../components/ProductCard.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
 import ProductsEmptyState from '../components/ProductsEmptyState.tsx';
@@ -160,7 +161,7 @@ export default function ProductsPage() {
   );
 
   return (
-    <main className="flex w-full justify-center px-4 py-8 md:px-20">
+    <main className="flex w-full justify-center px-4 pt-6 pb-20 md:px-20 md:pb-[200px]">
       <div className="w-full max-w-[1280px]">
         <nav aria-label="Miga de pan">
           <ol className="flex items-center gap-1">
@@ -350,6 +351,7 @@ export default function ProductsPage() {
           </section>
         </div>
       </div>
+      <AddedAlert visible={addedId !== null} />
     </main>
   );
 }
