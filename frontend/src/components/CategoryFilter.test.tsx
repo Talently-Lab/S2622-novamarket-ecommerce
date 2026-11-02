@@ -30,9 +30,9 @@ function renderFilter(value = '', onChange = vi.fn()) {
 }
 
 function openSheet() {
-  const trigger = screen.getByRole('button', { name: 'Categorías' });
+  const trigger = screen.getByRole('button', { name: 'Filtros' });
   fireEvent.click(trigger);
-  const dialog = screen.getByRole('dialog', { name: 'Categorías' });
+  const dialog = screen.getByRole('dialog', { name: 'Filtros' });
   return { trigger, dialog };
 }
 
@@ -44,7 +44,7 @@ describe('CategoryFilter', () => {
   it('renders a button trigger with dialog semantics and no native select', () => {
     renderFilter();
 
-    const trigger = screen.getByRole('button', { name: 'Categorías' });
+    const trigger = screen.getByRole('button', { name: 'Filtros' });
     expect(trigger.tagName).toBe('BUTTON');
     expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -57,9 +57,10 @@ describe('CategoryFilter', () => {
     const { dialog } = openSheet();
 
     expect(dialog).toHaveAttribute('aria-modal', 'true');
-    expect(
-      screen.getByRole('button', { name: 'Categorías' }),
-    ).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Filtros' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
 
     const radios = within(dialog).getAllByRole('radio');
     expect(radios.map((radio) => radio.getAttribute('value'))).toEqual([
@@ -68,9 +69,7 @@ describe('CategoryFilter', () => {
       'perifericos',
       'gadgets',
     ]);
-    expect(
-      within(dialog).getByRole('radio', { name: 'Todos' }),
-    ).toBeChecked();
+    expect(within(dialog).getByRole('radio', { name: 'Todos' })).toBeChecked();
     expect(
       within(dialog).getByRole('button', { name: /ver 9 productos/i }),
     ).toBeInTheDocument();
@@ -91,9 +90,7 @@ describe('CategoryFilter', () => {
     const { onChange } = renderFilter();
     const { dialog } = openSheet();
 
-    fireEvent.click(
-      within(dialog).getByRole('radio', { name: 'Perifericos' }),
-    );
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Perifericos' }));
 
     expect(onChange).not.toHaveBeenCalled();
     expect(
@@ -104,7 +101,11 @@ describe('CategoryFilter', () => {
       within(dialog).getByRole('button', { name: 'Ver 5 productos' }),
     );
 
-    expect(onChange).toHaveBeenCalledWith('perifericos');
+    expect(onChange).toHaveBeenCalledWith({
+      category: 'perifericos',
+      minPrice: undefined,
+      maxPrice: undefined,
+    });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -125,9 +126,7 @@ describe('CategoryFilter', () => {
     // Scrim click.
     openSheet();
     fireEvent.click(screen.getByRole('radio', { name: 'Gadgets' }));
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Cerrar filtro de categorías' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar filtros' }));
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
@@ -161,8 +160,7 @@ describe('CategoryFilter', () => {
 
     expect(dialog.className).toContain('animate-sheet-in');
     expect(
-      screen.getByRole('button', { name: 'Cerrar filtro de categorías' })
-        .className,
+      screen.getByRole('button', { name: 'Cerrar filtros' }).className,
     ).toContain('animate-fade-in');
 
     // Inline width instead of w-full: the Chakra recipe width (240px) wins

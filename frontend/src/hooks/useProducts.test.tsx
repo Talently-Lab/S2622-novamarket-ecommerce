@@ -40,7 +40,10 @@ function LocationProbe({ onSearch }: { onSearch: (search: string) => void }) {
   return null;
 }
 
-function wrapper(initialEntry: string, onParams?: (setParams: SetParams) => void) {
+function wrapper(
+  initialEntry: string,
+  onParams?: (setParams: SetParams) => void,
+) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <MemoryRouter initialEntries={[initialEntry]}>
@@ -91,6 +94,7 @@ describe('useProducts', () => {
     expect(mockedGetProducts).toHaveBeenCalledWith(
       'gadgets',
       expect.any(AbortSignal),
+      { minPrice: undefined, maxPrice: undefined, sort: undefined },
     );
   });
 
@@ -107,6 +111,7 @@ describe('useProducts', () => {
     expect(mockedGetProducts).toHaveBeenCalledWith(
       undefined,
       expect.any(AbortSignal),
+      { minPrice: undefined, maxPrice: undefined, sort: undefined },
     );
   });
 
@@ -153,6 +158,7 @@ describe('useProducts', () => {
       expect(mockedGetProducts).toHaveBeenCalledWith(
         'gadgets',
         expect.any(AbortSignal),
+        { minPrice: undefined, maxPrice: undefined, sort: undefined },
       ),
     );
     expect(result.current.category).toBe('gadgets');
@@ -200,6 +206,7 @@ describe('useProducts', () => {
       expect(mockedGetProducts).toHaveBeenCalledWith(
         'gadgets',
         expect.any(AbortSignal),
+        { minPrice: undefined, maxPrice: undefined, sort: undefined },
       ),
     );
     act(() => {

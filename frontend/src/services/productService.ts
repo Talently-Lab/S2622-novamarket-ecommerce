@@ -107,6 +107,18 @@ function readProductsPage(data: unknown): BackendProductDto[] {
 }
 
 /**
+ * Extra catalog filters the backend already accepts (`GET /api/products`):
+ * price bounds are applied with `$gte`/`$lte` and `sortByPrice` orders the
+ * result. Kept as a separate object so the positional `category`/`signal`
+ * arguments stay stable for every existing caller.
+ */
+export interface CatalogQuery {
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: 'price_asc' | 'price_desc';
+}
+
+/**
  * Page size used to pull the catalog. Deliberately far larger than the whole
  * catalog so a single request usually returns everything; the page loop is
  * the guard against silent truncation if the catalog ever grows past this.
@@ -126,6 +138,7 @@ const CATALOG_PAGE_SIZE = 100;
 export async function getProductsFromApi(
   category?: string,
   signal?: AbortSignal,
+  query: CatalogQuery = {},
 ): Promise<Product[]> {
   const rows: BackendProductDto[] = [];
 
@@ -135,6 +148,17 @@ export async function getProductsFromApi(
     params.set('page', String(page));
     if (category && category.length > 0) {
       params.set('category', category);
+    }
+    if (query.minPrice !== undefined) {
+      params.set('minPrice', String(query.minPrice));
+    }
+    if (query.maxPrice !== undefined) {
+      params.set('maxPrice', String(query.maxPrice));
+    }
+    if (query.sort === 'price_asc') {
+      params.set('sortByPrice', 'asc');
+    } else if (query.sort === 'price_desc') {
+      params.set('sortByPrice', 'desc');
     }
 
     const response = await apiFetch<ProductsResponse>(

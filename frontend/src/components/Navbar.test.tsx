@@ -105,7 +105,7 @@ describe('Navbar', () => {
   });
 
   it('marks the selected category with the orange underline', async () => {
-    renderNavbar({}, '/productos?categoria=gadgets');
+    renderNavbar({}, '/?categoria=gadgets');
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
     const selected = await within(bar).findByRole('link', { name: 'Gadgets' });
@@ -119,12 +119,20 @@ describe('Navbar', () => {
   });
 
   it('marks Todos when no categoria param is present', () => {
-    renderNavbar({}, '/productos');
+    renderNavbar({}, '/');
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
     const todos = within(bar).getByRole('link', { name: 'Todos' });
     expect(todos.className).toContain('underline');
     expect(todos.className).toContain('decoration-accion-acento');
+  });
+
+  it('hides the category bar on the catalog, where the filters take over', () => {
+    renderNavbar({}, '/productos');
+
+    expect(
+      screen.queryByRole('navigation', { name: 'Categorías' }),
+    ).not.toBeInTheDocument();
   });
 
   it('navigates with params and filters the catalog', async () => {
@@ -147,11 +155,12 @@ describe('Navbar', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/productos']}>
+      <MemoryRouter initialEntries={['/']}>
         <AuthProvider>
           <ChakraProvider value={system}>
             <Navbar />
             <Routes>
+              <Route path="/" element={null} />
               <Route path="/productos" element={<ProductsPage />} />
             </Routes>
           </ChakraProvider>
@@ -171,6 +180,7 @@ describe('Navbar', () => {
     expect(mockedGetProducts).toHaveBeenCalledWith(
       'accesorios',
       expect.any(AbortSignal),
+      { minPrice: undefined, maxPrice: undefined, sort: undefined },
     );
   });
 

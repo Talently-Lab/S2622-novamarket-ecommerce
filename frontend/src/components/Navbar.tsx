@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, NavLink, useNavigate, useSearchParams } from 'react-router';
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router';
 import { trackEvent } from '../analytics/trackEvent.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useCategories } from '../hooks/useCategories.ts';
@@ -133,7 +139,12 @@ function SessionLinks({ onNavigate }: { onNavigate?: () => void }) {
 export default function Navbar({ count = 2 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const activeCategory = searchParams.get('categoria') ?? '';
+  // Figma drops the category bar on the catalog: there the categories live in
+  // the filter sidebar/sheet, so repeating them in the navbar would duplicate
+  // the control.
+  const showCategoryBar = pathname !== '/productos';
   // Category names come from the backend enum, not from a local map.
   const { categories: categoryOptions } = useCategories();
 
@@ -182,7 +193,10 @@ export default function Navbar({ count = 2 }: NavbarProps) {
           <NavLink to="/" className="text-titulo-2 shrink-0 font-bold">
             NovaMarket
           </NavLink>
-          <SearchForm id="navbar-search-desktop" className="w-[640px] shrink" />
+          <SearchForm
+            id="navbar-search-desktop"
+            className="max-w-[640px] shrink"
+          />
           <div className="flex shrink-0 items-center gap-4">
             <SessionLinks />
             <CartButton count={count} />
@@ -190,41 +204,45 @@ export default function Navbar({ count = 2 }: NavbarProps) {
         </div>
       </div>
 
-      {/* Divider between top bar and categories */}
-      <div
-        aria-hidden="true"
-        className="border-borde-divisor-estructura hidden border-t md:block"
-      />
+      {showCategoryBar ? (
+        <>
+          {/* Divider between top bar and categories */}
+          <div
+            aria-hidden="true"
+            className="border-borde-divisor-estructura hidden border-t md:block"
+          />
 
-      {/* Desktop category bar */}
-      <nav
-        aria-label="Categorías"
-        className="hidden justify-center px-20 md:flex"
-      >
-        <div className="flex w-full max-w-[1280px] items-center gap-6 py-3">
-          <Link
-            to="/productos"
-            className={desktopCategoryClass('', 'text-cuerpo')}
+          {/* Desktop category bar */}
+          <nav
+            aria-label="Categorías"
+            className="hidden justify-center px-20 md:flex"
           >
-            Todos
-          </Link>
-          {categoryOptions.map((option) => (
-            <Link
-              key={option.value}
-              to={`/productos?categoria=${option.value}`}
-              onClick={() =>
-                trackEvent('select_category', {
-                  categoria: option.value,
-                  origen: 'filtro',
-                })
-              }
-              className={desktopCategoryClass(option.value, 'text-cuerpo')}
-            >
-              {option.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
+            <div className="flex w-full max-w-[1280px] items-center gap-6 py-3">
+              <Link
+                to="/productos"
+                className={desktopCategoryClass('', 'text-cuerpo')}
+              >
+                Todos
+              </Link>
+              {categoryOptions.map((option) => (
+                <Link
+                  key={option.value}
+                  to={`/productos?categoria=${option.value}`}
+                  onClick={() =>
+                    trackEvent('select_category', {
+                      categoria: option.value,
+                      origen: 'filtro',
+                    })
+                  }
+                  className={desktopCategoryClass(option.value, 'text-cuerpo')}
+                >
+                  {option.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        </>
+      ) : null}
 
       {/* Mobile drawer: session + categories */}
       {menuOpen ? (

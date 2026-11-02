@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@chakra-ui/react';
+import CatalogFilters from './CatalogFilters.tsx';
+import type { CatalogFilterValues } from './CatalogFilters.tsx';
 import Icon from './icons/Icon.tsx';
 import type { CategoryOption } from '../services/formdataService.ts';
 
@@ -7,32 +9,42 @@ interface CategoryFilterProps {
   /** Backend-owned category options (GET /api/formdata/products). */
   options: CategoryOption[];
   value: string;
-  onChange: (category: string) => void;
+  minPrice?: number;
+  maxPrice?: number;
+  onChange: (values: CatalogFilterValues) => void;
   counts: Record<string, number>;
   total: number;
 }
 
-// Bottom-sheet category dialog (overlay-todos.png). The closed trigger keeps
-// the button styling from Figma Buttons 427:3108; opening it shows a sheet
-// with pending selection — only the CTA applies the filter.
-// Responsive note (interim, no desktop spec provided): the sheet is a
-// bottom-anchored full-width panel on mobile and becomes a centered floating
-// card on sm+ (max-w-md with bottom offset and full rounded-xl).
+// Mobile filter control (Figma `Catálogo` 737:5641): the dark "Filtros (n)"
+// button opens a bottom sheet with the same fields as the desktop rail —
+// categories and price. Changes stay pending until the CTA applies them.
 export default function CategoryFilter({
   options,
   value,
+  minPrice,
+  maxPrice,
   onChange,
   counts,
   total,
 }: CategoryFilterProps) {
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(value);
+  const [pending, setPending] = useState<CatalogFilterValues>({
+    category: value,
+    minPrice,
+    maxPrice,
+  });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
 
+  const activeCount =
+    (value ? 1 : 0) +
+    (minPrice !== undefined ? 1 : 0) +
+    (maxPrice !== undefined ? 1 : 0);
+
   function openSheet() {
-    setPending(value);
+    setPending({ category: value, minPrice, maxPrice });
     setOpen(true);
   }
 
@@ -66,31 +78,26 @@ export default function CategoryFilter({
       wasOpen.current = false;
       triggerRef.current?.focus();
     }
-  }, [open ]);
+  }, [open]);
 
-  // "Todos" always comes first; the rest are the backend's own options, in the
-  // order its enum defines.
-  const radioOptions: CategoryOption[] = [
-    { value: '', label: 'Todos' },
-    ...options,
-  ];
-  const pendingCount = pending === '' ? total : (counts[pending] ?? 0);
+  const pendingCount =
+    pending.category === '' ? total : (counts[pending.category] ?? 0);
   const ctaLabel = `Ver ${pendingCount} ${pendingCount === 1 ? 'producto' : 'productos'}`;
 
   return (
-    <div className="w-full">
+    <div className="flex-1">
       <button
         ref={triggerRef}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={openSheet}
-        className="flex h-12 w-full items-center justify-center gap-3 rounded-md border border-borde-divisor bg-fondo-superficie px-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-borde-foco"
+        className="bg-fondo-estructura text-texto-sobre-estructura focus-visible:outline-borde-foco flex h-12 w-full items-center justify-center gap-2 rounded-md px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
-        <span className="text-cuerpo-boton font-semibold text-texto-principal">
-          Categorías
+        <Icon name="tune" className="text-xl" />
+        <span className="text-cuerpo-boton font-semibold">
+          Filtros{activeCount > 0 ? ` (${activeCount})` : ''}
         </span>
-        <Icon name="expand_more" className="text-2xl text-texto-principal" />
       </button>
 
       {open ? (
@@ -98,54 +105,54 @@ export default function CategoryFilter({
           {/* Scrim alpha is approximate: /60 over fondo-estructura. */}
           <button
             type="button"
-            aria-label="Cerrar filtro de categorías"
+            aria-label="Cerrar filtros"
             onClick={closeSheet}
-            className="absolute inset-0 animate-fade-in cursor-default bg-fondo-estructura/60"
+            className="bg-fondo-estructura/60 animate-fade-in absolute inset-0 cursor-default"
           />
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Categorías"
-            className="relative max-h-[85vh] w-full animate-sheet-in overflow-y-auto rounded-t-xl bg-fondo-superficie sm:mx-auto sm:w-full sm:max-w-md sm:rounded-xl"
+            aria-label="Filtros"
+            className="bg-fondo-superficie animate-sheet-in relative max-h-[85vh] w-full overflow-y-auto rounded-t-xl sm:mx-auto sm:w-full sm:max-w-md sm:rounded-xl"
           >
             <div
               aria-hidden="true"
-              className="mx-auto mt-3 h-1 w-10 rounded-full bg-borde-divisor"
+              className="bg-borde-divisor mx-auto mt-3 h-1 w-10 rounded-full"
             />
             <div className="flex items-center justify-between px-4 py-3">
-              <h2 className="text-titulo-3 font-bold text-texto-principal">
-                Categorías
+              <h2 className="text-titulo-3 text-texto-principal font-bold">
+                Filtros
               </h2>
               <button
                 ref={closeRef}
                 type="button"
                 aria-label="Cerrar"
                 onClick={closeSheet}
-                className="flex h-11 w-11 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-borde-foco"
+                className="focus-visible:outline-borde-foco flex h-11 w-11 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                <Icon name="close" className="text-2xl text-texto-principal" />
+                <Icon name="close" className="text-texto-principal text-2xl" />
               </button>
             </div>
-            <div aria-hidden="true" className="border-t border-borde-divisor" />
-            <fieldset className="px-4 py-2">
-              <legend className="sr-only">Categorías</legend>
-              {radioOptions.map((option) => (
-                <label
-                  key={option.value === '' ? 'all' : option.value}
-                  className="flex cursor-pointer items-center gap-3 py-3 text-cuerpo text-texto-principal"
-                >
-                  <input
-                    type="radio"
-                    name="category-filter"
-                    value={option.value}
-                    checked={pending === option.value}
-                    onChange={() => setPending(option.value)}
-                    className="h-5 w-5 accent-texto-principal"
-                  />
-                  {option.label}
-                </label>
-              ))}
-            </fieldset>
+            <div aria-hidden="true" className="border-borde-divisor border-t" />
+            <div className="px-4 py-4">
+              <CatalogFilters
+                name="category-filter-sheet"
+                options={options}
+                category={pending.category}
+                minPrice={pending.minPrice}
+                maxPrice={pending.maxPrice}
+                onCategoryChange={(category) =>
+                  setPending((current) => ({ ...current, category }))
+                }
+                onPriceChange={(nextMin, nextMax) =>
+                  setPending((current) => ({
+                    ...current,
+                    minPrice: nextMin,
+                    maxPrice: nextMax,
+                  }))
+                }
+              />
+            </div>
             <div className="px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
               {/* Inline width instead of w-full: the Chakra recipe fixes
                   width at 240px in a cascade layer injected after

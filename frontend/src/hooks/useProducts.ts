@@ -12,6 +12,11 @@ export interface UseProductsResult {
   total: number;
   /** Active filter slug from `?categoria=`; '' means no filter. */
   category: string;
+  /** Price bounds from `?precioMin=`/`?precioMax=`, undefined when unset. */
+  minPrice?: number;
+  maxPrice?: number;
+  /** Price ordering from `?orden=` (`precio-asc` | `precio-desc`). */
+  sort?: 'price_asc' | 'price_desc';
   loading: boolean;
   error: string | null;
   retry: () => void;
@@ -32,6 +37,18 @@ export interface UseProductsResult {
 export function useProducts(): UseProductsResult {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawCategory = searchParams.get('categoria') ?? '';
+  const rawMinPrice = searchParams.get('precioMin') ?? '';
+  const rawMaxPrice = searchParams.get('precioMax') ?? '';
+  const rawOrder = searchParams.get('orden') ?? '';
+  // Non-numeric params are ignored instead of NaN-ing the request.
+  const minPrice = /^\d+$/.test(rawMinPrice) ? Number(rawMinPrice) : undefined;
+  const maxPrice = /^\d+$/.test(rawMaxPrice) ? Number(rawMaxPrice) : undefined;
+  const sort =
+    rawOrder === 'precio-asc'
+      ? ('price_asc' as const)
+      : rawOrder === 'precio-desc'
+        ? ('price_desc' as const)
+        : undefined;
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -56,7 +73,9 @@ export function useProducts(): UseProductsResult {
 
   function captureMeta(items: Product[]) {
     setMetaReady(true);
-    setCategories(Array.from(new Set(items.map((item) => item.category))).sort());
+    setCategories(
+      Array.from(new Set(items.map((item) => item.category))).sort(),
+    );
     const nextCounts: Record<string, number> = {};
     for (const item of items) {
       nextCounts[item.category] = (nextCounts[item.category] ?? 0) + 1;
@@ -70,11 +89,17 @@ export function useProducts(): UseProductsResult {
     requestId.current += 1;
     const id = requestId.current;
 
-    getProductsFromApi(category || undefined, controller.signal)
+    getProductsFromApi(category || undefined, controller.signal, {
+      minPrice,
+      maxPrice,
+      sort,
+    })
       .then((items) => {
         if (requestId.current !== id || controller.signal.aborted) return;
         setProducts(items);
-        if (!category) {
+        // Meta (category counts) only comes from a completely unfiltered
+        // load, otherwise the filter sheet would shrink to the price band.
+        if (!category && minPrice === undefined && maxPrice === undefined) {
           captureMeta(items);
         }
         // A fresh success clears a previous error (e.g. after the URL
@@ -96,9 +121,10 @@ export function useProducts(): UseProductsResult {
     return () => {
       controller.abort();
     };
-  }, [category, retryToken]);
+  }, [category, minPrice, maxPrice, sort, retryToken]);
 
-  const hasFilter = category !== '';
+  const hasFilter =
+    category !== '' || minPrice !== undefined || maxPrice !== undefined;
   const metaLoaded = categories.length > 0;
 
   // Deep-link support: a filtered first load never sees the full catalog,
@@ -149,6 +175,9 @@ export function useProducts(): UseProductsResult {
     counts,
     total,
     category,
+    minPrice,
+    maxPrice,
+    sort,
     loading,
     error,
     retry,
