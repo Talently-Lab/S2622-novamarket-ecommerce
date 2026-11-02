@@ -141,10 +141,10 @@ export default function Navbar() {
   const [searchParams] = useSearchParams();
   const { pathname } = useLocation();
   const activeCategory = searchParams.get('categoria') ?? '';
-  // Figma drops the category bar on the catalog: there the categories live in
-  // the filter sidebar/sheet, so repeating them in the navbar would duplicate
-  // the control.
-  const showCategoryBar = pathname !== '/productos';
+  // Figma only renders the category bar on the home page. Everywhere else the
+  // categories are reached through the catalog filters or the mobile drawer, so
+  // repeating them under the navbar would duplicate the control.
+  const showCategoryBar = pathname === '/';
   // Category names come from the backend enum, not from a local map.
   const { categories: categoryOptions } = useCategories();
 

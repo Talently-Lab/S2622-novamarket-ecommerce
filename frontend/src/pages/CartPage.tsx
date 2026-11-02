@@ -124,34 +124,43 @@ function CartRow({
 
 function EmptyCart({ notice }: { notice?: string }) {
   return (
-    <div className="flex flex-col items-center px-4 py-12 text-center">
-      <Icon name="shopping_cart" className="text-texto-secundario text-7xl" />
-      <h1 className="text-titulo-2 text-texto-principal mt-6 font-bold">
-        Tu carrito está vacío
-      </h1>
-      <p className="text-cuerpo text-texto-secundario mt-2">
-        Sumá productos para armar tu setup
-      </p>
-      {notice ? (
-        <p
-          role="status"
-          className="bg-fondo-exito text-cuerpo text-texto-sobre-exito mt-4 rounded-md px-4 py-2"
+    <>
+      {/* Figma: page and bestsellers span the full content width; the empty
+          message is a hug card (radius 16, 80px padding) centered above them,
+          not a narrow centered column for the whole page. */}
+      <div className="bg-fondo-superficie border-azul-600 mx-auto flex w-fit max-w-full flex-col items-center gap-6 rounded-xl border p-8 text-center md:p-20">
+        <Icon
+          name="shopping_cart"
+          className="text-texto-secundario text-[48px]!"
+        />
+        <div className="flex flex-col items-center gap-1">
+          <h1 className="text-titulo-2 text-texto-principal font-bold">
+            Tu carrito está vacío
+          </h1>
+          <p className="text-cuerpo text-texto-secundario">
+            Sumá productos para armar tu setup
+          </p>
+          {notice ? (
+            <p
+              role="status"
+              className="bg-fondo-exito text-cuerpo text-texto-sobre-exito mt-4 rounded-md px-4 py-2"
+            >
+              {notice}
+            </p>
+          ) : null}
+        </div>
+        <Button
+          variant="primary"
+          asChild
+          style={{ width: '280px', maxWidth: '100%', height: '48px' }}
         >
-          {notice}
-        </p>
-      ) : null}
-      <Button
-        variant="primary"
-        asChild
-        style={{ width: '100%' }}
-        className="mt-6"
-      >
-        <Link to="/productos">Ver catálogo</Link>
-      </Button>
-      <div className="mt-10 w-full text-left">
+          <Link to="/productos">Ver catálogo</Link>
+        </Button>
+      </div>
+      <div className="mt-6 w-full text-left">
         <FeaturedProducts title="Más vendidos" />
       </div>
-    </div>
+    </>
   );
 }
 
@@ -171,13 +180,7 @@ export function CartView({
   const total = subtotal - discount;
 
   return (
-    <main
-      className={
-        items.length === 0
-          ? 'mx-auto max-w-2xl px-4 py-6 sm:px-6'
-          : 'mx-auto max-w-7xl px-4 py-6 sm:px-6'
-      }
-    >
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
       {items.length === 0 ? (
         <EmptyCart notice={notice} />
       ) : (

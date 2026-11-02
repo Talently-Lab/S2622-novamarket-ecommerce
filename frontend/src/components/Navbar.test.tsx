@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,7 +27,7 @@ vi.mock('../services/formdataService.ts', () => ({
 const mockedGetProducts = vi.mocked(getProductsFromApi);
 const mockedCategories = vi.mocked(getProductCategories);
 
-function renderNavbar(_props: Record<string, never> = {}, initialEntry = '/') {
+function renderNavbar(initialEntry = '/') {
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <AuthProvider>
@@ -109,7 +115,7 @@ describe('Navbar', () => {
   });
 
   it('marks the selected category with the orange underline', async () => {
-    renderNavbar({}, '/?categoria=gadgets');
+    renderNavbar('/?categoria=gadgets');
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
     const selected = await within(bar).findByRole('link', { name: 'Gadgets' });
@@ -123,7 +129,7 @@ describe('Navbar', () => {
   });
 
   it('marks Todos when no categoria param is present', () => {
-    renderNavbar({}, '/');
+    renderNavbar('/');
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
     const todos = within(bar).getByRole('link', { name: 'Todos' });
@@ -131,12 +137,23 @@ describe('Navbar', () => {
     expect(todos.className).toContain('decoration-accion-acento');
   });
 
-  it('hides the category bar on the catalog, where the filters take over', () => {
-    renderNavbar({}, '/productos');
-
+  it('shows the category bar only on the home page', () => {
+    renderNavbar('/productos');
     expect(
       screen.queryByRole('navigation', { name: 'Categorías' }),
     ).not.toBeInTheDocument();
+
+    cleanup();
+    renderNavbar('/carrito');
+    expect(
+      screen.queryByRole('navigation', { name: 'Categorías' }),
+    ).not.toBeInTheDocument();
+
+    cleanup();
+    renderNavbar('/');
+    expect(
+      screen.getByRole('navigation', { name: 'Categorías' }),
+    ).toBeInTheDocument();
   });
 
   it('navigates with params and filters the catalog', async () => {
