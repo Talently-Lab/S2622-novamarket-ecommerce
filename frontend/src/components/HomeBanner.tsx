@@ -24,17 +24,17 @@ export default function HomeBanner() {
             <div className="flex flex-col gap-1 md:gap-4">
               <h1
                 id="home-hero-title"
-                className="text-titulo-3 font-bold text-black md:text-display"
+                className="text-titulo-3 md:text-display font-bold text-black"
               >
                 Potenciá tu setup
               </h1>
-              <p className="text-caption text-black md:w-[247px] md:text-cuerpo">
+              <p className="text-caption md:text-cuerpo text-black md:w-[247px]">
                 Periféricos, accesorios y gadgets al alcance de tu mano.
               </p>
             </div>
             <Link
               to="/productos"
-              className="flex h-10 w-fit items-center justify-center rounded-md bg-accion-primaria px-4 text-cuerpo-boton font-semibold text-texto-sobre-accion hover:bg-accion-primaria-hover md:h-12 md:w-[240px]"
+              className="bg-accion-primaria text-cuerpo-boton text-texto-sobre-accion hover:bg-accion-primaria-hover flex h-10 w-fit items-center justify-center rounded-md px-4 font-semibold md:h-12 md:w-[240px]"
             >
               Ver productos
             </Link>
