@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App.tsx';
@@ -137,5 +138,27 @@ describe('NovaMarket landing page', () => {
       await screen.findByRole('heading', { level: 1, name: 'Producto 3' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Stock disponible: 10 u.')).toBeInTheDocument();
+  });
+
+  it('confirms the add on the detail page CTA and fills the cart', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/productos/mongo-id-3']}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: /agregar al carrito/i }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Agregado al carrito',
+    );
+    expect(
+      screen.queryByRole('button', { name: /agregar al carrito/i }),
+    ).toBeNull();
   });
 });

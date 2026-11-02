@@ -4,6 +4,8 @@ import { Button } from '@chakra-ui/react';
 import { trackEvent } from '../analytics/trackEvent.ts';
 import Icon from '../components/icons/Icon.tsx';
 import ProductCardSkeleton from '../components/ProductCardSkeleton.tsx';
+import { useCart } from '../context/CartContext.tsx';
+import { useAddedFeedback } from '../hooks/useAddedFeedback.ts';
 import { useCategories } from '../hooks/useCategories.ts';
 import { getProductById } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
@@ -12,6 +14,8 @@ import { formatPrice } from '../utils/format.ts';
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { labelFor } = useCategories();
+  const { addItem } = useCart();
+  const { addedId, markAdded } = useAddedFeedback();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,15 +77,15 @@ export default function ProductDetailPage() {
   if (error || !product) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-12 text-center">
-        <h1 className="text-titulo-2 font-bold text-texto-principal">
+        <h1 className="text-titulo-2 text-texto-principal font-bold">
           Producto no encontrado
         </h1>
-        <p className="mt-2 text-cuerpo text-texto-secundario">
+        <p className="text-cuerpo text-texto-secundario mt-2">
           {error ?? 'El producto solicitado no existe.'}
         </p>
         <Link
           to="/productos"
-          className="mt-6 inline-flex items-center gap-1 text-cuerpo-boton font-semibold text-accion-primaria underline hover:text-accion-primaria-hover"
+          className="text-cuerpo-boton text-accion-primaria hover:text-accion-primaria-hover mt-6 inline-flex items-center gap-1 font-semibold underline"
         >
           <Icon name="chevron_left" className="text-xl" />
           Volver al catálogo
@@ -94,9 +98,9 @@ export default function ProductDetailPage() {
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       {/* Navegación / Breadcrumbs */}
       <nav aria-label="Miga de pan">
-        <ol className="flex items-center gap-1 text-caption text-texto-secundario">
+        <ol className="text-caption text-texto-secundario flex items-center gap-1">
           <li>
-            <Link to="/" className="underline hover:text-texto-principal">
+            <Link to="/" className="hover:text-texto-principal underline">
               Inicio
             </Link>
           </li>
@@ -104,14 +108,17 @@ export default function ProductDetailPage() {
           <li>
             <Link
               to={`/productos?categoria=${product.category}`}
-              className="underline hover:text-texto-principal"
+              className="hover:text-texto-principal underline"
             >
               {labelFor(product.category)}
             </Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
-            <span aria-current="page" className="font-semibold text-texto-principal">
+            <span
+              aria-current="page"
+              className="text-texto-principal font-semibold"
+            >
               {product.name}
             </span>
           </li>
@@ -120,7 +127,7 @@ export default function ProductDetailPage() {
 
       <div className="mt-6 grid gap-8 lg:grid-cols-2">
         {/* Imagen del producto */}
-        <div className="aspect-square w-full overflow-hidden rounded-xl border border-borde-divisor bg-fondo-superficie">
+        <div className="border-borde-divisor bg-fondo-superficie aspect-square w-full overflow-hidden rounded-xl border">
           <img
             src={product.imageUrl}
             alt={product.name}
@@ -130,13 +137,13 @@ export default function ProductDetailPage() {
 
         <div className="flex flex-col justify-between">
           <div>
-            <span className="text-caption font-semibold uppercase tracking-wider text-texto-secundario">
+            <span className="text-caption text-texto-secundario font-semibold tracking-wider uppercase">
               {labelFor(product.category)}
             </span>
-            <h1 className="mt-1 text-titulo-1 font-bold text-texto-principal">
+            <h1 className="text-titulo-1 text-texto-principal mt-1 font-bold">
               {product.name}
             </h1>
-            <p className="mt-3 text-precio font-bold text-texto-principal">
+            <p className="text-precio text-texto-principal mt-3 font-bold">
               {formatPrice(product.price)}
             </p>
 
@@ -153,37 +160,50 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            <hr className="my-6 border-borde-divisor" />
+            <hr className="border-borde-divisor my-6" />
 
             <div>
-              <h2 className="text-cuerpo-chico-label font-bold text-texto-principal">
+              <h2 className="text-cuerpo-chico-label text-texto-principal font-bold">
                 Descripción
               </h2>
-              <p className="mt-2 whitespace-pre-line text-cuerpo text-texto-secundario">
+              <p className="text-cuerpo text-texto-secundario mt-2 whitespace-pre-line">
                 {product.description || 'Sin descripción disponible.'}
               </p>
             </div>
           </div>
 
-          {/* Botón "Agregar al carrito" preparado sin lógica aún */}
-          <div className="mt-8 border-t border-borde-divisor pt-6">
-            <Button
-              variant="primary"
-              disabled={product.stock <= 0}
-              onClick={() => {
-                trackEvent('click_add_to_cart', {
-                  id_producto: product.id,
-                  nombre_producto: product.name,
-                  precio: product.price,
-                  cantidad: 1,
-                  origen: 'ficha',
-                });
-              }}
-              style={{ width: '100%' }}
-            >
-              <Icon name="shopping_cart" className="mr-2 text-xl" />
-              {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
-            </Button>
+          {/* Figma `648:5146` ("Alert Added-to-cart"): the CTA becomes a
+              green confirmation for 2 s, then returns to the button. */}
+          <div className="border-borde-divisor mt-8 border-t pt-6">
+            {addedId === String(product.id) ? (
+              <p
+                role="status"
+                className="text-cuerpo-boton bg-fondo-exito text-texto-sobre-exito flex h-12 w-full items-center justify-center gap-2 rounded-md px-4 font-semibold"
+              >
+                <Icon name="check" />
+                Agregado al carrito
+              </p>
+            ) : (
+              <Button
+                variant="primary"
+                disabled={product.stock <= 0}
+                onClick={() => {
+                  trackEvent('click_add_to_cart', {
+                    id_producto: product.id,
+                    nombre_producto: product.name,
+                    precio: product.price,
+                    cantidad: 1,
+                    origen: 'ficha',
+                  });
+                  markAdded(String(product.id));
+                  addItem(product);
+                }}
+                style={{ width: '100%', height: '48px' }}
+              >
+                <Icon name="shopping_cart" className="mr-2 text-xl" />
+                {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
+              </Button>
+            )}
           </div>
         </div>
       </div>
