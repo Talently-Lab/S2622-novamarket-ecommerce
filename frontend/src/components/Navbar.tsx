@@ -14,7 +14,7 @@ interface NavbarProps {
 
 // Selected category marker from Nav_categorias.png: orange underline.
 const SELECTED_CATEGORY_CLASS =
-  'underline decoration-accion-acento decoration-2 underline-offset-4';
+  'font-semibold underline decoration-accion-acento decoration-2 underline-offset-4';
 
 function CartButton({ count }: { count: number }) {
   return (
@@ -201,10 +201,10 @@ export default function Navbar({ count = 2 }: NavbarProps) {
         aria-label="Categorías"
         className="hidden justify-center px-20 md:flex"
       >
-        <div className="flex w-full max-w-[1280px] items-center gap-8 py-6">
+        <div className="flex w-full max-w-[1280px] items-center gap-6 py-3">
           <Link
             to="/productos"
-            className={desktopCategoryClass('', 'text-cuerpo font-semibold')}
+            className={desktopCategoryClass('', 'text-cuerpo')}
           >
             Todos
           </Link>

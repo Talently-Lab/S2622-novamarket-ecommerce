@@ -36,7 +36,7 @@ function FeaturedCard({ product }: { product: Product }) {
   const detailHref = `/productos/${product.id}`;
 
   return (
-    <li className="border-borde-divisor bg-fondo-superficie relative flex flex-col overflow-hidden rounded-lg border">
+    <li className="border-borde-divisor bg-fondo-superficie relative flex flex-col overflow-hidden rounded-xl border">
       {/* One link wraps badge + image + title + price so the whole block is
           clickable with a single tab stop. The CTA stays outside the link:
           nested interactive elements are invalid and break the button. */}
@@ -45,14 +45,14 @@ function FeaturedCard({ product }: { product: Product }) {
         aria-label={product.name}
         className="group focus-visible:outline-borde-foco flex flex-col focus-visible:outline-2 focus-visible:outline-offset-[-2px]"
       >
-        <span className="bg-fondo-exito text-caption-badge text-texto-sobre-exito absolute top-2 left-2 rounded-full px-2 py-1 font-semibold">
+        <span className="bg-fondo-exito text-caption-badge text-texto-sobre-exito absolute top-2 left-2 flex h-7 items-center rounded-full px-3 font-semibold">
           Novedad
         </span>
         {imageFailed || !product.imageUrl ? (
           <div
             role="img"
             aria-label={product.name}
-            className="bg-fondo-deshabilitado flex aspect-square w-full items-center justify-center"
+            className="bg-fondo-deshabilitado flex h-[172px] w-full items-center justify-center md:h-[300px]"
           >
             <Icon
               name="image_not_supported"
@@ -68,14 +68,14 @@ function FeaturedCard({ product }: { product: Product }) {
             loading="lazy"
             decoding="async"
             onError={() => setImageFailed(true)}
-            className="bg-fondo-deshabilitado aspect-square w-full object-cover"
+            className="bg-fondo-deshabilitado h-[172px] w-full object-cover md:h-[300px]"
           />
         )}
         <span className="flex flex-col gap-2 px-3 pt-3">
           <span className="text-cuerpo-chico text-texto-principal line-clamp-2 h-10 overflow-hidden font-normal group-hover:underline">
             {product.name}
           </span>
-          <span className="text-precio text-texto-principal font-bold">
+          <span className="text-precio text-texto-principal md:text-titulo-2 font-bold">
             {formatPrice(product.price)}
           </span>
         </span>
@@ -148,13 +148,13 @@ export default function FeaturedProducts({
         {showSeeAll ? (
           <Link
             to="/productos"
-            className="text-cuerpo-chico text-texto-secundario flex min-h-11 items-center font-semibold underline"
+            className="text-cuerpo text-texto-secundario flex min-h-11 items-center underline"
           >
             Ver todo
           </Link>
         ) : null}
       </div>
-      <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <ul className="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-x-6">
         {featured === null
           ? Array.from({ length: count }, (_, index) => (
               <li key={`featured-skeleton-${index}`}>
