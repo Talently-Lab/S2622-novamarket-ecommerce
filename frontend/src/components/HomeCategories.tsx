@@ -22,29 +22,23 @@ const CATEGORY_IMAGES: Record<string, string> = {
  * so a category added on the backend shows up here without a code change.
  * "Ver todo" always comes last.
  *
- * Below md it is a horizontal strip (Figma mobile 110px tiles); from md the
- * tiles are 240px and the row is centred on the content column.
+ * Below md it is a horizontal strip (Figma mobile 110px tiles). Desktop uses
+ * four equal columns so the tiles span the same content width as featured cards.
  */
 export default function HomeCategories() {
   const { categories } = useCategories();
 
   return (
-    <section aria-labelledby="home-categories-title">
-      <h2
-        id="home-categories-title"
-        className="text-titulo-3 text-texto-principal font-bold"
-      >
-        Categorías
-      </h2>
-      <ul className="mt-4 flex [scrollbar-width:none] gap-3 overflow-x-auto md:justify-center md:gap-6 md:overflow-visible [&::-webkit-scrollbar]:hidden">
+    <section aria-label="Categorías" className="py-4 md:py-6">
+      <ul className="flex [scrollbar-width:none] gap-4 overflow-x-auto md:grid md:grid-cols-2 md:gap-6 md:overflow-visible xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
         {categories.map((option) => {
           const image = CATEGORY_IMAGES[option.value];
 
           return (
-            <li key={option.value} className="shrink-0">
+            <li key={option.value} className="shrink-0 md:min-w-0">
               <Link
                 to={`/productos?categoria=${option.value}`}
-                className="flex w-[110px] flex-col items-center gap-4 md:w-[240px]"
+                className="flex w-[110px] flex-col items-center gap-4 md:w-full"
               >
                 {image ? (
                   <img
@@ -53,12 +47,12 @@ export default function HomeCategories() {
                     alt=""
                     loading="lazy"
                     decoding="async"
-                    className="h-[110px] w-[110px] rounded-xl object-cover md:h-[240px] md:w-[240px]"
+                    className="h-[110px] w-[110px] rounded-xl object-cover md:aspect-square md:h-auto md:w-full"
                   />
                 ) : (
                   <span
                     aria-hidden="true"
-                    className="bg-fondo-deshabilitado block h-[110px] w-[110px] rounded-xl md:h-[240px] md:w-[240px]"
+                    className="bg-fondo-deshabilitado block h-[110px] w-[110px] rounded-xl md:aspect-square md:h-auto md:w-full"
                   />
                 )}
                 <span className="text-cuerpo-boton text-texto-secundario md:text-titulo-3 text-center font-semibold md:font-bold">
@@ -68,14 +62,14 @@ export default function HomeCategories() {
             </li>
           );
         })}
-        <li className="shrink-0">
+        <li className="shrink-0 md:min-w-0">
           <Link
             to="/productos"
-            className="flex w-[110px] flex-col items-center gap-4 md:w-[240px]"
+            className="flex w-[110px] flex-col items-center gap-4 md:w-full"
           >
             {/* Figma paints "Ver todo" as a flat tile with an outward arrow
                 instead of a photo. */}
-            <span className="flex h-[110px] w-[110px] items-center justify-center rounded-xl bg-[#EDF0F5] md:h-[240px] md:w-[240px]">
+            <span className="flex h-[110px] w-[110px] items-center justify-center rounded-xl bg-[#EDF0F5] md:aspect-square md:h-auto md:w-full">
               <Icon
                 name="arrow_outward"
                 className="text-accion-primaria text-[32px]! md:text-[40px]!"
