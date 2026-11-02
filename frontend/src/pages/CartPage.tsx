@@ -157,7 +157,9 @@ function EmptyCart({ notice }: { notice?: string }) {
           <Link to="/productos">Ver catálogo</Link>
         </Button>
       </div>
-      <div className="mt-6 w-full text-left">
+      {/* Figma separates the two blocks with the body gap (48px) plus the
+          section's own 24px top padding. */}
+      <div className="w-full pt-6 text-left">
         <FeaturedProducts title="Más vendidos" />
       </div>
     </>
@@ -180,89 +182,96 @@ export function CartView({
   const total = subtotal - discount;
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      {items.length === 0 ? (
-        <EmptyCart notice={notice} />
-      ) : (
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
-          <section aria-label="Productos del carrito">
-            <h1 className="text-titulo-2 text-texto-principal font-bold">
-              Tu carrito
-            </h1>
+    // Same content column as the navbar, the home page and the footer: a true
+    // 1280px column with 80px side margins at 1440. Figma's cart body is
+    // `48px 80px 200px` on desktop and ends 80px above the footer on mobile,
+    // so the page owns the bottom padding instead of every section repeating it.
+    <main className="flex w-full justify-center px-4 pt-6 pb-20 md:px-20 md:pt-12 md:pb-[200px]">
+      <div className="flex w-full max-w-[1280px] flex-col gap-6 md:gap-12">
+        {items.length === 0 ? (
+          <EmptyCart notice={notice} />
+        ) : (
+          // Figma `D - Carrito`: 360px summary column with a 48px gutter.
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-12">
+            <section aria-label="Productos del carrito">
+              <h1 className="text-titulo-2 text-texto-principal font-bold">
+                Tu carrito
+              </h1>
 
-            <div className="border-borde-divisor text-cuerpo-chico text-texto-secundario mt-6 hidden border-b pb-2 font-semibold lg:grid lg:grid-cols-[76px_minmax(0,1fr)_minmax(5.5rem,8rem)_minmax(7rem,9.5rem)_minmax(6rem,8rem)_64px]">
-              <span className="lg:col-span-2 lg:col-start-1">Producto</span>
-              <span className="lg:col-start-3">Precio</span>
-              <span className="lg:col-start-4">Cantidad</span>
-              <span className="lg:col-start-5">Subtotal</span>
-            </div>
+              <div className="border-borde-divisor text-cuerpo-chico text-texto-secundario mt-6 hidden border-b pb-2 font-semibold lg:grid lg:grid-cols-[76px_minmax(0,1fr)_minmax(5.5rem,8rem)_minmax(7rem,9.5rem)_minmax(6rem,8rem)_64px]">
+                <span className="lg:col-span-2 lg:col-start-1">Producto</span>
+                <span className="lg:col-start-3">Precio</span>
+                <span className="lg:col-start-4">Cantidad</span>
+                <span className="lg:col-start-5">Subtotal</span>
+              </div>
 
-            <ul className="divide-borde-divisor mt-4 divide-y lg:mt-0">
-              {items.map((item) => (
-                <CartRow
-                  key={item.productId}
-                  item={item}
-                  onIncrement={onIncrement}
-                  onDecrement={onDecrement}
-                  onRemove={onRemove}
-                />
-              ))}
-            </ul>
-          </section>
+              <ul className="divide-borde-divisor mt-4 divide-y lg:mt-0">
+                {items.map((item) => (
+                  <CartRow
+                    key={item.productId}
+                    item={item}
+                    onIncrement={onIncrement}
+                    onDecrement={onDecrement}
+                    onRemove={onRemove}
+                  />
+                ))}
+              </ul>
+            </section>
 
-          <aside
-            aria-labelledby="cart-summary-title"
-            className="border-borde-divisor lg:bg-fondo-superficie mt-6 border-t pt-4 lg:mt-0 lg:rounded-xl lg:border lg:p-6"
-          >
-            <h2
-              id="cart-summary-title"
-              className="text-titulo-3 text-texto-principal sr-only font-bold lg:not-sr-only lg:mb-4"
+            <aside
+              aria-labelledby="cart-summary-title"
+              className="border-borde-divisor lg:bg-fondo-superficie mt-6 border-t pt-4 lg:mt-0 lg:rounded-xl lg:border lg:p-6"
             >
-              Resumen
-            </h2>
+              <h2
+                id="cart-summary-title"
+                className="text-titulo-3 text-texto-principal sr-only font-bold lg:not-sr-only lg:mb-4"
+              >
+                Resumen
+              </h2>
 
-            <div className="text-cuerpo text-texto-secundario flex items-center justify-between">
-              <span>Subtotal</span>
-              <span>{formatPrice(subtotal)}</span>
-            </div>
-            <div className="text-cuerpo text-texto-secundario mt-2 flex items-center justify-between">
-              <span>Descuentos</span>
-              <span>-{formatPrice(discount)}</span>
-            </div>
-            <div className="border-borde-divisor mt-3 flex items-center justify-between border-t pt-3">
-              <span className="text-titulo-3 text-texto-principal font-bold">
-                Total
-              </span>
-              <span className="text-precio text-texto-principal font-bold">
-                {formatPrice(total)}
-              </span>
-            </div>
+              <div className="text-cuerpo text-texto-secundario flex items-center justify-between">
+                <span>Subtotal</span>
+                <span>{formatPrice(subtotal)}</span>
+              </div>
+              <div className="text-cuerpo text-texto-secundario mt-2 flex items-center justify-between">
+                <span>Descuentos</span>
+                <span>-{formatPrice(discount)}</span>
+              </div>
+              <div className="border-borde-divisor mt-3 flex items-center justify-between border-t pt-3">
+                <span className="text-titulo-3 text-texto-principal font-bold">
+                  Total
+                </span>
+                <span className="text-precio text-texto-principal font-bold">
+                  {formatPrice(total)}
+                </span>
+              </div>
 
-            <Button
-              variant="primary"
-              style={{ width: '100%' }}
-              className="mt-6"
-              onClick={onCheckout}
-            >
-              Continuar compra
-            </Button>
-          </aside>
+              <Button
+                variant="primary"
+                style={{ width: '100%' }}
+                className="mt-6"
+                onClick={onCheckout}
+              >
+                Continuar compra
+              </Button>
+            </aside>
 
-          <p className="mt-4 text-center lg:col-start-1 lg:row-start-2 lg:text-left">
-            <Link
-              to="/productos"
-              className="text-cuerpo-boton text-texto-principal inline-flex items-center gap-1 font-semibold underline"
-            >
-              {/* Wrapper: the icon font stylesheet sets its own `display`, which
+            <p className="mt-4 text-center lg:col-start-1 lg:row-start-2 lg:text-left">
+              <Link
+                to="/productos"
+                className="text-cuerpo-boton text-texto-principal inline-flex items-center gap-1 font-semibold underline"
+              >
+                {/* Wrapper: the icon font stylesheet sets its own `display`, which
                   beats the `hidden` utility, so the hiding happens here. */}
-              <span className="hidden lg:inline-flex">
-                <Icon name="arrow_back" className="text-base" />
-              </span>
-              Seguir comprando
-            </Link>
-          </p>
-        </div>
-      )}
+                <span className="hidden lg:inline-flex">
+                  <Icon name="arrow_back" className="text-base" />
+                </span>
+                Seguir comprando
+              </Link>
+            </p>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
