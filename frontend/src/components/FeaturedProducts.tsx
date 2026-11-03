@@ -142,9 +142,8 @@ export default function FeaturedProducts({
   const { addedId, markAdded } = useAddedFeedback();
   const headingId = `featured-${slugifyTitle(title)}`;
 
-  function handleAdd(product: Product) {
-    addItem(product);
-    markAdded(String(product.id));
+  async function handleAdd(product: Product) {
+    if (await addItem(product)) markAdded(String(product.id));
   }
 
   useEffect(() => {

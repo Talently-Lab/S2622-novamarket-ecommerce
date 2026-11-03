@@ -18,8 +18,8 @@ const SELECTED_CATEGORY_CLASS =
   'font-semibold underline decoration-accion-acento decoration-2 underline-offset-4';
 
 function CartButton() {
-  const { count } = useCart();
-  const label = `${count} ${count === 1 ? 'producto' : 'productos'} en el carrito`;
+  const { totalItems } = useCart();
+  const label = `${totalItems} ${totalItems === 1 ? 'producto' : 'productos'} en el carrito`;
 
   return (
     <Link
@@ -30,12 +30,12 @@ function CartButton() {
       <Icon name="shopping_cart" className="text-accion-primaria text-2xl" />
       {/* Figma paints the count in the navbar blue over the orange accent,
           not in white like the other action surfaces. */}
-      {count > 0 ? (
+      {totalItems > 0 ? (
         <span
           aria-label={label}
           className="bg-accion-acento text-caption-badge text-texto-principal absolute top-1 right-0 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-semibold"
         >
-          {count}
+          {totalItems}
         </span>
       ) : null}
     </Link>

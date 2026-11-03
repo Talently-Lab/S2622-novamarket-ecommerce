@@ -277,24 +277,50 @@ export function CartView({
 }
 
 /**
- * Cart page connected to the localStorage cart. The presentational `CartView`
+ * Cart page bound to the cart context: guest carts live in localStorage,
+ * authenticated carts live in `/api/cart`. The presentational `CartView`
  * stays exported so the layout can be rendered with injected items.
  */
 export default function CartPage() {
-  const { items, increment, decrement, remove, clear } = useCart();
+  const { items, updateQuantity, removeItem, clearCart, loading } = useCart();
   const [notice, setNotice] = useState<string>();
 
+  function quantityOf(productId: string): number {
+    return items.find((item) => item.productId === productId)?.quantity ?? 0;
+  }
+
   function handleCheckout() {
-    clear();
-    setNotice('Compra simulada: no se realizó ningún cobro.');
+    void clearCart().then((cleared) => {
+      if (cleared) {
+        setNotice('Compra simulada: no se realizó ningún cobro.');
+      }
+    });
+  }
+
+  // The server cart arrives after the session restores; without this the page
+  // would show "Tu carrito está vacío" for a user who does have lines.
+  if (loading && items.length === 0) {
+    return (
+      <main className="flex w-full justify-center px-4 pt-6 pb-20 md:px-20 md:pt-12 md:pb-[200px]">
+        <p role="status" className="text-cuerpo text-texto-secundario">
+          Cargando tu carrito…
+        </p>
+      </main>
+    );
   }
 
   return (
     <CartView
       items={items}
-      onIncrement={increment}
-      onDecrement={decrement}
-      onRemove={remove}
+      onIncrement={(productId) => {
+        void updateQuantity(productId, quantityOf(productId) + 1);
+      }}
+      onDecrement={(productId) => {
+        void updateQuantity(productId, quantityOf(productId) - 1);
+      }}
+      onRemove={(productId) => {
+        void removeItem(productId);
+      }}
       onCheckout={handleCheckout}
       notice={notice}
     />

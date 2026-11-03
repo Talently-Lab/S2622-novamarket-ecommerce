@@ -13,6 +13,7 @@ import { getProductCategories } from '../services/formdataService.ts';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
 import { system } from '../theme/system.ts';
+import { AuthProvider } from '../context/AuthContext.tsx';
 import { CartProvider } from '../context/CartContext.tsx';
 import ProductsPage from './ProductsPage.tsx';
 
@@ -43,9 +44,11 @@ function renderPage(initialEntry = '/productos') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <ChakraProvider value={system}>
-        <CartProvider>
-          <ProductsPage />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <ProductsPage />
+          </CartProvider>
+        </AuthProvider>
       </ChakraProvider>
     </MemoryRouter>,
   );
@@ -385,8 +388,10 @@ describe('ProductsPage', () => {
     const card = (await screen.findAllByRole('article'))[0];
     fireEvent.click(within(card).getByRole('button', { name: /agregar/i }));
 
-    expect(within(card).getByRole('status')).toHaveTextContent('Agregado');
-    expect(screen.getByText('Agregado al carrito')).toBeInTheDocument();
+    expect(await within(card).findByRole('status')).toHaveTextContent(
+      'Agregado',
+    );
+    expect(await screen.findByText('Agregado al carrito')).toBeInTheDocument();
   });
 
   it('prioritizes the first cards and lazy-loads the rest', async () => {

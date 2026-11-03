@@ -48,9 +48,8 @@ export default function ProductsPage() {
   const { addItem } = useCart();
   const { addedId, markAdded } = useAddedFeedback();
 
-  function handleAdd(product: Product) {
-    addItem(product);
-    markAdded(String(product.id));
+  async function handleAdd(product: Product) {
+    if (await addItem(product)) markAdded(String(product.id));
   }
   const [searchParams, setSearchParams] = useSearchParams();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);

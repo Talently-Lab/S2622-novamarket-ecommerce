@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter } from 'react-router';
+import { AuthProvider } from '../context/AuthContext.tsx';
 import { CartProvider } from '../context/CartContext.tsx';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getProductsFromApi } from '../services/productService.ts';
@@ -47,9 +48,11 @@ function renderCart(props: CartPageProps = {}) {
   render(
     <ChakraProvider value={system}>
       <MemoryRouter>
-        <CartProvider>
-          <CartView {...props} />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <CartView {...props} />
+          </CartProvider>
+        </AuthProvider>
       </MemoryRouter>
     </ChakraProvider>,
   );

@@ -192,8 +192,9 @@ export default function ProductDetailPage() {
                     cantidad: 1,
                     origen: 'ficha',
                   });
-                  markAdded(String(product.id));
-                  addItem(product);
+                  void addItem(product).then((added) => {
+                    if (added) markAdded(String(product.id));
+                  });
                 }}
                 style={{ width: '100%', height: '48px' }}
               >
