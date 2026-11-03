@@ -3,33 +3,47 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { system } from '../theme/system.ts';
+import type { CartItem } from '../types/cart.ts';
 import CheckoutPage from './CheckoutPage.tsx';
 
-const mocks = vi.hoisted(() => {
-  const clearCart = vi.fn();
+function line(overrides: Partial<CartItem> = {}): CartItem {
   return {
-    clearCart,
+    productId: 'p1',
+    name: 'Teclado Mecánico',
+    unitPrice: 5000,
+    quantity: 2,
+    stock: 5,
+    imageUrl: '',
+    ...overrides,
+  };
+}
+
+const mocks = vi.hoisted(() => {
+  const cart: {
+    items: unknown[];
+    totalItems: number;
+    totalAmount: number;
+    loading: boolean;
+    clearCart: ReturnType<typeof vi.fn>;
+    removeItem: ReturnType<typeof vi.fn>;
+    refresh: ReturnType<typeof vi.fn>;
+  } = {
+    items: [],
+    totalItems: 0,
+    totalAmount: 0,
+    loading: false,
+    clearCart: vi.fn(),
+    removeItem: vi.fn(),
+    refresh: vi.fn(),
+  };
+  return {
+    cart,
     createOrder: vi.fn(),
     user: null as null | {
       id: string;
       name: string;
       email: string;
       role: string;
-    },
-    cart: {
-      items: [
-        {
-          productId: 'p1',
-          name: 'Teclado Mecánico',
-          unitPrice: 5000,
-          quantity: 2,
-          imageUrl: '',
-        },
-      ],
-      totalItems: 2,
-      totalAmount: 10000,
-      loading: false,
-      clearCart,
     },
   };
 });
@@ -77,6 +91,15 @@ function fillAddress() {
   });
 }
 
+function setCart(items: CartItem[]) {
+  mocks.cart.items = items;
+  mocks.cart.totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  mocks.cart.totalAmount = items.reduce(
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0,
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.user = {
@@ -85,7 +108,10 @@ beforeEach(() => {
     email: 'ana@example.com',
     role: 'cliente',
   };
-  mocks.clearCart.mockResolvedValue(true);
+  setCart([line()]);
+  mocks.cart.clearCart.mockResolvedValue(true);
+  mocks.cart.removeItem.mockResolvedValue(true);
+  mocks.cart.refresh.mockResolvedValue(null);
   mocks.createOrder.mockResolvedValue({
     id: '507f1f77bcf86cd7994390ab',
     code: 'NM-4390AB',
@@ -151,7 +177,7 @@ describe('CheckoutPage', () => {
         codigoPostal: '1043',
       },
     });
-    await waitFor(() => expect(mocks.clearCart).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.cart.clearCart).toHaveBeenCalled());
   });
 
   it('shows the sign-in gate instead of the review when there is no session', () => {
@@ -166,18 +192,82 @@ describe('CheckoutPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows the backend message when the order is rejected', async () => {
+  it('flags a line that lost its stock, excludes it from the total and offers to remove it', async () => {
+    setCart([
+      line(),
+      line({
+        productId: 'p2',
+        name: 'Teclado NovaKey TKL',
+        unitPrice: 1000,
+        quantity: 2,
+        stock: 1,
+      }),
+    ]);
+    renderPage();
+
+    expect(
+      screen.getByText('Uno producto ya no está disponible'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Sin stock')).toBeInTheDocument();
+    expect(screen.getByText('Producto sin stock')).toBeInTheDocument();
+    expect(screen.getByText('-$2.000')).toBeInTheDocument();
+    // Subtotal keeps every line; the payable total drops the blocked one.
+    expect(screen.getByText('$12.000')).toBeInTheDocument();
+    expect(screen.getAllByText('$10.000')).toHaveLength(2);
+    expect(
+      screen.queryByRole('button', { name: 'Confirmar pedido' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar y continuar' }));
+
+    await waitFor(() =>
+      expect(mocks.cart.removeItem).toHaveBeenCalledWith('p2'),
+    );
+    expect(mocks.cart.removeItem).not.toHaveBeenCalledWith('p1');
+    expect(mocks.createOrder).not.toHaveBeenCalled();
+  });
+
+  it('shows the connection error with a retry action and retries the order', async () => {
     mocks.createOrder.mockRejectedValueOnce(
-      new Error('Stock insuficiente para Teclado Mecánico. Disponibles: 1'),
+      new Error('Hubo un problema de conexión con nuestro sistema.'),
     );
     renderPage();
     fillAddress();
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Stock insuficiente para Teclado Mecánico. Disponibles: 1',
+    expect(
+      await screen.findByText('No pudimos confirmar tu pedido'),
+    ).toBeInTheDocument();
+    expect(mocks.cart.refresh).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+
+    await waitFor(() => expect(mocks.createOrder).toHaveBeenCalledTimes(2));
+    expect(
+      await screen.findByText('pantalla de confirmación'),
+    ).toBeInTheDocument();
+  });
+
+  it('switches to the stock banner when the refresh finds the line unavailable', async () => {
+    mocks.createOrder.mockRejectedValueOnce(
+      new Error('Stock insuficiente para Teclado. Disponibles: 1'),
     );
-    expect(mocks.clearCart).not.toHaveBeenCalled();
+    mocks.cart.refresh.mockImplementationOnce(async () => {
+      const fresh = [line({ quantity: 3, stock: 1 })];
+      setCart(fresh);
+      return fresh;
+    });
+    renderPage();
+    fillAddress();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+
+    expect(
+      await screen.findByText('Uno producto ya no está disponible'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('No pudimos confirmar tu pedido'),
+    ).not.toBeInTheDocument();
   });
 });
