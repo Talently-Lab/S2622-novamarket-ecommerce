@@ -307,6 +307,34 @@ describe('CartContext — server cart', () => {
     expect(mockedRemove).toHaveBeenCalledWith(MONGO_ID);
   });
 
+  it('re-reads the server cart on demand', async () => {
+    loginAsStoredSession();
+    const { result } = renderCart();
+    await waitFor(() => expect(mockedGetCart).toHaveBeenCalledTimes(1));
+
+    mockedGetCart.mockResolvedValueOnce(snapshot([SERVER_ITEM]));
+    let fresh: unknown = null;
+    await act(async () => {
+      fresh = await result.current.refresh();
+    });
+
+    expect(fresh).toEqual([SERVER_ITEM]);
+    expect(result.current.items).toEqual([SERVER_ITEM]);
+    expect(mockedGetCart).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshing as a guest is a no-op', async () => {
+    const { result } = renderCart();
+
+    let fresh: unknown = 'unset';
+    await act(async () => {
+      fresh = await result.current.refresh();
+    });
+
+    expect(fresh).toBeNull();
+    expect(mockedGetCart).not.toHaveBeenCalled();
+  });
+
   it('removes and clears through the API', async () => {
     loginAsStoredSession();
     const { result } = renderCart();

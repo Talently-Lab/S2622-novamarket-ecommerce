@@ -3,6 +3,8 @@ import Layout from '../components/Layout.tsx';
 import AdminLayout from '../components/admin/AdminLayout.tsx';
 import HomePage from '../pages/HomePage.tsx';
 import CartPage from '../pages/CartPage.tsx';
+import CheckoutConfirmationPage from '../pages/CheckoutConfirmationPage.tsx';
+import CheckoutPage from '../pages/CheckoutPage.tsx';
 import LoginPage from '../pages/LoginPage.tsx';
 import NotFoundPage from '../pages/NotFoundPage.tsx';
 import ProductDetailPage from '../pages/ProductDetailPage.tsx';
@@ -21,6 +23,17 @@ export function AppRoutes() {
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/productos/:id" element={<ProductDetailPage />} />
         <Route path="/carrito" element={<CartPage />} />
+        {/* `/checkout` is public on purpose: a guest sees the "Ingresá para
+            finalizar tu compra" gate and logs in without losing the cart.
+            The confirmation itself needs a session because it carries the
+            order created for the authenticated user. */}
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route element={<PrivateRoute />}>
+          <Route
+            path="/checkout/confirmacion"
+            element={<CheckoutConfirmationPage />}
+          />
+        </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />

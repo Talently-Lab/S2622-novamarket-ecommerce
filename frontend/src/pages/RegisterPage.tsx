@@ -19,9 +19,7 @@ function getSignUpErrorType(error: unknown): string {
   return 'error_servidor';
 }
 
-function getValidationErrorType(
-  fieldErrors: Record<string, string>,
-): string {
+function getValidationErrorType(fieldErrors: Record<string, string>): string {
   return fieldErrors.password || fieldErrors.confirmPassword
     ? 'validacion_password'
     : 'otro';
@@ -50,8 +48,13 @@ export default function RegisterPage() {
     });
   }, [authLoading, user, location.state]);
 
+  // Checkout sends the guest here and expects to get them back afterwards.
+  const from = (location.state as { from?: string } | null)?.from;
+
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/'} replace />;
+    return (
+      <Navigate to={from ?? (user.role === 'admin' ? '/admin' : '/')} replace />
+    );
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -93,7 +96,7 @@ export default function RegisterPage() {
         id_usuario: newUser.id,
         fecha_registro: new Date().toISOString(),
       });
-      navigate(newUser.role === 'admin' ? '/admin' : '/');
+      navigate(from ?? (newUser.role === 'admin' ? '/admin' : '/'));
     } catch (error) {
       trackEvent('sign_up_error', {
         tipo_error: getSignUpErrorType(error),
@@ -109,13 +112,13 @@ export default function RegisterPage() {
   const disabled = pending || authLoading;
 
   return (
-    <div className="flex min-h-[calc(100vh-16rem)] items-center justify-center bg-fondo-superficie px-4 py-12">
+    <div className="bg-fondo-superficie flex min-h-[calc(100vh-16rem)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-8 shadow-md">
         <div className="text-center">
-          <h1 className="text-titulo-2 font-bold text-texto-principal">
+          <h1 className="text-titulo-2 text-texto-principal font-bold">
             Crear cuenta
           </h1>
-          <p className="mt-2 text-cuerpo text-texto-secundario">
+          <p className="text-cuerpo text-texto-secundario mt-2">
             Para ver tus pedidos cuando quieras
           </p>
         </div>
@@ -130,7 +133,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="register-name"
-              className="mb-1 block text-caption font-semibold text-texto-principal"
+              className="text-caption text-texto-principal mb-1 block font-semibold"
             >
               Nombre y apellido
             </label>
@@ -141,7 +144,7 @@ export default function RegisterPage() {
               onChange={(event) => setName(event.target.value)}
               placeholder="Nombre Apellido"
               disabled={disabled}
-              className={`w-full rounded-md border px-3 py-2 text-cuerpo focus:outline-none ${
+              className={`text-cuerpo w-full rounded-md border px-3 py-2 focus:outline-none ${
                 errors.name
                   ? 'border-red-500'
                   : 'border-borde-divisor focus:border-borde-foco'
@@ -155,7 +158,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="register-email"
-              className="mb-1 block text-caption font-semibold text-texto-principal"
+              className="text-caption text-texto-principal mb-1 block font-semibold"
             >
               Email
             </label>
@@ -166,7 +169,7 @@ export default function RegisterPage() {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="tu@email.com"
               disabled={disabled}
-              className={`w-full rounded-md border px-3 py-2 text-cuerpo focus:outline-none ${
+              className={`text-cuerpo w-full rounded-md border px-3 py-2 focus:outline-none ${
                 errors.email
                   ? 'border-red-500'
                   : 'border-borde-divisor focus:border-borde-foco'
@@ -180,7 +183,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="register-password"
-              className="mb-1 block text-caption font-semibold text-texto-principal"
+              className="text-caption text-texto-principal mb-1 block font-semibold"
             >
               Contraseña
             </label>
@@ -191,13 +194,13 @@ export default function RegisterPage() {
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
               disabled={disabled}
-              className={`w-full rounded-md border px-3 py-2 text-cuerpo focus:outline-none ${
+              className={`text-cuerpo w-full rounded-md border px-3 py-2 focus:outline-none ${
                 errors.password
                   ? 'border-red-500'
                   : 'border-borde-divisor focus:border-borde-foco'
               }`}
             />
-            <p className="mt-1 text-xs text-texto-secundario">
+            <p className="text-texto-secundario mt-1 text-xs">
               Mínimo 8 caracteres, con mayúscula, minúscula y número
             </p>
             {errors.password ? (
@@ -208,7 +211,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="register-confirm"
-              className="mb-1 block text-caption font-semibold text-texto-principal"
+              className="text-caption text-texto-principal mb-1 block font-semibold"
             >
               Confirmar contraseña
             </label>
@@ -219,7 +222,7 @@ export default function RegisterPage() {
               onChange={(event) => setConfirmPassword(event.target.value)}
               placeholder="••••••••"
               disabled={disabled}
-              className={`w-full rounded-md border px-3 py-2 text-cuerpo focus:outline-none ${
+              className={`text-cuerpo w-full rounded-md border px-3 py-2 focus:outline-none ${
                 errors.confirmPassword
                   ? 'border-red-500'
                   : 'border-borde-divisor focus:border-borde-foco'
@@ -235,18 +238,18 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={disabled}
-            className="w-full rounded-md bg-accion-acento py-3 text-cuerpo-boton font-semibold text-texto-sobre-accion transition-colors hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-accion-acento text-cuerpo-boton text-texto-sobre-accion hover:bg-opacity-90 w-full rounded-md py-3 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? 'Creando cuenta...' : 'Crear cuenta'}
           </button>
         </form>
 
-        <div className="text-center text-caption text-texto-secundario">
+        <div className="text-caption text-texto-secundario text-center">
           <p>
             ¿Ya tenés cuenta?{' '}
             <Link
               to="/login"
-              className="font-semibold text-accion-primaria hover:underline"
+              className="text-accion-primaria font-semibold hover:underline"
             >
               Ingresar
             </Link>

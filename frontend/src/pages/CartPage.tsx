@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import FeaturedProducts from '../components/FeaturedProducts.tsx';
 import { useCart } from '../context/CartContext.tsx';
 import Icon from '../components/icons/Icon.tsx';
@@ -282,19 +281,11 @@ export function CartView({
  * stays exported so the layout can be rendered with injected items.
  */
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, loading } = useCart();
-  const [notice, setNotice] = useState<string>();
+  const { items, updateQuantity, removeItem, loading } = useCart();
+  const navigate = useNavigate();
 
   function quantityOf(productId: string): number {
     return items.find((item) => item.productId === productId)?.quantity ?? 0;
-  }
-
-  function handleCheckout() {
-    void clearCart().then((cleared) => {
-      if (cleared) {
-        setNotice('Compra simulada: no se realizó ningún cobro.');
-      }
-    });
   }
 
   // The server cart arrives after the session restores; without this the page
@@ -321,8 +312,7 @@ export default function CartPage() {
       onRemove={(productId) => {
         void removeItem(productId);
       }}
-      onCheckout={handleCheckout}
-      notice={notice}
+      onCheckout={() => navigate('/checkout')}
     />
   );
 }

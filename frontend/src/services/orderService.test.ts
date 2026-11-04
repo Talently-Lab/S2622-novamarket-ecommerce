@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getAllOrders, updateOrderStatus } from './orderService.ts';
+import {
+  createOrder,
+  getAllOrders,
+  updateOrderStatus,
+} from './orderService.ts';
 
 const dto = {
   _id: '507f1f77bcf86cd799439020',
@@ -74,5 +78,81 @@ describe('orderService', () => {
     expect(init.method).toBe('PUT');
     expect(JSON.parse(init.body)).toEqual({ estado: 'enviado' });
     expect(order.status).toBe('enviado');
+  });
+});
+
+describe('createOrder', () => {
+  it('posts the items, total and address, and maps the created order', async () => {
+    const fetchMock = mockFetch({
+      ok: true,
+      message: 'Compra realizada correctamente',
+      data: {
+        _id: '507f1f77bcf86cd7994390ab',
+        total: 10000,
+        items: [
+          {
+            productId: 'p1',
+            nombre: 'Teclado',
+            cantidad: 2,
+            precioHistorico: 5000,
+          },
+        ],
+      },
+    });
+
+    const order = await createOrder({
+      items: [{ productId: 'p1', cantidad: 2 }],
+      total: 10000,
+      direccionEnvio: {
+        calle: 'Calle 1',
+        ciudad: 'CABA',
+        provincia: 'Buenos Aires',
+        codigoPostal: '1000',
+      },
+    });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toMatch(/\/orders$/);
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({
+      items: [{ productId: 'p1', cantidad: 2 }],
+      total: 10000,
+      direccionEnvio: {
+        calle: 'Calle 1',
+        ciudad: 'CABA',
+        provincia: 'Buenos Aires',
+        codigoPostal: '1000',
+      },
+    });
+    expect(order).toEqual({
+      id: '507f1f77bcf86cd7994390ab',
+      code: 'NM-4390AB',
+      total: 10000,
+      items: [
+        {
+          productId: 'p1',
+          name: 'Teclado',
+          quantity: 2,
+          priceAtPurchase: 5000,
+        },
+      ],
+    });
+  });
+
+  it('rejects a malformed created-order payload', async () => {
+    mockFetch({ ok: true, message: 'ok', data: { _id: 'x' } });
+
+    await expect(
+      createOrder({
+        items: [{ productId: 'p1', cantidad: 1 }],
+        total: 5000,
+        direccionEnvio: {
+          calle: 'Calle 1',
+          ciudad: 'CABA',
+          provincia: 'Buenos Aires',
+          codigoPostal: '1000',
+        },
+      }),
+    ).rejects.toThrow('Invalid order response');
   });
 });

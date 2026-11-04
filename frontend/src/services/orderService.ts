@@ -153,3 +153,100 @@ export async function updateOrderStatus(
   }
   return mapOrderDto(data);
 }
+
+/* ------------------------------------------------------------------ *
+ * Checkout (POST /api/orders, rol client)
+ * ------------------------------------------------------------------ */
+
+/** One line sent to the backend: product id + units. */
+export interface CreateOrderItemInput {
+  productId: string;
+  cantidad: number;
+}
+
+export interface CreateOrderInput {
+  items: CreateOrderItemInput[];
+  /** Must equal the server's own sum, or the backend answers 400. */
+  total: number;
+  direccionEnvio: {
+    calle: string;
+    ciudad: string;
+    provincia: string;
+    codigoPostal: string;
+  };
+}
+
+/**
+ * The created order as the confirmation screen needs it. Kept separate from
+ * `Order` because `POST /api/orders` returns the raw document with `userId`
+ * as an ObjectId (not populated) — reading a customer name from it would lie.
+ */
+export interface PlacedOrder {
+  id: string;
+  /** Short display code in the design's `NM-XXXXXX` format. */
+  code: string;
+  total: number;
+  items: Array<{
+    productId: string;
+    name: string;
+    quantity: number;
+    priceAtPurchase: number;
+  }>;
+}
+
+type CreatedOrderDto = {
+  _id: string;
+  items: Array<{
+    productId?: string;
+    nombre: string;
+    cantidad: number;
+    precioHistorico: number;
+  }>;
+  total: number;
+};
+
+function isCreatedOrderDto(value: unknown): value is CreatedOrderDto {
+  if (typeof value !== 'object' || value === null) return false;
+  const dto = value as Record<string, unknown>;
+  return (
+    typeof dto._id === 'string' &&
+    typeof dto.total === 'number' &&
+    Array.isArray(dto.items) &&
+    dto.items.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).nombre === 'string' &&
+        typeof (item as Record<string, unknown>).cantidad === 'number' &&
+        typeof (item as Record<string, unknown>).precioHistorico === 'number',
+    )
+  );
+}
+
+/**
+ * POST /api/orders — creates the order and decrements stock server-side.
+ * The backend does NOT empty the cart, so the caller clears it after success.
+ */
+export async function createOrder(
+  input: CreateOrderInput,
+): Promise<PlacedOrder> {
+  const response = await apiFetch<unknown>('/orders', {
+    method: 'POST',
+    body: input,
+  });
+  const data = readData(response);
+  if (!isCreatedOrderDto(data)) {
+    throw new ApiError('Invalid order response');
+  }
+  return {
+    id: data._id,
+    code: `NM-${data._id.slice(-6).toUpperCase()}`,
+    total: data.total,
+    items: data.items.map((item) => ({
+      productId: String(item.productId ?? ''),
+      name: item.nombre,
+      quantity: item.cantidad,
+      priceAtPurchase: item.precioHistorico,
+    })),
+  };
+}

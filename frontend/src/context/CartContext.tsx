@@ -50,6 +50,8 @@ export interface CartContextValue {
   /** Sets an absolute quantity. Zero or less drops the line. */
   updateQuantity: (productId: string, quantity: number) => Promise<boolean>;
   clearCart: () => Promise<boolean>;
+  /** Re-reads the server cart (guests have nothing to refresh). */
+  refresh: () => Promise<CartItem[] | null>;
   clearError: () => void;
 }
 
@@ -297,6 +299,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return runServerMutation(() => cartService.clearCart());
   }, [isServerMode, runServerMutation]);
 
+  const refresh = useCallback(async (): Promise<CartItem[] | null> => {
+    if (!isServerMode) return null;
+    try {
+      const cart = await cartService.getCart();
+      setItems(cart.items);
+      setError(null);
+      return cart.items;
+    } catch (err) {
+      setError(errorMessage(err));
+      return null;
+    }
+  }, [isServerMode]);
+
   const clearError = useCallback(() => setError(null), []);
 
   // Recomputed only when the line array changes: React never re-adds the
@@ -317,6 +332,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       updateQuantity,
       clearCart,
+      refresh,
       clearError,
     };
   }, [
@@ -327,6 +343,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     removeItem,
     updateQuantity,
     clearCart,
+    refresh,
     clearError,
   ]);
 
