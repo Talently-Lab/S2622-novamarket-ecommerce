@@ -42,7 +42,10 @@ const productFields = {
     precio: z.number('El precio debe ser un número').nonnegative('El precio no puede ser negativo'),
     stock: z.number('El stock debe ser un número').int('El stock debe ser un número entero').nonnegative('El stock no puede ser negativo'),
     categoria: z.enum(CATEGORIAS, { error: `La categoría debe ser una de: ${CATEGORIAS.join(', ')}` }),
-    imagenUrl: z.string('La imagen debe ser una cadena de texto'),
+    imagenUrl: z
+        .string({ required_error: 'La imagen es requerida', invalid_type_error: 'La imagen debe ser una cadena de texto' })
+        .url({ message: 'La imagen debe ser una URL válida' }),
+
 };
 
 export const CREATE_PRODUCT_SCHEMA = z.object({
