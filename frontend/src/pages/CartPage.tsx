@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
 import { Link } from 'react-router';
 import FeaturedProducts from '../components/FeaturedProducts.tsx';
+import { useCart } from '../context/CartContext.tsx';
 import Icon from '../components/icons/Icon.tsx';
 import type { CartItem } from '../types/cart.ts';
 import { formatPrice } from '../utils/format.ts';
@@ -12,6 +14,8 @@ export interface CartPageProps {
   onDecrement?: (productId: string) => void;
   onRemove?: (productId: string) => void;
   onCheckout?: () => void;
+  /** Confirmation shown on the empty state after a simulated checkout. */
+  notice?: string;
 }
 
 const noop = () => {};
@@ -118,38 +122,58 @@ function CartRow({
   );
 }
 
-function EmptyCart() {
+function EmptyCart({ notice }: { notice?: string }) {
   return (
-    <div className="flex flex-col items-center px-4 py-12 text-center">
-      <Icon name="shopping_cart" className="text-texto-secundario text-7xl" />
-      <h1 className="text-titulo-2 text-texto-principal mt-6 font-bold">
-        Tu carrito está vacío
-      </h1>
-      <p className="text-cuerpo text-texto-secundario mt-2">
-        Sumá productos para armar tu setup
-      </p>
-      <Button
-        variant="primary"
-        asChild
-        style={{ width: '100%' }}
-        className="mt-6"
-      >
-        <Link to="/productos">Ver catálogo</Link>
-      </Button>
-      <div className="mt-10 w-full text-left">
+    <>
+      {/* Figma: page and bestsellers span the full content width; the empty
+          message is a hug card (radius 16, 80px padding) centered above them,
+          not a narrow centered column for the whole page. */}
+      <div className="bg-fondo-superficie border-azul-600 mx-auto flex w-fit max-w-full flex-col items-center gap-6 rounded-xl border p-8 text-center md:p-20">
+        <Icon
+          name="shopping_cart"
+          className="text-texto-secundario text-[48px]!"
+        />
+        <div className="flex flex-col items-center gap-1">
+          <h1 className="text-titulo-2 text-texto-principal font-bold">
+            Tu carrito está vacío
+          </h1>
+          <p className="text-cuerpo text-texto-secundario">
+            Sumá productos para armar tu setup
+          </p>
+          {notice ? (
+            <p
+              role="status"
+              className="bg-fondo-exito text-cuerpo text-texto-sobre-exito mt-4 rounded-md px-4 py-2"
+            >
+              {notice}
+            </p>
+          ) : null}
+        </div>
+        <Button
+          variant="primary"
+          asChild
+          style={{ width: '280px', maxWidth: '100%', height: '48px' }}
+        >
+          <Link to="/productos">Ver catálogo</Link>
+        </Button>
+      </div>
+      {/* Figma separates the two blocks with the body gap (48px) plus the
+          section's own 24px top padding. */}
+      <div className="w-full pt-6 text-left">
         <FeaturedProducts title="Más vendidos" />
       </div>
-    </div>
+    </>
   );
 }
 
-export default function CartPage({
+export function CartView({
   items = [],
   discount = 0,
   onIncrement = noop,
   onDecrement = noop,
   onRemove = noop,
   onCheckout = noop,
+  notice,
 }: CartPageProps) {
   const subtotal = items.reduce(
     (sum, item) => sum + item.unitPrice * item.quantity,
@@ -158,95 +182,147 @@ export default function CartPage({
   const total = subtotal - discount;
 
   return (
-    <main
-      className={
-        items.length === 0
-          ? 'mx-auto max-w-2xl px-4 py-6 sm:px-6'
-          : 'mx-auto max-w-7xl px-4 py-6 sm:px-6'
-      }
-    >
-      {items.length === 0 ? (
-        <EmptyCart />
-      ) : (
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
-          <section aria-label="Productos del carrito">
-            <h1 className="text-titulo-2 text-texto-principal font-bold">
-              Tu carrito
-            </h1>
+    // Same content column as the navbar, the home page and the footer: a true
+    // 1280px column with 80px side margins at 1440. Figma's cart body is
+    // `48px 80px 200px` on desktop and ends 80px above the footer on mobile,
+    // so the page owns the bottom padding instead of every section repeating it.
+    <main className="flex w-full justify-center px-4 pt-6 pb-20 md:px-20 md:pt-12 md:pb-[200px]">
+      <div className="flex w-full max-w-[1280px] flex-col gap-6 md:gap-12">
+        {items.length === 0 ? (
+          <EmptyCart notice={notice} />
+        ) : (
+          // Figma `D - Carrito`: 360px summary column with a 48px gutter.
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-12">
+            <section aria-label="Productos del carrito">
+              <h1 className="text-titulo-2 text-texto-principal font-bold">
+                Tu carrito
+              </h1>
 
-            <div className="border-borde-divisor text-cuerpo-chico text-texto-secundario mt-6 hidden border-b pb-2 font-semibold lg:grid lg:grid-cols-[76px_minmax(0,1fr)_minmax(5.5rem,8rem)_minmax(7rem,9.5rem)_minmax(6rem,8rem)_64px]">
-              <span className="lg:col-span-2 lg:col-start-1">Producto</span>
-              <span className="lg:col-start-3">Precio</span>
-              <span className="lg:col-start-4">Cantidad</span>
-              <span className="lg:col-start-5">Subtotal</span>
-            </div>
+              <div className="border-borde-divisor text-cuerpo-chico text-texto-secundario mt-6 hidden border-b pb-2 font-semibold lg:grid lg:grid-cols-[76px_minmax(0,1fr)_minmax(5.5rem,8rem)_minmax(7rem,9.5rem)_minmax(6rem,8rem)_64px]">
+                <span className="lg:col-span-2 lg:col-start-1">Producto</span>
+                <span className="lg:col-start-3">Precio</span>
+                <span className="lg:col-start-4">Cantidad</span>
+                <span className="lg:col-start-5">Subtotal</span>
+              </div>
 
-            <ul className="divide-borde-divisor mt-4 divide-y lg:mt-0">
-              {items.map((item) => (
-                <CartRow
-                  key={item.productId}
-                  item={item}
-                  onIncrement={onIncrement}
-                  onDecrement={onDecrement}
-                  onRemove={onRemove}
-                />
-              ))}
-            </ul>
-          </section>
+              <ul className="divide-borde-divisor mt-4 divide-y lg:mt-0">
+                {items.map((item) => (
+                  <CartRow
+                    key={item.productId}
+                    item={item}
+                    onIncrement={onIncrement}
+                    onDecrement={onDecrement}
+                    onRemove={onRemove}
+                  />
+                ))}
+              </ul>
+            </section>
 
-          <aside
-            aria-labelledby="cart-summary-title"
-            className="border-borde-divisor lg:bg-fondo-superficie mt-6 border-t pt-4 lg:mt-0 lg:rounded-xl lg:border lg:p-6"
-          >
-            <h2
-              id="cart-summary-title"
-              className="text-titulo-3 text-texto-principal sr-only font-bold lg:not-sr-only lg:mb-4"
+            <aside
+              aria-labelledby="cart-summary-title"
+              className="border-borde-divisor lg:bg-fondo-superficie mt-6 border-t pt-4 lg:mt-0 lg:rounded-xl lg:border lg:p-6"
             >
-              Resumen
-            </h2>
+              <h2
+                id="cart-summary-title"
+                className="text-titulo-3 text-texto-principal sr-only font-bold lg:not-sr-only lg:mb-4"
+              >
+                Resumen
+              </h2>
 
-            <div className="text-cuerpo text-texto-secundario flex items-center justify-between">
-              <span>Subtotal</span>
-              <span>{formatPrice(subtotal)}</span>
-            </div>
-            <div className="text-cuerpo text-texto-secundario mt-2 flex items-center justify-between">
-              <span>Descuentos</span>
-              <span>-{formatPrice(discount)}</span>
-            </div>
-            <div className="border-borde-divisor mt-3 flex items-center justify-between border-t pt-3">
-              <span className="text-titulo-3 text-texto-principal font-bold">
-                Total
-              </span>
-              <span className="text-precio text-texto-principal font-bold">
-                {formatPrice(total)}
-              </span>
-            </div>
+              <div className="text-cuerpo text-texto-secundario flex items-center justify-between">
+                <span>Subtotal</span>
+                <span>{formatPrice(subtotal)}</span>
+              </div>
+              <div className="text-cuerpo text-texto-secundario mt-2 flex items-center justify-between">
+                <span>Descuentos</span>
+                <span>-{formatPrice(discount)}</span>
+              </div>
+              <div className="border-borde-divisor mt-3 flex items-center justify-between border-t pt-3">
+                <span className="text-titulo-3 text-texto-principal font-bold">
+                  Total
+                </span>
+                <span className="text-precio text-texto-principal font-bold">
+                  {formatPrice(total)}
+                </span>
+              </div>
 
-            <Button
-              variant="primary"
-              style={{ width: '100%' }}
-              className="mt-6"
-              onClick={onCheckout}
-            >
-              Continuar compra
-            </Button>
-          </aside>
+              <Button
+                variant="primary"
+                style={{ width: '100%' }}
+                className="mt-6"
+                onClick={onCheckout}
+              >
+                Continuar compra
+              </Button>
+            </aside>
 
-          <p className="mt-4 text-center lg:col-start-1 lg:row-start-2 lg:text-left">
-            <Link
-              to="/productos"
-              className="text-cuerpo-boton text-texto-principal inline-flex items-center gap-1 font-semibold underline"
-            >
-              {/* Wrapper: the icon font stylesheet sets its own `display`, which
+            <p className="mt-4 text-center lg:col-start-1 lg:row-start-2 lg:text-left">
+              <Link
+                to="/productos"
+                className="text-cuerpo-boton text-texto-principal inline-flex items-center gap-1 font-semibold underline"
+              >
+                {/* Wrapper: the icon font stylesheet sets its own `display`, which
                   beats the `hidden` utility, so the hiding happens here. */}
-              <span className="hidden lg:inline-flex">
-                <Icon name="arrow_back" className="text-base" />
-              </span>
-              Seguir comprando
-            </Link>
-          </p>
-        </div>
-      )}
+                <span className="hidden lg:inline-flex">
+                  <Icon name="arrow_back" className="text-base" />
+                </span>
+                Seguir comprando
+              </Link>
+            </p>
+          </div>
+        )}
+      </div>
     </main>
+  );
+}
+
+/**
+ * Cart page bound to the cart context: guest carts live in localStorage,
+ * authenticated carts live in `/api/cart`. The presentational `CartView`
+ * stays exported so the layout can be rendered with injected items.
+ */
+export default function CartPage() {
+  const { items, updateQuantity, removeItem, clearCart, loading } = useCart();
+  const [notice, setNotice] = useState<string>();
+
+  function quantityOf(productId: string): number {
+    return items.find((item) => item.productId === productId)?.quantity ?? 0;
+  }
+
+  function handleCheckout() {
+    void clearCart().then((cleared) => {
+      if (cleared) {
+        setNotice('Compra simulada: no se realizó ningún cobro.');
+      }
+    });
+  }
+
+  // The server cart arrives after the session restores; without this the page
+  // would show "Tu carrito está vacío" for a user who does have lines.
+  if (loading && items.length === 0) {
+    return (
+      <main className="flex w-full justify-center px-4 pt-6 pb-20 md:px-20 md:pt-12 md:pb-[200px]">
+        <p role="status" className="text-cuerpo text-texto-secundario">
+          Cargando tu carrito…
+        </p>
+      </main>
+    );
+  }
+
+  return (
+    <CartView
+      items={items}
+      onIncrement={(productId) => {
+        void updateQuantity(productId, quantityOf(productId) + 1);
+      }}
+      onDecrement={(productId) => {
+        void updateQuantity(productId, quantityOf(productId) - 1);
+      }}
+      onRemove={(productId) => {
+        void removeItem(productId);
+      }}
+      onCheckout={handleCheckout}
+      notice={notice}
+    />
   );
 }

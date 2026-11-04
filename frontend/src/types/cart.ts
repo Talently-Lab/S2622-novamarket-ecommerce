@@ -1,5 +1,6 @@
-// Display-shape types for the cart UI. The API mapping will land with the
-// cart service (SN-285); this page only consumes props.
+// Display-shape types for the cart UI. `cartService` maps the backend
+// `/api/cart` DTO (Spanish field names, `cantidad`) into this shape, and the
+// guest cart stores it in localStorage as-is.
 export interface CartItem {
   productId: string;
   name: string;

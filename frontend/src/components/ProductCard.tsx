@@ -91,7 +91,7 @@ export default function ProductCard({
           >
             {product.name}
           </h2>
-          <p className="text-precio text-texto-principal font-bold">
+          <p className="text-precio text-texto-principal md:text-titulo-2 font-bold">
             {formatPrice(product.price)}
           </p>
         </div>

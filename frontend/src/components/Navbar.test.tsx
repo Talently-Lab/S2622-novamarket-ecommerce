@@ -1,8 +1,15 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext.tsx';
+import { CartProvider } from '../context/CartContext.tsx';
 import { getProductCategories } from '../services/formdataService.ts';
 import { getProductsFromApi } from '../services/productService.ts';
 import { system } from '../theme/system.ts';
@@ -20,11 +27,13 @@ vi.mock('../services/formdataService.ts', () => ({
 const mockedGetProducts = vi.mocked(getProductsFromApi);
 const mockedCategories = vi.mocked(getProductCategories);
 
-function renderNavbar(props: { count?: number } = {}, initialEntry = '/') {
+function renderNavbar(initialEntry = '/') {
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <AuthProvider>
-        <Navbar count={props.count} />
+        <CartProvider>
+          <Navbar />
+        </CartProvider>
         <Routes>
           <Route path="/" element={<p>Inicio</p>} />
           <Route path="/productos" element={<p>Catálogo</p>} />
@@ -37,6 +46,7 @@ function renderNavbar(props: { count?: number } = {}, initialEntry = '/') {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();
   mockedCategories.mockResolvedValue([
     { value: 'accesorios', label: 'Accesorios' },
     { value: 'perifericos', label: 'Perifericos' },
@@ -105,7 +115,7 @@ describe('Navbar', () => {
   });
 
   it('marks the selected category with the orange underline', async () => {
-    renderNavbar({}, '/productos?categoria=gadgets');
+    renderNavbar('/?categoria=gadgets');
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
     const selected = await within(bar).findByRole('link', { name: 'Gadgets' });
@@ -119,12 +129,31 @@ describe('Navbar', () => {
   });
 
   it('marks Todos when no categoria param is present', () => {
-    renderNavbar({}, '/productos');
+    renderNavbar('/');
 
     const bar = screen.getByRole('navigation', { name: 'Categorías' });
     const todos = within(bar).getByRole('link', { name: 'Todos' });
     expect(todos.className).toContain('underline');
     expect(todos.className).toContain('decoration-accion-acento');
+  });
+
+  it('shows the category bar only on the home page', () => {
+    renderNavbar('/productos');
+    expect(
+      screen.queryByRole('navigation', { name: 'Categorías' }),
+    ).not.toBeInTheDocument();
+
+    cleanup();
+    renderNavbar('/carrito');
+    expect(
+      screen.queryByRole('navigation', { name: 'Categorías' }),
+    ).not.toBeInTheDocument();
+
+    cleanup();
+    renderNavbar('/');
+    expect(
+      screen.getByRole('navigation', { name: 'Categorías' }),
+    ).toBeInTheDocument();
   });
 
   it('navigates with params and filters the catalog', async () => {
@@ -147,13 +176,16 @@ describe('Navbar', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/productos']}>
+      <MemoryRouter initialEntries={['/']}>
         <AuthProvider>
           <ChakraProvider value={system}>
-            <Navbar />
-            <Routes>
-              <Route path="/productos" element={<ProductsPage />} />
-            </Routes>
+            <CartProvider>
+              <Navbar />
+              <Routes>
+                <Route path="/" element={null} />
+                <Route path="/productos" element={<ProductsPage />} />
+              </Routes>
+            </CartProvider>
           </ChakraProvider>
         </AuthProvider>
       </MemoryRouter>,
@@ -171,21 +203,27 @@ describe('Navbar', () => {
     expect(mockedGetProducts).toHaveBeenCalledWith(
       'accesorios',
       expect.any(AbortSignal),
+      { minPrice: undefined, maxPrice: undefined, sort: undefined },
     );
   });
 
-  it('shows the default cart badge count from Figma', () => {
+  it('hides the cart badge while the cart is empty', () => {
     renderNavbar();
 
-    expect(screen.getAllByLabelText('2 productos en el carrito')).toHaveLength(
-      2,
-    );
+    expect(screen.queryByLabelText(/en el carrito/)).not.toBeInTheDocument();
   });
 
-  it('accepts a dynamic cart count', () => {
-    renderNavbar({ count: 5 });
+  it('shows the units stored in the persisted cart', () => {
+    window.localStorage.setItem(
+      'novamarket.cart.v1',
+      JSON.stringify([
+        { productId: 'p1', name: 'Teclado', unitPrice: 1000, quantity: 3 },
+      ]),
+    );
 
-    expect(screen.getAllByLabelText('5 productos en el carrito')).toHaveLength(
+    renderNavbar();
+
+    expect(screen.getAllByLabelText('3 productos en el carrito')).toHaveLength(
       2,
     );
   });

@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, NavLink, useNavigate, useSearchParams } from 'react-router';
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router';
 import { trackEvent } from '../analytics/trackEvent.ts';
 import { useAuth } from '../context/AuthContext.tsx';
+import { useCart } from '../context/CartContext.tsx';
 import { useCategories } from '../hooks/useCategories.ts';
 import Icon from './icons/Icon.tsx';
 
-// TODO(cart): wire `count` to a real cart context once it exists.
-// The default 2 mirrors the Figma badge example, it is not live data.
-interface NavbarProps {
-  count?: number;
-}
-
 // Selected category marker from Nav_categorias.png: orange underline.
 const SELECTED_CATEGORY_CLASS =
-  'underline decoration-accion-acento decoration-2 underline-offset-4';
+  'font-semibold underline decoration-accion-acento decoration-2 underline-offset-4';
 
-function CartButton({ count }: { count: number }) {
+function CartButton() {
+  const { totalItems } = useCart();
+  const label = `${totalItems} ${totalItems === 1 ? 'producto' : 'productos'} en el carrito`;
+
   return (
     <Link
       to="/carrito"
@@ -26,12 +30,14 @@ function CartButton({ count }: { count: number }) {
       <Icon name="shopping_cart" className="text-accion-primaria text-2xl" />
       {/* Figma paints the count in the navbar blue over the orange accent,
           not in white like the other action surfaces. */}
-      <span
-        aria-label={`${count} productos en el carrito`}
-        className="bg-accion-acento text-caption-badge text-texto-principal absolute top-1 right-0 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-semibold"
-      >
-        {count}
-      </span>
+      {totalItems > 0 ? (
+        <span
+          aria-label={label}
+          className="bg-accion-acento text-caption-badge text-texto-principal absolute top-1 right-0 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-semibold"
+        >
+          {totalItems}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -130,10 +136,15 @@ function SessionLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export default function Navbar({ count = 2 }: NavbarProps) {
+export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const activeCategory = searchParams.get('categoria') ?? '';
+  // Figma only renders the category bar on the home page. Everywhere else the
+  // categories are reached through the catalog filters or the mobile drawer, so
+  // repeating them under the navbar would duplicate the control.
+  const showCategoryBar = pathname === '/';
   // Category names come from the backend enum, not from a local map.
   const { categories: categoryOptions } = useCategories();
 
@@ -168,7 +179,7 @@ export default function Navbar({ count = 2 }: NavbarProps) {
         <NavLink to="/" className="text-titulo-3 font-bold">
           NovaMarket
         </NavLink>
-        <CartButton count={count} />
+        <CartButton />
       </div>
 
       {/* Mobile search bar */}
@@ -182,49 +193,56 @@ export default function Navbar({ count = 2 }: NavbarProps) {
           <NavLink to="/" className="text-titulo-2 shrink-0 font-bold">
             NovaMarket
           </NavLink>
-          <SearchForm id="navbar-search-desktop" className="w-[640px] shrink" />
+          <SearchForm
+            id="navbar-search-desktop"
+            className="max-w-[640px] shrink"
+          />
           <div className="flex shrink-0 items-center gap-4">
             <SessionLinks />
-            <CartButton count={count} />
+            <CartButton />
           </div>
         </div>
       </div>
 
-      {/* Divider between top bar and categories */}
-      <div
-        aria-hidden="true"
-        className="border-borde-divisor-estructura hidden border-t md:block"
-      />
+      {showCategoryBar ? (
+        <>
+          {/* Divider between top bar and categories */}
+          <div
+            aria-hidden="true"
+            className="border-borde-divisor-estructura hidden border-t md:block"
+          />
 
-      {/* Desktop category bar */}
-      <nav
-        aria-label="Categorías"
-        className="hidden justify-center px-20 md:flex"
-      >
-        <div className="flex w-full max-w-[1280px] items-center gap-8 py-6">
-          <Link
-            to="/productos"
-            className={desktopCategoryClass('', 'text-cuerpo font-semibold')}
+          {/* Desktop category bar */}
+          <nav
+            aria-label="Categorías"
+            className="hidden justify-center px-20 md:flex"
           >
-            Todos
-          </Link>
-          {categoryOptions.map((option) => (
-            <Link
-              key={option.value}
-              to={`/productos?categoria=${option.value}`}
-              onClick={() =>
-                trackEvent('select_category', {
-                  categoria: option.value,
-                  origen: 'filtro',
-                })
-              }
-              className={desktopCategoryClass(option.value, 'text-cuerpo')}
-            >
-              {option.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
+            <div className="flex w-full max-w-[1280px] items-center gap-6 py-3">
+              <Link
+                to="/productos"
+                className={desktopCategoryClass('', 'text-cuerpo')}
+              >
+                Todos
+              </Link>
+              {categoryOptions.map((option) => (
+                <Link
+                  key={option.value}
+                  to={`/productos?categoria=${option.value}`}
+                  onClick={() =>
+                    trackEvent('select_category', {
+                      categoria: option.value,
+                      origen: 'filtro',
+                    })
+                  }
+                  className={desktopCategoryClass(option.value, 'text-cuerpo')}
+                >
+                  {option.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        </>
+      ) : null}
 
       {/* Mobile drawer: session + categories */}
       {menuOpen ? (

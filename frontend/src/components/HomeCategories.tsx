@@ -1,56 +1,81 @@
 import { Link } from 'react-router';
-import { trackEvent } from '../analytics/trackEvent.ts';
 import { useCategories } from '../hooks/useCategories.ts';
+import Icon from './icons/Icon.tsx';
+import accesoriosImage from '../assets/categories/accesorios.jpg';
+import gadgetsImage from '../assets/categories/gadgets.jpg';
+import perifericosImage from '../assets/categories/perifericos.jpg';
 
 /**
- * Category tiles for the home. The options and their labels come from the
- * backend enum (`GET /api/formdata/products`), so a category added on the
- * backend shows up here without a code change. "Ver todo" always comes last.
+ * Figma `D - Home` › `Section_categorias` pins one photo per category, but the
+ * backend enum (`GET /api/formdata/products`) carries no image. The artwork is
+ * mapped here by slug; a category added later renders with the flat
+ * placeholder instead of a broken image.
+ */
+const CATEGORY_IMAGES: Record<string, string> = {
+  accesorios: accesoriosImage,
+  gadgets: gadgetsImage,
+  perifericos: perifericosImage,
+};
+
+/**
+ * Category tiles for the home. Options and labels come from the backend enum,
+ * so a category added on the backend shows up here without a code change.
+ * "Ver todo" always comes last.
+ *
+ * Below md it is a horizontal strip (Figma mobile 110px tiles). Desktop uses
+ * four equal columns so the tiles span the same content width as featured cards.
  */
 export default function HomeCategories() {
   const { categories } = useCategories();
 
   return (
-    <section aria-labelledby="home-categories-title">
-      <h2
-        id="home-categories-title"
-        className="text-titulo-3 font-bold text-texto-principal"
-      >
-        Categorías
-      </h2>
-      <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {categories.map((option) => (
-          <li key={option.value}>
-            <Link
-              to={`/productos?categoria=${option.value}`}
-              onClick={() =>
-                trackEvent('select_category', {
-                  categoria: option.value,
-                  origen: 'home',
-                })
-              }
-              className="flex min-h-11 flex-col overflow-hidden rounded-lg bg-fondo-superficie"
-            >
-              <span
-                aria-hidden="true"
-                className="block aspect-[4/3] w-full bg-fondo-deshabilitado"
-              />
-              <span className="block px-3 py-2 text-cuerpo-chico font-medium text-texto-secundario">
-                {option.label}
-              </span>
-            </Link>
-          </li>
-        ))}
-        <li>
+    <section aria-label="Categorías" className="py-4 md:py-6">
+      <ul className="flex [scrollbar-width:none] gap-4 overflow-x-auto md:grid md:grid-cols-2 md:gap-6 md:overflow-visible xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+        {categories.map((option) => {
+          const image = CATEGORY_IMAGES[option.value];
+
+          return (
+            <li key={option.value} className="shrink-0 md:min-w-0">
+              <Link
+                to={`/productos?categoria=${option.value}`}
+                className="flex w-[110px] flex-col items-center gap-4 md:w-full"
+              >
+                {image ? (
+                  <img
+                    src={image}
+                    // The label right below already names the category.
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="h-[110px] w-[110px] rounded-xl object-cover md:aspect-square md:h-auto md:w-full"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="bg-fondo-deshabilitado block h-[110px] w-[110px] rounded-xl md:aspect-square md:h-auto md:w-full"
+                  />
+                )}
+                <span className="text-cuerpo-boton text-texto-secundario md:text-titulo-3 text-center font-semibold md:font-bold">
+                  {option.label}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+        <li className="shrink-0 md:min-w-0">
           <Link
             to="/productos"
-            className="flex min-h-11 flex-col overflow-hidden rounded-lg bg-fondo-superficie"
+            className="flex w-[110px] flex-col items-center gap-4 md:w-full"
           >
-            <span
-              aria-hidden="true"
-              className="block aspect-[4/3] w-full bg-fondo-deshabilitado"
-            />
-            <span className="block px-3 py-2 text-cuerpo-chico font-medium text-texto-secundario">
+            {/* Figma paints "Ver todo" as a flat tile with an outward arrow
+                instead of a photo. */}
+            <span className="flex h-[110px] w-[110px] items-center justify-center rounded-xl bg-[#EDF0F5] md:aspect-square md:h-auto md:w-full">
+              <Icon
+                name="arrow_outward"
+                className="text-accion-primaria text-[32px]! md:text-[40px]!"
+              />
+            </span>
+            <span className="text-cuerpo-boton text-texto-secundario md:text-titulo-3 text-center font-semibold md:font-bold">
               Ver todo
             </span>
           </Link>

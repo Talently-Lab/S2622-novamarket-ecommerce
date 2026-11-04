@@ -1,49 +1,53 @@
 import { Link } from 'react-router';
-import bannerImage from '../assets/banner/banner.png';
+import bannerImage from '../assets/banner/banner-tech.png';
+
+// Figma `D - Home` › `Banner` (desktop 622:4867, mobile 623:4886).
+// The gradient is a one-off hero surface, not part of the token palette.
+const BANNER_SURFACE =
+  'bg-[linear-gradient(180deg,#C9CCD1_0%,#F1F4F5_70%,#E2E0E5_100%)]';
 
 /**
- * Home hero: real Banner.png artwork with the value proposition overlaid on
- * the empty left area of the image, on every breakpoint.
- *
- * Mobile keeps the copy inside the banner too, with a smaller headline and a
- * slightly taller crop so the blurb and CTA fit over the artwork.
+ * Home hero: copy column plus the transparent product shot, per the Figma
+ * banner. Both breakpoints share the markup; below md the artwork is
+ * absolutely positioned so it overlaps the copy column like the mobile frame,
+ * and the two-column row only starts at md.
  */
 export default function HomeBanner() {
   return (
     <section
       aria-labelledby="home-hero-title"
-      className="relative overflow-hidden rounded-xl bg-fondo-superficie"
+      className={`w-full ${BANNER_SURFACE}`}
     >
-      <img
-        src={bannerImage}
-        alt="Teclado, auriculares, parlante, batería externa, mouse y audífonos inalámbricos sobre pedestales claros"
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        className="h-[175px] w-full object-cover md:aspect-[1160/520] md:h-auto"
-      />
-      {/* Mobile only: soft white fade on the left so the copy stays legible
-          over the artwork; desktop's left third is empty already. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-fondo-superficie via-fondo-superficie/65 to-transparent md:hidden"
-      />
-      <div className="absolute inset-0 flex flex-col items-start justify-center gap-1.5 p-4 md:max-w-[42%] md:gap-3 md:px-12">
-        <h1
-          id="home-hero-title"
-          className="text-titulo-2 font-bold text-texto-principal md:text-display"
-        >
-          Potenciá tu setup
-        </h1>
-        <p className="max-w-[80%] text-caption text-texto-secundario md:max-w-md md:text-cuerpo">
-          Periféricos, accesorios y gadgets al alcance de tu mano.
-        </p>
-        <Link
-          to="/productos"
-          className="mt-0.5 flex h-9 items-center justify-center rounded-md bg-accion-primaria px-4 text-cuerpo-chico-label font-semibold text-texto-sobre-accion hover:bg-accion-primaria-hover md:mt-1 md:h-12 md:px-6 md:text-cuerpo-boton"
-        >
-          Ver productos
-        </Link>
+      <div className="flex w-full justify-center px-4 md:px-20">
+        <div className="relative flex h-[200px] w-full max-w-[1280px] items-center md:h-[520px] md:items-end md:justify-center md:gap-[120px] md:py-4">
+          <div className="relative z-10 flex w-[181px] flex-col gap-4 md:w-auto md:gap-6 md:pb-16">
+            <div className="flex flex-col gap-1 md:gap-4">
+              <h1
+                id="home-hero-title"
+                className="text-titulo-3 md:text-display font-bold text-black"
+              >
+                Potenciá tu setup
+              </h1>
+              <p className="text-caption md:text-cuerpo text-black md:w-[247px]">
+                Periféricos, accesorios y gadgets al alcance de tu mano.
+              </p>
+            </div>
+            <Link
+              to="/productos"
+              className="bg-accion-primaria text-cuerpo-boton text-texto-sobre-accion hover:bg-accion-primaria-hover flex h-10 w-fit items-center justify-center rounded-md px-4 font-semibold md:h-12 md:w-[240px]"
+            >
+              Ver productos
+            </Link>
+          </div>
+          <img
+            src={bannerImage}
+            alt="Teclado, auriculares, parlante, batería externa, mouse y audífonos inalámbricos sobre pedestales claros"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            className="pointer-events-none absolute top-2 right-0 h-[184px] w-[220px] object-contain md:static md:h-[472px] md:w-[632px] md:shrink-0"
+          />
+        </div>
       </div>
     </section>
   );

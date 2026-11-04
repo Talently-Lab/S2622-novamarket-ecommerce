@@ -1,10 +1,13 @@
 import { Provider } from './components/ui/provider.tsx';
+import { CartProvider } from './context/CartContext.tsx';
 import { AppRoutes } from './routes/AppRoutes.tsx';
 
 export default function App() {
   return (
     <Provider>
-      <AppRoutes />
+      <CartProvider>
+        <AppRoutes />
+      </CartProvider>
     </Provider>
   );
 }

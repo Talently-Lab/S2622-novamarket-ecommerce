@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +13,8 @@ import { getProductCategories } from '../services/formdataService.ts';
 import { getProductsFromApi } from '../services/productService.ts';
 import type { Product } from '../types/product.ts';
 import { system } from '../theme/system.ts';
+import { AuthProvider } from '../context/AuthContext.tsx';
+import { CartProvider } from '../context/CartContext.tsx';
 import ProductsPage from './ProductsPage.tsx';
 
 vi.mock('../services/productService.ts', () => ({
@@ -36,7 +44,11 @@ function renderPage(initialEntry = '/productos') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <ChakraProvider value={system}>
-        <ProductsPage />
+        <AuthProvider>
+          <CartProvider>
+            <ProductsPage />
+          </CartProvider>
+        </AuthProvider>
       </ChakraProvider>
     </MemoryRouter>,
   );
@@ -155,6 +167,33 @@ describe('ProductsPage', () => {
     expect(screen.getByText('0 productos')).toBeInTheDocument();
   });
 
+  it.each([
+    { layout: 'desktop rail', isDesktop: true },
+    { layout: 'mobile filter sheet', isDesktop: false },
+  ])('shows price examples in the $layout inputs', async ({ isDesktop }) => {
+    stubMatchMedia(isDesktop);
+    mockedGetProducts.mockResolvedValueOnce([product(1)]);
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    const filters = isDesktop
+      ? screen
+      : (() => {
+          fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+          return within(screen.getByRole('dialog', { name: 'Filtros' }));
+        })();
+
+    expect(filters.getByRole('textbox', { name: 'Mínimo' })).toHaveAttribute(
+      'placeholder',
+      '$20.000',
+    );
+    expect(filters.getByRole('textbox', { name: 'Máximo' })).toHaveAttribute(
+      'placeholder',
+      '$50.000',
+    );
+  });
+
   it('shows the error state and retries on demand', async () => {
     mockedGetProducts.mockRejectedValueOnce(
       new ApiError('No se pudieron cargar los productos', 500),
@@ -183,15 +222,16 @@ describe('ProductsPage', () => {
     renderPage();
     await screen.findByText('Producto 1');
 
-    const trigger = screen.getByRole('button', { name: 'Categorías' });
+    const trigger = screen.getByRole('button', { name: 'Filtros' });
     expect(trigger.tagName).toBe('BUTTON');
     expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    // The only native select is the sort control; the filters use radios.
+    expect(screen.getAllByRole('combobox')).toHaveLength(1);
 
     fireEvent.click(trigger);
 
-    const dialog = screen.getByRole('dialog', { name: 'Categorías' });
+    const dialog = screen.getByRole('dialog', { name: 'Filtros' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
@@ -203,9 +243,7 @@ describe('ProductsPage', () => {
       'perifericos',
       'gadgets',
     ]);
-    expect(
-      within(dialog).getByRole('radio', { name: 'Todos' }),
-    ).toBeChecked();
+    expect(within(dialog).getByRole('radio', { name: 'Todos' })).toBeChecked();
   });
 
   it('keeps the category pending until the CTA applies it and resets load-more', async () => {
@@ -233,13 +271,11 @@ describe('ProductsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /cargar más/i }));
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(16);
 
-    const trigger = screen.getByRole('button', { name: 'Categorías' });
+    const trigger = screen.getByRole('button', { name: 'Filtros' });
     fireEvent.click(trigger);
-    const dialog = screen.getByRole('dialog', { name: 'Categorías' });
+    const dialog = screen.getByRole('dialog', { name: 'Filtros' });
 
-    fireEvent.click(
-      within(dialog).getByRole('radio', { name: 'Gadgets' }),
-    );
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Gadgets' }));
 
     // Pending selection updates the CTA count without fetching or rendering.
     expect(
@@ -247,6 +283,7 @@ describe('ProductsPage', () => {
     ).toBeInTheDocument();
     expect(mockedGetProducts).not.toHaveBeenCalledWith(
       'gadgets',
+      expect.anything(),
       expect.anything(),
     );
     expect(
@@ -261,6 +298,7 @@ describe('ProductsPage', () => {
       expect(mockedGetProducts).toHaveBeenLastCalledWith(
         'gadgets',
         expect.any(AbortSignal),
+        { minPrice: undefined, maxPrice: undefined, sort: undefined },
       ),
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -293,30 +331,24 @@ describe('ProductsPage', () => {
     const callsBefore = mockedGetProducts.mock.calls.length;
 
     async function openAndPickGadgets() {
-      fireEvent.click(screen.getByRole('button', { name: 'Categorías' }));
-      const dialog = screen.getByRole('dialog', { name: 'Categorías' });
-      fireEvent.click(
-        within(dialog).getByRole('radio', { name: 'Gadgets' }),
-      );
+      fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+      const dialog = screen.getByRole('dialog', { name: 'Filtros' });
+      fireEvent.click(within(dialog).getByRole('radio', { name: 'Gadgets' }));
       return dialog;
     }
 
-    const trigger = screen.getByRole('button', { name: 'Categorías' });
+    const trigger = screen.getByRole('button', { name: 'Filtros' });
 
     // X button discards.
     let dialog = await openAndPickGadgets();
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Cerrar' }),
-    );
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cerrar' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
 
     // Scrim click discards.
     dialog = await openAndPickGadgets();
     expect(dialog).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Cerrar filtro de categorías' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar filtros' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     // Escape discards.
@@ -340,13 +372,26 @@ describe('ProductsPage', () => {
     renderPage();
     await screen.findByText('Producto 1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Categorías' }));
-    const dialog = screen.getByRole('dialog', { name: 'Categorías' });
+    fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+    const dialog = screen.getByRole('dialog', { name: 'Filtros' });
 
     expect(
       within(dialog).getByRole('button', { name: 'Cerrar' }),
     ).toHaveFocus();
     expect(document.body.style.overflow).toBe('hidden');
+  });
+
+  it('shows both the card confirmation and the added alert after adding a product', async () => {
+    mockedGetProducts.mockResolvedValueOnce([product(1)]);
+    renderPage();
+
+    const card = (await screen.findAllByRole('article'))[0];
+    fireEvent.click(within(card).getByRole('button', { name: /agregar/i }));
+
+    expect(await within(card).findByRole('status')).toHaveTextContent(
+      'Agregado',
+    );
+    expect(await screen.findByText('Agregado al carrito')).toBeInTheDocument();
   });
 
   it('prioritizes the first cards and lazy-loads the rest', async () => {
@@ -380,11 +425,9 @@ describe('ProductsPage', () => {
     renderPage();
     await screen.findByText('Producto 1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Categorías' }));
-    const dialog = screen.getByRole('dialog', { name: 'Categorías' });
-    fireEvent.click(
-      within(dialog).getByRole('radio', { name: 'Gadgets' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+    const dialog = screen.getByRole('dialog', { name: 'Filtros' });
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Gadgets' }));
     fireEvent.click(
       within(dialog).getByRole('button', { name: 'Ver 1 producto' }),
     );
@@ -393,7 +436,9 @@ describe('ProductsPage', () => {
       await screen.findByText('No hay productos en Gadgets'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Por ahora no tenemos nada acá. Mirá el resto del catálogo.'),
+      screen.getByText(
+        'Por ahora no tenemos nada acá. Mirá el resto del catálogo.',
+      ),
     ).toBeInTheDocument();
 
     const art = document.querySelector(
@@ -432,6 +477,7 @@ describe('ProductsPage', () => {
     expect(mockedGetProducts).toHaveBeenCalledWith(
       'gadgets',
       expect.any(AbortSignal),
+      { minPrice: undefined, maxPrice: undefined, sort: undefined },
     );
   });
 
@@ -447,6 +493,7 @@ describe('ProductsPage', () => {
     expect(mockedGetProducts).toHaveBeenCalledWith(
       undefined,
       expect.any(AbortSignal),
+      { minPrice: undefined, maxPrice: undefined, sort: undefined },
     );
   });
 
@@ -515,9 +562,9 @@ describe('ProductsPage', () => {
 
     // Mobile keeps ten per load; only desktop paginates by 8.
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(10);
-    expect(
-      screen.getByRole('button', { name: /cargar más/i }),
-    ).toHaveClass('novamarket-button');
+    expect(screen.getByRole('button', { name: /cargar más/i })).toHaveClass(
+      'novamarket-button',
+    );
     expect(
       screen.queryByRole('navigation', { name: 'Paginación' }),
     ).not.toBeInTheDocument();

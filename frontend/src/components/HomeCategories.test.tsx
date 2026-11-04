@@ -28,17 +28,28 @@ beforeEach(() => {
 });
 
 describe('HomeCategories', () => {
-  it('renders the Categorías heading and one tile per backend option plus Ver todo', async () => {
+  it('renders an accessible category section without a separate title', async () => {
     renderCategories();
 
+    expect(screen.queryByRole('heading', { name: 'Categorías' })).toBeNull();
     expect(
-      screen.getByRole('heading', { name: 'Categorías' }),
+      screen.getByRole('region', { name: 'Categorías' }),
     ).toBeInTheDocument();
     // Three backend options + "Ver todo". findAllByRole would resolve with the
     // single "Ver todo" tile, so wait for the full set instead.
     await waitFor(() =>
       expect(screen.getAllByRole('listitem')).toHaveLength(4),
     );
+  });
+
+  it('uses a four-column desktop grid that can fill the home content column', async () => {
+    renderCategories();
+
+    const section = screen.getByRole('region', { name: 'Categorías' });
+    const list = await within(section).findByRole('list');
+
+    expect(list.className).toContain('xl:grid-cols-4');
+    expect(list.className).toContain('md:gap-6');
   });
 
   it('links each tile to the slug the backend exposes', async () => {
