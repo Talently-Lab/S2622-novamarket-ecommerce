@@ -7,10 +7,19 @@ import Icon from '../../components/icons/Icon.tsx';
 import { useCategories } from '../../hooks/useCategories.ts';
 import { productSchema } from '../../schemas/product.ts';
 import {
-  createAdminProduct,
-  listAdminProducts,
-  updateAdminProduct,
-} from '../../services/adminProductService.ts';
+  createProduct,
+  getProductById,
+  updateProduct,
+} from '../../services/productService.ts';
+import {
+  ImageUploadError,
+  uploadProductImage,
+  validateImageFile,
+} from '../../services/cloudinaryService.ts';
+import {
+  adminWriteErrorMessage,
+  isMissingProductError,
+} from '../../utils/apiErrorMessages.ts';
 
 /** Raw text values as the inputs hold them; the schema coerces price/stock. */
 interface FormValues {
@@ -57,22 +66,20 @@ export default function ProductFormPage() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  /** Local blob used only while the upload is in flight. */
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isEdit) return;
-    let cancelled = false;
-    listAdminProducts()
-      .then((products) => {
-        if (cancelled) return;
-        const found = products.find(
-          (product) => String(product.id) === String(id),
-        );
-        if (!found) {
-          setLoadStatus('missing');
-          return;
-        }
+    if (!isEdit || id === undefined) return;
+
+    const controller = new AbortController();
+    getProductById(id, controller.signal)
+      .then((found) => {
+        if (controller.signal.aborted) return;
         setValues({
           name: found.name,
           description: found.description,
@@ -83,11 +90,12 @@ export default function ProductFormPage() {
         });
         setLoadStatus('ready');
       })
-      .catch(() => {
-        if (!cancelled) setLoadStatus('error');
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setLoadStatus(isMissingProductError(error) ? 'missing' : 'error');
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [id, isEdit]);
 
@@ -106,13 +114,42 @@ export default function ProductFormPage() {
     );
   }
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    // Reset so picking the same file again still fires onChange.
+    event.target.value = '';
     if (!file) return;
+
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      setImageError(invalid);
+      return;
+    }
+
+    setImageError(null);
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     const objectUrl = URL.createObjectURL(file);
     objectUrlRef.current = objectUrl;
-    setField('imageUrl', objectUrl);
+    setPreviewUrl(objectUrl);
+    setIsUploading(true);
+
+    try {
+      // The product stores the uploaded URL, never the local blob one: a
+      // blob: URL stops resolving as soon as this page reloads.
+      const secureUrl = await uploadProductImage(file);
+      setField('imageUrl', secureUrl);
+      setPreviewUrl(null);
+    } catch (error) {
+      setField('imageUrl', '');
+      setPreviewUrl(null);
+      setImageError(
+        error instanceof ImageUploadError
+          ? error.message
+          : 'No pudimos subir la imagen. Intentá de nuevo.',
+      );
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   function clearImage() {
@@ -120,11 +157,15 @@ export default function ProductFormPage() {
       URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = null;
     }
+    setPreviewUrl(null);
+    setImageError(null);
     setField('imageUrl', '');
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // Saving mid-upload would persist an empty or blob: image URL.
+    if (isUploading) return;
     const parsed = productSchema.safeParse(values);
     if (!parsed.success) {
       const nextErrors: FormErrors = {};
@@ -142,14 +183,19 @@ export default function ProductFormPage() {
     setIsSaving(true);
     setSaveError(null);
     try {
-      if (isEdit) {
-        await updateAdminProduct(id, parsed.data);
+      if (isEdit && id !== undefined) {
+        await updateProduct(id, parsed.data);
       } else {
-        await createAdminProduct(parsed.data);
+        await createProduct(parsed.data);
       }
       navigate('/admin/productos');
-    } catch {
-      setSaveError('No pudimos guardar el producto. Intentá de nuevo.');
+    } catch (error) {
+      setSaveError(
+        adminWriteErrorMessage(error, {
+          fallback: 'No pudimos guardar el producto. Intentá de nuevo.',
+          notFound: 'El producto ya no existe.',
+        }),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -325,9 +371,9 @@ export default function ProductFormPage() {
               htmlFor="product-image"
               className="flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-dashed border-borde-input bg-fondo-deshabilitado/40 text-center"
             >
-              {values.imageUrl ? (
+              {previewUrl || values.imageUrl ? (
                 <img
-                  src={values.imageUrl}
+                  src={previewUrl ?? values.imageUrl}
                   alt="Vista previa del producto"
                   className="h-full w-full object-cover"
                 />
@@ -335,7 +381,7 @@ export default function ProductFormPage() {
                 <span className="flex flex-col items-center gap-2">
                   <Icon name="upload" className="text-2xl text-texto-secundario" />
                   <span className="text-cuerpo text-texto-secundario">
-                    Subir imagen (JPG o PNG)
+                    Subir imagen (JPG, PNG o WEBP)
                   </span>
                 </span>
               )}
@@ -343,11 +389,17 @@ export default function ProductFormPage() {
             <input
               id="product-image"
               type="file"
-              accept="image/png,image/jpeg"
+              accept="image/png,image/jpeg,image/webp"
               onChange={handleFileChange}
+              disabled={isUploading}
               className="sr-only"
             />
-            {values.imageUrl ? (
+            {isUploading ? (
+              <span role="status" className="text-cuerpo-chico text-texto-secundario">
+                Subiendo imagen…
+              </span>
+            ) : null}
+            {values.imageUrl && !isUploading ? (
               <button
                 type="button"
                 onClick={clearImage}
@@ -356,9 +408,9 @@ export default function ProductFormPage() {
                 Quitar imagen
               </button>
             ) : null}
-            {errors.imageUrl ? (
-              <span className="text-caption font-semibold text-texto-error">
-                {errors.imageUrl}
+            {imageError ?? errors.imageUrl ? (
+              <span role="alert" className="text-caption font-semibold text-texto-error">
+                {imageError ?? errors.imageUrl}
               </span>
             ) : null}
           </div>
@@ -387,7 +439,7 @@ export default function ProductFormPage() {
             type="submit"
             variant="primary"
             style={{ width: 'auto' }}
-            disabled={isSaving}
+            disabled={isSaving || isUploading}
           >
             {isSaving ? 'Guardando…' : 'Guardar producto'}
           </Button>

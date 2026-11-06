@@ -3,25 +3,26 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminProductsPage from './AdminProductsPage.tsx';
+import { ApiError } from '../../services/api.ts';
 import {
-  deleteAdminProduct,
-  listAdminProducts,
-} from '../../services/adminProductService.ts';
+  deleteProduct,
+  getProductsFromApi,
+} from '../../services/productService.ts';
 import { getProductCategories } from '../../services/formdataService.ts';
 import { system } from '../../theme/system.ts';
 import type { Product } from '../../types/product.ts';
 
-vi.mock('../../services/adminProductService.ts', () => ({
-  listAdminProducts: vi.fn(),
-  deleteAdminProduct: vi.fn(),
+vi.mock('../../services/productService.ts', () => ({
+  getProductsFromApi: vi.fn(),
+  deleteProduct: vi.fn(),
 }));
 
 vi.mock('../../services/formdataService.ts', () => ({
   getProductCategories: vi.fn(),
 }));
 
-const mockedList = vi.mocked(listAdminProducts);
-const mockedDelete = vi.mocked(deleteAdminProduct);
+const mockedList = vi.mocked(getProductsFromApi);
+const mockedDelete = vi.mocked(deleteProduct);
 const mockedCategories = vi.mocked(getProductCategories);
 
 function product(index: number, category = 'accesorios'): Product {
@@ -203,6 +204,33 @@ describe('AdminProductsPage', () => {
     expect(screen.getByText('Producto 1')).toBeInTheDocument();
   });
 
+  it('keeps the product and explains a rejected delete', async () => {
+    mockedList.mockResolvedValueOnce([product(1)]);
+    mockedDelete.mockRejectedValueOnce(new ApiError('Forbidden', 403));
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar Producto 1' }));
+    await screen.findByRole('dialog', { name: 'Eliminar producto' });
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }));
+
+    expect(
+      await screen.findByRole('alert'),
+    ).toHaveTextContent('No tenés permisos para esta acción.');
+    expect(screen.getByText('Producto 1')).toBeInTheDocument();
+  });
+
+  it('drops the legacy local product cache on mount', async () => {
+    localStorage.setItem('novamarket_admin_products', '[]');
+    mockedList.mockResolvedValueOnce([]);
+
+    renderPage();
+    await screen.findByText('Todavía no hay productos cargados.');
+
+    expect(localStorage.getItem('novamarket_admin_products')).toBeNull();
+  });
+
   it('opens the create form from the header action', async () => {
     mockedList.mockResolvedValueOnce([]);
 
@@ -227,7 +255,7 @@ describe('AdminProductsPage', () => {
 
   it('shows the error state and retries on demand', async () => {
     mockedList
-      .mockRejectedValueOnce(new Error('storage unavailable'))
+      .mockRejectedValueOnce(new Error('network unavailable'))
       .mockResolvedValueOnce([product(1)]);
 
     renderPage();

@@ -56,7 +56,9 @@ export const productSchema = z.object({
     .optional()
     .default('')
     .refine(
-      (value) => value === '' || z.url().safeParse(value).success,
+      // Only http(s) survives a reload: a blob: URL is bound to the browser
+      // tab that created it and would break for every other visitor.
+      (value) => value === '' || (/^https?:\/\//i.test(value) && z.url().safeParse(value).success),
       'La URL de la imagen no es válida',
     ),
 });

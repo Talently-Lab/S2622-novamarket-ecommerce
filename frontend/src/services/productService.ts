@@ -248,14 +248,12 @@ export async function getProductById(
 }
 
 /*
- * Week-6 API writes (POST/PUT/DELETE /products).
+ * Product writes (POST/PUT/DELETE /products), consumed by the admin pages.
  *
- * These are the REAL mutations, ready to be wired in once the backend lands
- * them. Today the deployed backend product write endpoints are stubs that
- * return `successResponse(res, null, null, 200)`, so `data` is `null` and
- * calling these throws `ApiError('Invalid product response')`. That is
- * expected: the admin UI does NOT call them yet — it goes through the local
- * driver in `adminProductService` (see that file for the swap notes).
+ * These are the real mutations: the admin product list, form and delete
+ * confirmation call them directly. A 401/403 from the backend means the
+ * session is gone or is not an admin, and surfaces as an ApiError with the
+ * HTTP status so the UI can explain it.
  */
 
 /** Create a product via POST /api/products and map the created row to domain. */

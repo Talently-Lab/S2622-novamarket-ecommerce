@@ -10,13 +10,17 @@ import Icon from '../../components/icons/Icon.tsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.ts';
 import { useCategories } from '../../hooks/useCategories.ts';
 import {
-  deleteAdminProduct,
-  listAdminProducts,
-} from '../../services/adminProductService.ts';
+  deleteProduct,
+  getProductsFromApi,
+} from '../../services/productService.ts';
+import { adminWriteErrorMessage } from '../../utils/apiErrorMessages.ts';
 import type { Product } from '../../types/product.ts';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
 const PAGE_SIZE = 8;
+
+/** Cache written by the pre-API admin driver, whose `local-` ids no longer resolve. */
+const LEGACY_ADMIN_CACHE_KEY = 'novamarket_admin_products';
 
 type LoadStatus = 'loading' | 'ready' | 'error';
 
@@ -42,19 +46,21 @@ export default function AdminProductsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    listAdminProducts()
+    localStorage.removeItem(LEGACY_ADMIN_CACHE_KEY);
+
+    const controller = new AbortController();
+    getProductsFromApi(undefined, controller.signal)
       .then((rows) => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         setProducts(rows);
         setStatus('ready');
       })
       .catch(() => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         setStatus('error');
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [reloadToken]);
 
@@ -93,14 +99,19 @@ export default function AdminProductsPage() {
     const target = pendingDelete;
     setIsDeleting(true);
     try {
-      await deleteAdminProduct(target.id);
+      await deleteProduct(target.id);
       setProducts((current) =>
         current.filter((product) => String(product.id) !== String(target.id)),
       );
       setPendingDelete(null);
-    } catch {
+    } catch (error) {
       setPendingDelete(null);
-      setDeleteError('No se pudo eliminar el producto. Intentá de nuevo.');
+      setDeleteError(
+        adminWriteErrorMessage(error, {
+          fallback: 'No se pudo eliminar el producto. Intentá de nuevo.',
+          notFound: 'El producto ya no existe.',
+        }),
+      );
     } finally {
       setIsDeleting(false);
     }

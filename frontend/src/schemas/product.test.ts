@@ -134,6 +134,13 @@ describe('productSchema', () => {
     expect(messages(validInput({ imageUrl: 'not-a-url' }))).toContain(
       'La URL de la imagen no es válida',
     );
+    // A local blob: or data: URL would die as soon as the page reloads.
+    expect(
+      messages(validInput({ imageUrl: 'blob:http://localhost/preview' })),
+    ).toContain('La URL de la imagen no es válida');
+    expect(
+      messages(validInput({ imageUrl: 'data:image/png;base64,AAAA' })),
+    ).toContain('La URL de la imagen no es válida');
 
     const result = productSchema.safeParse(validInput({ imageUrl: '' }));
     expect(result.success).toBe(true);
