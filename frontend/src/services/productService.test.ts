@@ -92,6 +92,29 @@ describe('productService.getProductsFromApi', () => {
     expect(products.map((product) => product.id)).toEqual(['a', 'b']);
   });
 
+  it('sends the search term as an escaped name filter', async () => {
+    mockedApiFetch.mockResolvedValueOnce(page([backendDto()]));
+
+    await getProductsFromApi(undefined, undefined, {
+      name: '  Teclado (K7)  ',
+    });
+
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      '/products?limit=100&page=1&name=Teclado+%5C%28K7%5C%29',
+      { signal: undefined },
+    );
+  });
+
+  it('skips the name filter for an empty search term', async () => {
+    mockedApiFetch.mockResolvedValueOnce(page([]));
+
+    await getProductsFromApi(undefined, undefined, { name: '   ' });
+
+    expect(mockedApiFetch).toHaveBeenCalledWith('/products?limit=100&page=1', {
+      signal: undefined,
+    });
+  });
+
   it('collects every page until the reported total is reached', async () => {
     mockedApiFetch
       .mockResolvedValueOnce(

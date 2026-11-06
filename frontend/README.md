@@ -271,9 +271,19 @@ present**. Do not add one unless the team explicitly decides to; prefer CSS
 
 The app is a client-only SPA: `BrowserRouter` owns the URL after the initial
 page load. Any host serving the production `dist/` build must rewrite unknown
-paths (e.g. a refresh on `/products`) back to `index.html` so the router can
-resolve them — otherwise deep links return 404. How to configure that rewrite
-depends on the (not yet selected) hosting setup.
+paths (e.g. a refresh on `/productos`, `/carrito`, `/checkout`) back to
+`index.html` so the router can resolve them — otherwise deep links return 404.
+
+The Netlify deploy is covered by `public/_redirects`:
+
+```text
+/*    /index.html   200
+```
+
+Vite copies everything in `public/` to the root of `dist/`, so the rule ships
+with the build. Do not delete it; without it a browser refresh on an internal
+route shows Netlify's "Page Not Found". When the site is served by a different
+host from the same `dist/`, configure the equivalent SPA rewrite there.
 
 ## Recommended team workflow
 
@@ -291,16 +301,16 @@ depends on the (not yet selected) hosting setup.
 
 ## Troubleshooting
 
-| Symptom                                        | Likely cause and fix                                                                                                       |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Wrong Node/npm version                         | `nvm install` then `nvm use` (or install Node 24 manually). `engines` requires Node ≥ 24, npm ≥ 11.                        |
-| `npm ci` fails on lockfile mismatch            | Someone changed `package.json` without committing the lockfile. Run `npm install` to re-resolve, then commit both files.   |
-| `npm run build` fails on types but `dev` works | Vite dev transpiles without full type-checking; `tsc -b` is stricter. Run `npm run typecheck` and fix the reported errors. |
-| Commit blocked by commitlint                   | Message is not Conventional Commits. Reword to `type(scope): summary` (see examples above).                                |
-| Push blocked from `main` or odd branch name    | Branch off with an allowed name: `git switch -c feat/product-catalog`; never force-push `main`.                            |
-| Push blocked by typecheck/lint/tests/build     | Fix the failing command locally and push again. Do not `--no-verify` to silence a real failure.                            |
-| Prettier keeps reordering classes              | Expected: `prettier-plugin-tailwindcss` sorts Tailwind classes. Accept its order.                                          |
-| Deep link 404 on a deployed build              | Host is not rewriting unknown paths to `index.html` (SPA fallback). Configure the rewrite on the host.                     |
+| Symptom                                        | Likely cause and fix                                                                                                                      |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Wrong Node/npm version                         | `nvm install` then `nvm use` (or install Node 24 manually). `engines` requires Node ≥ 24, npm ≥ 11.                                       |
+| `npm ci` fails on lockfile mismatch            | Someone changed `package.json` without committing the lockfile. Run `npm install` to re-resolve, then commit both files.                  |
+| `npm run build` fails on types but `dev` works | Vite dev transpiles without full type-checking; `tsc -b` is stricter. Run `npm run typecheck` and fix the reported errors.                |
+| Commit blocked by commitlint                   | Message is not Conventional Commits. Reword to `type(scope): summary` (see examples above).                                               |
+| Push blocked from `main` or odd branch name    | Branch off with an allowed name: `git switch -c feat/product-catalog`; never force-push `main`.                                           |
+| Push blocked by typecheck/lint/tests/build     | Fix the failing command locally and push again. Do not `--no-verify` to silence a real failure.                                           |
+| Prettier keeps reordering classes              | Expected: `prettier-plugin-tailwindcss` sorts Tailwind classes. Accept its order.                                                         |
+| Deep link 404 on a deployed build              | Host is not rewriting unknown paths to `index.html` (SPA fallback). On Netlify keep `public/_redirects`; elsewhere configure the rewrite. |
 
 See `CONTRIBUTING.md` for the short contributor version of the branch, commit,
 and hook rules.

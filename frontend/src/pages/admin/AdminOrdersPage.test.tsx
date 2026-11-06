@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminOrdersPage from './AdminOrdersPage.tsx';
 import * as orderService from '../../services/orderService.ts';
 import type { Order } from '../../services/orderService.ts';
+import { ApiError } from '../../services/api.ts';
 
 vi.mock('../../services/orderService.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof orderService>()),
@@ -124,6 +125,59 @@ describe('AdminOrdersPage', () => {
     expect(screen.getByLabelText('Estado del pedido #A1')).toHaveValue(
       'pendiente',
     );
+  });
+
+  it('explica que la sesión expiró si el cambio de estado responde 401', async () => {
+    stubMatchMedia(true);
+    updateOrderStatus.mockRejectedValue(new ApiError('unauthorized', 401));
+    render(<AdminOrdersPage />);
+
+    const select = await screen.findByLabelText('Estado del pedido #A1');
+    fireEvent.change(select, { target: { value: 'pagado' } });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Tu sesión expiró. Volvé a iniciar sesión.',
+    );
+  });
+
+  it('avisa que el pedido ya no existe si el cambio de estado responde 404', async () => {
+    stubMatchMedia(true);
+    updateOrderStatus.mockRejectedValue(new ApiError('not found', 404));
+    render(<AdminOrdersPage />);
+
+    const select = await screen.findByLabelText('Estado del pedido #A1');
+    fireEvent.change(select, { target: { value: 'pagado' } });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'El pedido #A1 ya no existe.',
+    );
+  });
+
+  it('explica que la sesión expiró si la carga de pedidos responde 401', async () => {
+    stubMatchMedia(true);
+    getAllOrders.mockRejectedValue(new ApiError('unauthorized', 401));
+    render(<AdminOrdersPage />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Tu sesión expiró. Volvé a iniciar sesión.',
+    );
+  });
+
+  it('pluraliza el conteo de productos del listado mobile', async () => {
+    stubMatchMedia(false);
+    getAllOrders.mockResolvedValue([
+      makeOrder({
+        id: 'c3',
+        date: '02/10/2026',
+        items: [
+          { id: 'i3', name: 'Teclado K380', quantity: 1, priceAtPurchase: 5000 },
+          { id: 'i4', name: 'Mouse G305', quantity: 2, priceAtPurchase: 3000 },
+        ],
+      }),
+    ]);
+    render(<AdminOrdersPage />);
+
+    expect(await screen.findByText('02/10/2026 · 2 productos')).toBeInTheDocument();
   });
 
   it('muestra un error si getAllOrders() falla', async () => {

@@ -40,6 +40,7 @@ export default function ProductsPage() {
     category,
     minPrice,
     maxPrice,
+    search,
     loading,
     error,
     retry,
@@ -260,7 +261,16 @@ export default function ProductsPage() {
                 </Button>
               </div>
             ) : products.length === 0 ? (
-              category ? (
+              search ? (
+                <ProductsEmptyState
+                  title="Producto no encontrado"
+                  description={`No encontramos productos para «${search}». Probá con otro término.`}
+                  action={{
+                    label: 'Ver todos los productos',
+                    onAction: clearFilter,
+                  }}
+                />
+              ) : category ? (
                 <ProductsEmptyState
                   title={`No hay productos en ${labelFor(category)}`}
                   description="Por ahora no tenemos nada acá. Mirá el resto del catálogo."

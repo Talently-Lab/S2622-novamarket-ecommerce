@@ -167,6 +167,41 @@ describe('ProductsPage', () => {
     expect(screen.getByText('0 productos')).toBeInTheDocument();
   });
 
+  it('filters by the buscar param and shows "Producto no encontrado"', async () => {
+    mockedGetProducts.mockResolvedValue([]);
+
+    renderPage('/productos?buscar=zzz');
+
+    expect(
+      await screen.findByText('Producto no encontrado'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No encontramos productos para «zzz». Probá con otro término.',
+      ),
+    ).toBeInTheDocument();
+    expect(mockedGetProducts).toHaveBeenCalledWith(
+      undefined,
+      expect.any(AbortSignal),
+      expect.objectContaining({ name: 'zzz' }),
+    );
+  });
+
+  it('clears the search from the empty state action', async () => {
+    mockedGetProducts.mockResolvedValue([]);
+
+    renderPage('/productos?buscar=zzz');
+    await screen.findByText('Producto no encontrado');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver todos los productos' }),
+    );
+
+    expect(
+      await screen.findByText('No hay productos disponibles'),
+    ).toBeInTheDocument();
+  });
+
   it.each([
     { layout: 'desktop rail', isDesktop: true },
     { layout: 'mobile filter sheet', isDesktop: false },

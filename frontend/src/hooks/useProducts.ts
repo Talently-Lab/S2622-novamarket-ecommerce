@@ -17,6 +17,8 @@ export interface UseProductsResult {
   maxPrice?: number;
   /** Price ordering from `?orden=` (`precio-asc` | `precio-desc`). */
   sort?: 'price_asc' | 'price_desc';
+  /** Active search term from `?buscar=`; '' means no search. */
+  search: string;
   loading: boolean;
   error: string | null;
   retry: () => void;
@@ -40,6 +42,9 @@ export function useProducts(): UseProductsResult {
   const rawMinPrice = searchParams.get('precioMin') ?? '';
   const rawMaxPrice = searchParams.get('precioMax') ?? '';
   const rawOrder = searchParams.get('orden') ?? '';
+  const rawSearch = searchParams.get('buscar') ?? '';
+  // Whitespace-only searches behave like no search at all.
+  const search = rawSearch.trim();
   // Non-numeric params are ignored instead of NaN-ing the request.
   const minPrice = /^\d+$/.test(rawMinPrice) ? Number(rawMinPrice) : undefined;
   const maxPrice = /^\d+$/.test(rawMaxPrice) ? Number(rawMaxPrice) : undefined;
@@ -93,13 +98,19 @@ export function useProducts(): UseProductsResult {
       minPrice,
       maxPrice,
       sort,
+      name: search || undefined,
     })
       .then((items) => {
         if (requestId.current !== id || controller.signal.aborted) return;
         setProducts(items);
         // Meta (category counts) only comes from a completely unfiltered
         // load, otherwise the filter sheet would shrink to the price band.
-        if (!category && minPrice === undefined && maxPrice === undefined) {
+        if (
+          !category &&
+          minPrice === undefined &&
+          maxPrice === undefined &&
+          search === ''
+        ) {
           captureMeta(items);
         }
         // A fresh success clears a previous error (e.g. after the URL
@@ -121,10 +132,13 @@ export function useProducts(): UseProductsResult {
     return () => {
       controller.abort();
     };
-  }, [category, minPrice, maxPrice, sort, retryToken]);
+  }, [category, minPrice, maxPrice, sort, search, retryToken]);
 
   const hasFilter =
-    category !== '' || minPrice !== undefined || maxPrice !== undefined;
+    category !== '' ||
+    minPrice !== undefined ||
+    maxPrice !== undefined ||
+    search !== '';
   const metaLoaded = categories.length > 0;
 
   // Deep-link support: a filtered first load never sees the full catalog,
@@ -178,6 +192,7 @@ export function useProducts(): UseProductsResult {
     minPrice,
     maxPrice,
     sort,
+    search,
     loading,
     error,
     retry,
