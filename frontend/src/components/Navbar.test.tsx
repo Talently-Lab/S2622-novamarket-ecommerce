@@ -6,7 +6,7 @@ import {
   within,
 } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext.tsx';
 import { CartProvider } from '../context/CartContext.tsx';
@@ -27,6 +27,13 @@ vi.mock('../services/formdataService.ts', () => ({
 const mockedGetProducts = vi.mocked(getProductsFromApi);
 const mockedCategories = vi.mocked(getProductCategories);
 
+function LocationProbe() {
+  const location = useLocation();
+  return (
+    <p data-testid="location">{`${location.pathname}${location.search}`}</p>
+  );
+}
+
 function renderNavbar(initialEntry = '/') {
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -39,6 +46,7 @@ function renderNavbar(initialEntry = '/') {
           <Route path="/productos" element={<p>Catálogo</p>} />
           <Route path="/login" element={<p>Iniciar sesión</p>} />
         </Routes>
+        <LocationProbe />
       </AuthProvider>
     </MemoryRouter>,
   );
@@ -80,6 +88,33 @@ describe('Navbar', () => {
     fireEvent.submit(screen.getAllByRole('search')[0]);
 
     expect(await screen.findByText('Catálogo')).toBeInTheDocument();
+  });
+
+  it('sends the trimmed search term to the catalog URL', async () => {
+    renderNavbar();
+
+    fireEvent.change(screen.getAllByRole('searchbox')[0], {
+      target: { value: '  teclado  ' },
+    });
+    fireEvent.submit(screen.getAllByRole('search')[0]);
+
+    expect(await screen.findByText('Catálogo')).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/productos?buscar=teclado',
+    );
+  });
+
+  it('clears the search param when the term is emptied', async () => {
+    renderNavbar('/productos?buscar=teclado');
+
+    expect(screen.getAllByRole('searchbox')[0]).toHaveValue('teclado');
+
+    fireEvent.change(screen.getAllByRole('searchbox')[0], {
+      target: { value: '   ' },
+    });
+    fireEvent.submit(screen.getAllByRole('search')[0]);
+
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/productos$/);
   });
 
   it('shows Ingresar for visitors and navigates to /login', async () => {

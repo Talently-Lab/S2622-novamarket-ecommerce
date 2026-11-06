@@ -50,12 +50,20 @@ function SearchForm({
   className?: string;
 }) {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const urlQuery = searchParams.get('buscar') ?? '';
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // No search endpoint yet — submitting navigates to the catalog.
-    navigate('/productos');
+    const field = event.currentTarget.elements.namedItem('buscar');
+    const term = field instanceof HTMLInputElement ? field.value.trim() : '';
+    // A new search starts from the whole catalog: previous filters are
+    // dropped instead of narrowing the term to whatever was selected.
+    navigate(
+      term === ''
+        ? '/productos'
+        : `/productos?buscar=${encodeURIComponent(term)}`,
+    );
   }
 
   return (
@@ -65,10 +73,13 @@ function SearchForm({
       className={`relative w-full ${className}`}
     >
       <input
+        // Remounts when the URL term changes, so the input always mirrors
+        // the catalog search on deep links, back/forward and after a clear.
+        key={urlQuery}
         id={id}
+        name="buscar"
         type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        defaultValue={urlQuery}
         placeholder="Buscar productos"
         aria-label="Buscar productos"
         className="bg-fondo-superficie text-cuerpo text-texto-principal placeholder:text-texto-secundario focus:outline-borde-foco h-12 w-full rounded-lg pr-12 pl-4 focus:outline-2"

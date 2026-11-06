@@ -108,14 +108,17 @@ function readProductsPage(data: unknown): BackendProductDto[] {
 
 /**
  * Extra catalog filters the backend already accepts (`GET /api/products`):
- * price bounds are applied with `$gte`/`$lte` and `sortByPrice` orders the
- * result. Kept as a separate object so the positional `category`/`signal`
+ * price bounds are applied with `$gte`/`$lte`, `sortByPrice` orders the
+ * result and `name` is a case-insensitive partial match on the product name.
+ * Kept as a separate object so the positional `category`/`signal`
  * arguments stay stable for every existing caller.
  */
 export interface CatalogQuery {
   minPrice?: number;
   maxPrice?: number;
   sort?: 'price_asc' | 'price_desc';
+  /** Search term matched against the product name. */
+  name?: string;
 }
 
 /**
@@ -124,6 +127,15 @@ export interface CatalogQuery {
  * the guard against silent truncation if the catalog ever grows past this.
  */
 const CATALOG_PAGE_SIZE = 100;
+
+/**
+ * The backend applies `name` as a Mongo `$regex`, so the user's text is
+ * escaped before it is sent: a search is a literal substring, not a pattern,
+ * and a stray `(` can never become an invalid regex (500).
+ */
+function escapeSearchTerm(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * Fetch the whole catalog from GET /api/products.
@@ -159,6 +171,9 @@ export async function getProductsFromApi(
       params.set('sortByPrice', 'asc');
     } else if (query.sort === 'price_desc') {
       params.set('sortByPrice', 'desc');
+    }
+    if (query.name !== undefined && query.name.trim() !== '') {
+      params.set('name', escapeSearchTerm(query.name.trim()));
     }
 
     const response = await apiFetch<ProductsResponse>(
