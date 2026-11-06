@@ -9,11 +9,21 @@ import {
 } from '../../services/orderService.ts';
 import type { Order, OrderStatus } from '../../services/orderService.ts';
 import { formatPrice } from '../../utils/format.ts';
+import {
+  adminAuthErrorMessage,
+  adminWriteErrorMessage,
+} from '../../utils/apiErrorMessages.ts';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
 
 function itemCount(order: Order): number {
   return order.items.length;
+}
+
+/** "1 producto" / "3 productos" — the count is of distinct order lines. */
+function itemCountLabel(order: Order): string {
+  const count = itemCount(order);
+  return `${count} ${count === 1 ? 'producto' : 'productos'}`;
 }
 
 function statusLabel(status: OrderStatus): string {
@@ -227,7 +237,7 @@ function OrdersList({
                 {order.customer.name}
               </span>
               <span className="text-cuerpo-chico text-texto-secundario">
-                {order.date} · {itemCount(order)} producto
+                {order.date} · {itemCountLabel(order)}
               </span>
               <span className="text-cuerpo-chico text-texto-secundario font-semibold">
                 {statusLabel(order.status)}
@@ -271,6 +281,7 @@ export default function AdminOrdersPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -279,8 +290,13 @@ export default function AdminOrdersPage() {
         setOrders(result);
         setLoadStatus('ready');
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setLoadStatus('error');
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setLoadError(
+          adminAuthErrorMessage(error) ??
+            'No se pudieron cargar los pedidos. Probá de nuevo más tarde.',
+        );
+        setLoadStatus('error');
       });
     return () => controller.abort();
   }, []);
@@ -302,9 +318,12 @@ export default function AdminOrdersPage() {
       setOrders((current) =>
         current.map((row) => (row.id === updated.id ? updated : row)),
       );
-    } catch {
+    } catch (error) {
       setUpdateError(
-        `No se pudo actualizar el estado del pedido ${order.code}. Intentá de nuevo.`,
+        adminWriteErrorMessage(error, {
+          fallback: `No se pudo actualizar el estado del pedido ${order.code}. Intentá de nuevo.`,
+          notFound: `El pedido ${order.code} ya no existe.`,
+        }),
       );
     } finally {
       setUpdatingId(null);
@@ -336,7 +355,8 @@ export default function AdminOrdersPage() {
       <>
         {title}
         <p role="alert" className="text-cuerpo text-texto-error mt-6">
-          No se pudieron cargar los pedidos. Probá de nuevo más tarde.
+          {loadError ??
+            'No se pudieron cargar los pedidos. Probá de nuevo más tarde.'}
         </p>
       </>
     );
