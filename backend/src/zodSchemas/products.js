@@ -1,5 +1,49 @@
 import { z } from 'zod';
 
+// Listas de soporte externas para mantener el esquema limpio
+const regexImagenes = /\.(jpeg|jpg|png|webp|avif|gif|svg|bmp)(\?.*)?$/i;
+const dominiosDeConfianza = [
+    'cloudinary.com',
+    '://unsplash.com',
+    'img.shields.io',
+    '://googleapis.com',
+    'amazonaws.com',
+];
+
+const CATEGORIAS = ['accesorios', 'perifericos', 'gadgets'];
+
+const productFields = {
+    nombre: z.string('El nombre debe ser una cadena de texto').trim().min(1, 'El nombre es requerido'),
+    descripcion: z.string('La descripción debe ser una cadena de texto'),
+    precio: z.number('El precio debe ser un número').nonnegative('El precio no puede ser negativo'),
+    stock: z.number('El stock debe ser un número').int('El stock debe ser un número entero').nonnegative('El stock no puede ser negativo'),
+    categoria: z.enum(CATEGORIAS, { error: `La categoría debe ser una de: ${CATEGORIAS.join(', ')}` }),
+    imagenUrl: z
+        .string({ required_error: 'La imagen es requerida', invalid_type_error: 'La imagen debe ser una cadena de texto' })
+        .url({ message: 'La imagen debe ser una URL válida' })
+        .refine(
+            (url) => {
+                const urlMinuscula = url.toLowerCase();
+
+                // 1. Extraemos la ruta limpia antes de cualquier signo '?' para mitigar trucos en la URL
+                const urlSinQuery = urlMinuscula.split('?')[0];
+                if (urlSinQuery.endsWith('.pdf')) {
+                    return false;
+                }
+
+                // 2. Evaluamos si cumple con las extensiones o pertenece a proveedores conocidos
+                const tieneExtensionValida = regexImagenes.test(urlMinuscula);
+                const esDominioSeguro = dominiosDeConfianza.some((dominio) => urlMinuscula.includes(dominio));
+
+                return tieneExtensionValida || esDominioSeguro;
+            },
+            {
+                message: 'La URL debe ser una imagen válida (.jpg, .png, .webp, .avif, .svg) o provenir de un servidor autorizado (Cloudinary, S3, etc.).'
+            }
+        ),
+};
+
+
 export const GET_PRODUCT_SCHEMA = z.object({
     id: z
         .string({ required_error: 'El ID del producto es requerido' })
@@ -34,19 +78,8 @@ export const GET_PRODUCTS_SCHEMA = z.object({
     sortByDate: z.enum(['asc', 'desc']).optional(),
 });
 
-const CATEGORIAS = ['accesorios', 'perifericos', 'gadgets'];
 
-const productFields = {
-    nombre: z.string('El nombre debe ser una cadena de texto').trim().min(1, 'El nombre es requerido'),
-    descripcion: z.string('La descripción debe ser una cadena de texto'),
-    precio: z.number('El precio debe ser un número').nonnegative('El precio no puede ser negativo'),
-    stock: z.number('El stock debe ser un número').int('El stock debe ser un número entero').nonnegative('El stock no puede ser negativo'),
-    categoria: z.enum(CATEGORIAS, { error: `La categoría debe ser una de: ${CATEGORIAS.join(', ')}` }),
-    imagenUrl: z
-        .string({ required_error: 'La imagen es requerida', invalid_type_error: 'La imagen debe ser una cadena de texto' })
-        .url({ message: 'La imagen debe ser una URL válida' }),
 
-};
 
 export const CREATE_PRODUCT_SCHEMA = z.object({
     ...productFields,
