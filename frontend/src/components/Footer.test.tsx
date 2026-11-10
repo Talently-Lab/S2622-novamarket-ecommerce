@@ -86,11 +86,31 @@ describe('Footer', () => {
     );
   });
 
-  it('keeps the checkout-demo disclosure available', () => {
+  it('omits the checkout-demo disclosure', () => {
     renderFooter();
 
-    expect(screen.getByRole('contentinfo')).toHaveTextContent(
+    expect(screen.getByRole('contentinfo')).not.toHaveTextContent(
       'Sitio de demostración: el checkout es simulado, no se realizan cobros.',
     );
+  });
+
+  it('uses the desktop wordmark style in the mobile footer', () => {
+    renderFooter();
+
+    const wordmarks = screen.getAllByRole('heading', { name: 'NovaMarket' });
+    expect(wordmarks).toHaveLength(2);
+    expect(wordmarks[0].className).toBe(wordmarks[1].className);
+  });
+
+  it('removes the desktop gap and top border before the final footer row', () => {
+    renderFooter();
+
+    const footer = screen.getByRole('contentinfo');
+    const content = footer.firstElementChild as HTMLElement;
+    const finalRow = screen.getByText('© 2026 NovaMarket').parentElement;
+
+    expect(content).toHaveClass('md:gap-0');
+    expect(content).not.toHaveClass('md:gap-6');
+    expect(finalRow).not.toHaveClass('border-t');
   });
 });

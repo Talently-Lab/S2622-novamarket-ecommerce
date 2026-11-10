@@ -96,9 +96,9 @@ function MobileFooter() {
   return (
     <div className="flex flex-col gap-4 md:hidden">
       <div className="flex flex-col gap-2">
-        <div className="border-borde-divisor-estructura w-fit rounded border px-3 py-1 text-sm font-semibold tracking-wider">
+        <h2 className="text-titulo-3 text-texto-sobre-estructura m-0 font-bold">
           NovaMarket
-        </div>
+        </h2>
         <p className="text-texto-sobre-estructura-sec m-0 text-sm leading-5">
           Tecnología para tu setup
         </p>
@@ -135,7 +135,7 @@ function MobileFooter() {
 export default function Footer() {
   return (
     <footer className="bg-fondo-estructura text-texto-sobre-estructura flex w-full justify-center px-4 py-8 font-sans md:px-20 md:py-12">
-      <div className="flex w-full max-w-[1280px] flex-col gap-4 md:gap-6">
+      <div className="flex w-full max-w-[1280px] flex-col gap-4 md:gap-0">
         <MobileFooter />
 
         <nav
@@ -159,13 +159,9 @@ export default function Footer() {
           ))}
         </nav>
 
-        <div className="border-borde-divisor-estructura flex flex-col gap-4 border-t pt-4">
+        <div className="border-borde-divisor-estructura flex flex-col gap-4 pt-4">
           <p className="text-texto-sobre-estructura-sec m-0 text-xs leading-4">
             © 2026 NovaMarket
-          </p>
-          <p className="text-texto-sobre-estructura-sec m-0 text-xs leading-4">
-            Sitio de demostración: el checkout es simulado, no se realizan
-            cobros.
           </p>
         </div>
       </div>

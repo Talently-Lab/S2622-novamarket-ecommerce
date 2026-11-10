@@ -10,6 +10,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext.tsx';
 import { CartProvider } from '../context/CartContext.tsx';
+import { TOKEN_STORAGE_KEY } from '../services/api.ts';
 import { getProductCategories } from '../services/formdataService.ts';
 import { getProductsFromApi } from '../services/productService.ts';
 import { system } from '../theme/system.ts';
@@ -263,6 +264,49 @@ describe('Navbar', () => {
     );
   });
 
+  it('uses a logout icon for the desktop sign-out action', async () => {
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, 'test-token');
+    window.localStorage.setItem(
+      'novamarket_user',
+      JSON.stringify({
+        id: 'user-1',
+        name: 'Mara',
+        email: 'mara@example.com',
+        role: 'cliente',
+      }),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            message: 'Sesión activa',
+            data: {
+              _id: 'user-1',
+              nombre: 'Mara',
+              email: 'mara@example.com',
+              rol: 'cliente',
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    );
+
+    try {
+      renderNavbar();
+      const logout = await screen.findByRole('button', {
+        name: 'Cerrar sesión',
+      });
+
+      expect(logout).toHaveClass('cursor-pointer');
+      expect(within(logout).getByText('logout')).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('toggles the mobile menu drawer', async () => {
     renderNavbar();
 
@@ -272,7 +316,71 @@ describe('Navbar', () => {
     fireEvent.click(menuButton);
     expect(menuButton).toHaveAttribute('aria-expanded', 'true');
     expect(
-      await screen.findByRole('navigation', { name: 'Menú principal' }),
+      await screen.findByRole('dialog', { name: 'Menú principal' }),
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar menú' }));
+    expect(
+      screen.queryByRole('dialog', { name: 'Menú principal' }),
+    ).not.toBeInTheDocument();
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('renders the Figma mobile menu and navigates to a selected category', async () => {
+    renderNavbar();
+    fireEvent.click(screen.getByRole('button', { name: /menú/i }));
+
+    const menu = await screen.findByRole('dialog', { name: 'Menú principal' });
+    expect(menu).toHaveClass('fixed', 'inset-0', 'md:hidden');
+    expect(within(menu).getByText('Ingresá para ver tus pedidos')).toBeInTheDocument();
+    expect(
+      within(menu).getByRole('link', { name: 'Crear cuenta' }),
+    ).toHaveAttribute('href', '/registro');
+    expect(within(menu).getByText('Ayuda')).toBeInTheDocument();
+    expect(within(menu).getByText('Contacto por WhatsApp')).toBeInTheDocument();
+
+    const categories = within(menu).getByRole('navigation', {
+      name: 'Categorías del menú',
+    });
+    expect(
+      within(categories)
+        .getAllByRole('link')
+        .map((link) => link.getAttribute('href')),
+    ).toEqual([
+      '/productos',
+      '/productos?categoria=perifericos',
+      '/productos?categoria=accesorios',
+      '/productos?categoria=gadgets',
+    ]);
+    expect(within(categories).getByRole('link', { name: 'Todos' })).toHaveAttribute(
+      'href',
+      '/productos',
+    );
+    expect(
+      await within(categories).findByRole('link', { name: 'Accesorios' }),
+    ).toHaveAttribute('href', '/productos?categoria=accesorios');
+
+    fireEvent.click(within(categories).getByRole('link', { name: 'Accesorios' }));
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/productos?categoria=accesorios',
+    );
+    expect(
+      screen.queryByRole('dialog', { name: 'Menú principal' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('closes the mobile menu on Escape and restores focus to its trigger', async () => {
+    renderNavbar();
+
+    const menuButton = screen.getByRole('button', { name: /menú/i });
+    fireEvent.click(menuButton);
+    const menu = await screen.findByRole('dialog', { name: 'Menú principal' });
+
+    fireEvent.keyDown(menu, { key: 'Escape' });
+
+    expect(
+      screen.queryByRole('dialog', { name: 'Menú principal' }),
+    ).not.toBeInTheDocument();
+    expect(menuButton).toHaveFocus();
   });
 });

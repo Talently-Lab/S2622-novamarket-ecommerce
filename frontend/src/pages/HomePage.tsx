@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useOutletContext } from 'react-router';
 import HomeBanner from '../components/HomeBanner.tsx';
 import HomeCategories from '../components/HomeCategories.tsx';
 import HomeFeatured from '../components/HomeFeatured.tsx';
@@ -16,6 +22,10 @@ import InitialLoader from '../components/InitialLoader.tsx';
 const SLOW_LOAD_MS = 7_000;
 
 export default function HomePage() {
+  const initialHomeLoaderAvailable = useOutletContext<boolean | null>();
+  const [showInitialLoader] = useState(
+    () => initialHomeLoaderAvailable ?? true,
+  );
   const [ready, setReady] = useState({ categories: false, featured: false });
   const [exiting, setExiting] = useState(false);
   // Refs keep the settle moment synchronous: the mark that completes both
@@ -43,9 +53,9 @@ export default function HomePage() {
       }
       // Batched with the setReady above, so the loader never unmounts for a
       // frame before the exit animation takes over.
-      if (slowRef.current) setExiting(true);
+      if (showInitialLoader && slowRef.current) setExiting(true);
     }
-  }, []);
+  }, [showInitialLoader]);
 
   const markCategories = useCallback(() => mark('categories'), [mark]);
   const markFeatured = useCallback(() => mark('featured'), [mark]);
@@ -53,20 +63,21 @@ export default function HomePage() {
   // Arm the slow-load threshold once, measured from mount; `mark` clears it
   // when both fetches settle early so a fast load never flags slow.
   useEffect(() => {
+    if (!showInitialLoader) return;
     slowTimerRef.current = setTimeout(() => {
       slowRef.current = true;
     }, SLOW_LOAD_MS);
     return () => {
       if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
     };
-  }, []);
+  }, [showInitialLoader]);
 
   const hideExit = useCallback(() => setExiting(false), []);
   const loading = !ready.categories || !ready.featured;
 
   return (
     <>
-      {loading || exiting ? (
+      {showInitialLoader && (loading || exiting) ? (
         <InitialLoader
           exit={exiting ? 'split' : undefined}
           onExited={hideExit}

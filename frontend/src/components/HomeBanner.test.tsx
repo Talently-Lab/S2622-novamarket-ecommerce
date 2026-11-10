@@ -21,6 +21,17 @@ describe('HomeBanner', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps the mobile copy and artwork in separate responsive columns', () => {
+    render(<HomeBanner />, { wrapper: MemoryRouter });
+
+    expect(screen.getByTestId('home-banner-content')).toHaveClass(
+      'grid-cols-[0.9fr_1.1fr]',
+    );
+    expect(
+      screen.getByRole('img', { name: /teclado, auriculares, parlante/i }),
+    ).not.toHaveClass('absolute');
+  });
+
   it('links the call to action to the catalog', () => {
     render(<HomeBanner />, { wrapper: MemoryRouter });
 

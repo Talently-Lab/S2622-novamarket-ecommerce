@@ -91,6 +91,22 @@ describe('ProductsPage', () => {
     expect(screen.getAllByTestId('product-card-skeleton')).not.toHaveLength(0);
   });
 
+  it('gives the mobile filter and sort controls equal width', async () => {
+    mockedGetProducts.mockResolvedValueOnce([product(1)]);
+
+    renderPage();
+    await screen.findByText('Producto 1');
+
+    const toolbar = screen.getByTestId('mobile-catalog-toolbar');
+    const [filterControl, sortControl] = Array.from(
+      toolbar.children,
+    ) as HTMLElement[];
+    expect(filterControl).toHaveClass('min-w-0', 'flex-1');
+    expect(sortControl).toHaveClass('min-w-0', 'flex-1');
+
+    expect(within(filterControl).getByRole('button', { name: 'Filtros' })).toBeInTheDocument();
+  });
+
   it('renders the breadcrumb with Inicio link and current page mirroring the title', async () => {
     mockedGetProducts.mockResolvedValueOnce([product(1)]);
 

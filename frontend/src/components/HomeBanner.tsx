@@ -19,8 +19,11 @@ export default function HomeBanner() {
       className={`w-full ${BANNER_SURFACE}`}
     >
       <div className="flex w-full justify-center px-4 md:px-20">
-        <div className="relative flex h-[200px] w-full max-w-[1280px] items-center md:h-[520px] md:items-end md:justify-center md:gap-[120px] md:py-4">
-          <div className="relative z-10 flex w-[181px] flex-col gap-4 md:w-auto md:gap-6 md:pb-16">
+        <div
+          data-testid="home-banner-content"
+          className="grid h-[200px] w-full max-w-[1280px] grid-cols-[0.9fr_1.1fr] items-center gap-2 md:flex md:h-[520px] md:items-end md:justify-center md:gap-[120px] md:py-4"
+        >
+          <div className="relative z-10 flex min-w-0 flex-col gap-4 md:w-auto md:gap-6 md:pb-16">
             <div className="flex flex-col gap-1 md:gap-4">
               <h1
                 id="home-hero-title"
@@ -45,7 +48,7 @@ export default function HomeBanner() {
             loading="eager"
             fetchPriority="high"
             decoding="async"
-            className="pointer-events-none absolute top-2 right-0 h-[184px] w-[220px] object-contain md:static md:h-[472px] md:w-[632px] md:shrink-0"
+            className="pointer-events-none h-[184px] w-full object-contain md:h-[472px] md:w-[632px] md:shrink-0"
           />
         </div>
       </div>
