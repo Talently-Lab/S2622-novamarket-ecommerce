@@ -142,12 +142,32 @@
   }
 }
 
+/*
+ * D-Loader split exit: the light track stretches into a full-width seam
+ * over the still-closed structure background (0–700ms), then fades
+ * (700–1000ms) so it is gone before the panels part at the seam — a light
+ * hairline would be invisible over the revealed page.
+ * Declared before the reduced-motion block so the override below wins.
+ */
+.loader-exit-track {
+  transition:
+    width 700ms ease-in-out,
+    opacity 300ms ease-in-out 700ms;
+}
+
 /* Motion accessibility: skip the entrance animation for reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   .animate-sheet-in,
   .animate-fade-in,
   .animate-loader-slide {
     animation: none;
+  }
+
+  /* Loader split exit: panels and track snap instead of gliding. */
+  [data-testid='initial-loader'] .transition-transform,
+  [data-testid='initial-loader'] .transition-opacity,
+  .loader-exit-track {
+    transition: none;
   }
 }
 
