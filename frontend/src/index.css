@@ -127,12 +127,26 @@
       opacity: 1;
     }
   }
+
+  /* D-Loader bar: the 80px segment crosses the 200px track and is fully
+     hidden at both endpoints, so the loop has no visible jump. */
+  --animate-loader-slide: loader-slide 1.5s linear infinite;
+
+  @keyframes loader-slide {
+    from {
+      transform: translateX(-80px);
+    }
+    to {
+      transform: translateX(200px);
+    }
+  }
 }
 
 /* Motion accessibility: skip the entrance animation for reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   .animate-sheet-in,
-  .animate-fade-in {
+  .animate-fade-in,
+  .animate-loader-slide {
     animation: none;
   }
 }
