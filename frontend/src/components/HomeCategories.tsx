@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { useCategories } from '../hooks/useCategories.ts';
 import Icon from './icons/Icon.tsx';
@@ -25,8 +26,18 @@ const CATEGORY_IMAGES: Record<string, string> = {
  * Below md it is a horizontal strip (Figma mobile 110px tiles). Desktop uses
  * four equal columns so the tiles span the same content width as featured cards.
  */
-export default function HomeCategories() {
-  const { categories } = useCategories();
+export default function HomeCategories({
+  onSettled,
+}: {
+  onSettled?: () => void;
+} = {}) {
+  const { categories, status } = useCategories();
+
+  // Report the fetch outcome (ready or error) so the home loader can
+  // dismiss; the consumer's setter is idempotent, so repeats are harmless.
+  useEffect(() => {
+    if (status !== 'loading') onSettled?.();
+  }, [status, onSettled]);
 
   return (
     <section aria-label="Categorías" className="py-4 md:py-6">

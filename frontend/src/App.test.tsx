@@ -125,6 +125,45 @@ describe('NovaMarket landing page', () => {
     expect(await screen.findAllByRole('img')).toHaveLength(10);
   });
 
+  it('does not show the initial home loader when returning from another route', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+
+    render(
+      <MemoryRouter initialEntries={['/productos']}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: /todos los productos/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('initial-loader')).not.toBeInTheDocument();
+
+    await user.click(screen.getAllByRole('link', { name: 'NovaMarket' })[0]);
+
+    expect(
+      await screen.findByRole('heading', { name: /potenciá tu setup/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('initial-loader')).not.toBeInTheDocument();
+  });
+
+  it('shows the initial home loader when the app opens on home', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('initial-loader')).toBeInTheDocument();
+  });
+
   it('renders the product detail page on /productos/:id', async () => {
     render(
       <MemoryRouter initialEntries={['/productos/mongo-id-3']}>
@@ -163,5 +202,27 @@ describe('NovaMarket landing page', () => {
     // The alert is an overlay: the CTA keeps its own label and stays clickable.
     expect(cta).toBeInTheDocument();
     expect(cta).toHaveTextContent('Agregar al carrito');
+  });
+
+  it('renders the responsive 404 page for unknown routes', () => {
+    render(
+      <MemoryRouter initialEntries={['/ruta-inexistente']}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    const content = screen.getByTestId('not-found-content');
+    expect(content).toHaveClass('px-4', 'md:px-[200px]', 'md:min-h-[795px]');
+    expect(screen.getByRole('main').querySelector('main')).toBeNull();
+    expect(screen.getByText('¡UPS!')).toBeInTheDocument();
+    expect(screen.getByText('No encontramos esta página')).toBeInTheDocument();
+    expect(screen.getByText('ERROR')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '404' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute(
+      'href',
+      '/',
+    );
   });
 });

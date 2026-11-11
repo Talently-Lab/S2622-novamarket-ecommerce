@@ -85,7 +85,7 @@ export default function CategoryFilter({
   const ctaLabel = `Ver ${pendingCount} ${pendingCount === 1 ? 'producto' : 'productos'}`;
 
   return (
-    <div className="flex-1">
+    <div className="min-w-0 flex-1">
       <button
         ref={triggerRef}
         type="button"
@@ -94,8 +94,8 @@ export default function CategoryFilter({
         onClick={openSheet}
         className="bg-fondo-estructura text-texto-sobre-estructura focus-visible:outline-borde-foco flex h-12 w-full items-center justify-center gap-2 rounded-md px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
-        <Icon name="tune" className="text-xl" />
-        <span className="text-cuerpo-boton font-semibold">
+        <Icon name="tune" className="shrink-0 text-xl" />
+        <span className="text-cuerpo-boton whitespace-nowrap font-semibold">
           Filtros{activeCount > 0 ? ` (${activeCount})` : ''}
         </span>
       </button>

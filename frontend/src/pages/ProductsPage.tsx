@@ -224,7 +224,10 @@ export default function ProductsPage() {
 
             {/* Mobile toolbar: Filtros + Ordenar, as in the 390 frame. */}
             {isDesktop ? null : (
-              <div className="mt-4 flex gap-2">
+              <div
+                data-testid="mobile-catalog-toolbar"
+                className="mt-4 flex gap-2"
+              >
                 <CategoryFilter
                   options={categoryOptions}
                   value={category}
@@ -234,7 +237,7 @@ export default function ProductsPage() {
                   counts={counts}
                   total={total}
                 />
-                {sortSelect}
+                <div className="min-w-0 flex-1">{sortSelect}</div>
               </div>
             )}
 

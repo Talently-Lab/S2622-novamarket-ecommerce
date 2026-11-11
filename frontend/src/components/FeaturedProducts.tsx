@@ -120,6 +120,8 @@ export interface FeaturedProductsProps {
   title: string;
   count?: number;
   showSeeAll?: boolean;
+  /** Fires once the fetch settles (success or error) so a parent loader can dismiss. */
+  onSettled?: () => void;
 }
 
 function slugifyTitle(title: string): string {
@@ -136,6 +138,7 @@ export default function FeaturedProducts({
   title,
   count = FEATURED_COUNT,
   showSeeAll = false,
+  onSettled,
 }: FeaturedProductsProps) {
   const [featured, setFeatured] = useState<Product[] | null>(null);
   const { addItem } = useCart();
@@ -160,6 +163,12 @@ export default function FeaturedProducts({
       cancelled = true;
     };
   }, [count]);
+
+  // Separate from the fetch effect so a changing onSettled identity never
+  // restarts the request; the home loader's setter is idempotent.
+  useEffect(() => {
+    if (featured !== null) onSettled?.();
+  }, [featured, onSettled]);
 
   // Hidden on error/empty: the section never breaks. While loading it renders
   // skeletons so the section does not collapse.

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router';
+import Icon from '../components/icons/Icon.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import { loginSchema } from '../schemas/auth.ts';
 
@@ -9,6 +10,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
   const [pending, setPending] = useState(false);
@@ -100,19 +102,35 @@ export default function LoginPage() {
             >
               Contraseña
             </label>
-            <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-              disabled={disabled}
-              className={`w-full rounded-md border px-3 py-2 text-cuerpo focus:outline-none ${
-                errors.password
-                  ? 'border-red-500'
-                  : 'border-borde-divisor focus:border-borde-foco'
-              }`}
-            />
+            <div className="relative">
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                disabled={disabled}
+                className={`w-full rounded-md border px-3 py-2 pr-10 text-cuerpo focus:outline-none ${
+                  errors.password
+                    ? 'border-red-500'
+                    : 'border-borde-divisor focus:border-borde-foco'
+                }`}
+              />
+              <button
+                type="button"
+                aria-label={
+                  showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                }
+                onClick={() => setShowPassword((shown) => !shown)}
+                disabled={disabled}
+                className="text-texto-secundario absolute inset-y-0 right-0 flex items-center px-3 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Icon
+                  name={showPassword ? 'visibility_off' : 'visibility'}
+                  className="text-lg"
+                />
+              </button>
+            </div>
             {errors.password ? (
               <p className="mt-1 text-xs text-red-500">{errors.password}</p>
             ) : null}

@@ -52,6 +52,15 @@ describe('CategoryFilter', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('keeps the active filter count on the same line as its label', () => {
+    renderFilter('gadgets');
+
+    const trigger = screen.getByRole('button', { name: 'Filtros (1)' });
+    expect(within(trigger).getByText('Filtros (1)')).toHaveClass(
+      'whitespace-nowrap',
+    );
+  });
+
   it('opens the sheet with the backend options and Todos checked by default', () => {
     renderFilter();
     const { dialog } = openSheet();
