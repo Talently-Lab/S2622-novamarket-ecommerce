@@ -112,6 +112,14 @@ export default function ProductsPage() {
     });
   }
 
+  function handleClearFilters() {
+    writeParams((params) => {
+      params.delete('categoria');
+      params.delete('precioMin');
+      params.delete('precioMax');
+    });
+  }
+
   function handleSortChange(next: string) {
     writeParams((params) => {
       if (next) {
@@ -202,6 +210,7 @@ export default function ProductsPage() {
                 maxPrice={maxPrice}
                 onCategoryChange={handleCategoryChange}
                 onPriceChange={handlePriceChange}
+                onClear={handleClearFilters}
               />
             </aside>
           ) : null}

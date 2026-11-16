@@ -104,7 +104,9 @@ describe('ProductsPage', () => {
     expect(filterControl).toHaveClass('min-w-0', 'flex-1');
     expect(sortControl).toHaveClass('min-w-0', 'flex-1');
 
-    expect(within(filterControl).getByRole('button', { name: 'Filtros' })).toBeInTheDocument();
+    expect(
+      within(filterControl).getByRole('button', { name: 'Filtros' }),
+    ).toBeInTheDocument();
   });
 
   it('renders the breadcrumb with Inicio link and current page mirroring the title', async () => {
@@ -237,12 +239,30 @@ describe('ProductsPage', () => {
 
     expect(filters.getByRole('textbox', { name: 'Mínimo' })).toHaveAttribute(
       'placeholder',
-      '$20.000',
+      '$2.000',
     );
     expect(filters.getByRole('textbox', { name: 'Máximo' })).toHaveAttribute(
       'placeholder',
       '$50.000',
     );
+  });
+
+  it('clears the category from the desktop rail with Limpiar filtros', async () => {
+    stubMatchMedia(true);
+    mockedGetProducts.mockResolvedValue([product(1)]);
+
+    renderPage('/productos?categoria=gadgets');
+    await screen.findByText('Producto 1');
+    expect(
+      screen.getByRole('heading', { name: 'Gadgets' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+
+    expect(
+      await screen.findByRole('heading', { name: /todos los productos/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Todos' })).toBeChecked();
   });
 
   it('shows the error state and retries on demand', async () => {

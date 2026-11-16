@@ -15,6 +15,7 @@ interface CatalogFiltersProps extends CatalogFilterValues {
   options: CategoryOption[];
   onCategoryChange: (category: string) => void;
   onPriceChange: (minPrice?: number, maxPrice?: number) => void;
+  onClear: () => void;
   /** Radio group name; unique per rendered instance. */
   name: string;
 }
@@ -35,6 +36,7 @@ export default function CatalogFilters({
   maxPrice,
   onCategoryChange,
   onPriceChange,
+  onClear,
   name,
 }: CatalogFiltersProps) {
   const [min, setMin] = useState(
@@ -103,7 +105,7 @@ export default function CatalogFilters({
               type="text"
               inputMode="numeric"
               value={min}
-              placeholder="$20.000"
+              placeholder="$2.000"
               onChange={(event) => setMin(toDigits(event.target.value))}
               onBlur={commitPrice}
               onKeyDown={(event) => {
@@ -135,6 +137,14 @@ export default function CatalogFilters({
           </label>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-cuerpo-boton text-texto-principal focus-visible:outline-borde-foco h-11 self-start rounded-md hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        Limpiar filtros
+      </button>
     </div>
   );
 }

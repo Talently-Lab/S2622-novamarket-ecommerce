@@ -95,7 +95,7 @@ export default function CategoryFilter({
         className="bg-fondo-estructura text-texto-sobre-estructura focus-visible:outline-borde-foco flex h-12 w-full items-center justify-center gap-2 rounded-md px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <Icon name="tune" className="shrink-0 text-xl" />
-        <span className="text-cuerpo-boton whitespace-nowrap font-semibold">
+        <span className="text-cuerpo-boton font-semibold whitespace-nowrap">
           Filtros{activeCount > 0 ? ` (${activeCount})` : ''}
         </span>
       </button>
@@ -150,6 +150,13 @@ export default function CategoryFilter({
                     minPrice: nextMin,
                     maxPrice: nextMax,
                   }))
+                }
+                onClear={() =>
+                  setPending({
+                    category: '',
+                    minPrice: undefined,
+                    maxPrice: undefined,
+                  })
                 }
               />
             </div>
