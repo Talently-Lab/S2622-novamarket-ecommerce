@@ -24,7 +24,6 @@ const FOOTER_COLUMNS: { title: string; links: FooterItem[] }[] = [
     links: [
       { label: 'Ingresar', to: '/login' },
       { label: 'Crear cuenta', to: '/registro' },
-      { label: 'Mis pedidos' },
     ],
   },
 ];

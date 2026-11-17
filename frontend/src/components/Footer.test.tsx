@@ -34,7 +34,9 @@ describe('Footer', () => {
     expect(
       within(navigation).getByRole('heading', { name: 'Mi cuenta' }),
     ).toBeInTheDocument();
-    expect(within(navigation).getByText('Mis pedidos')).toBeInTheDocument();
+    expect(
+      within(navigation).queryByText('Mis pedidos'),
+    ).not.toBeInTheDocument();
   });
 
   it('routes category and account links while leaving help and unimplemented orders as text', () => {

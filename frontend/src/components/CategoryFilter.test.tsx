@@ -118,6 +118,26 @@ describe('CategoryFilter', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('resets the pending filters with the Limpiar filtros button', () => {
+    const { onChange } = renderFilter();
+    const { dialog } = openSheet();
+
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Gadgets' }));
+    expect(
+      within(dialog).getByRole('button', { name: 'Ver 1 producto' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Limpiar filtros' }),
+    );
+
+    expect(within(dialog).getByRole('radio', { name: 'Todos' })).toBeChecked();
+    expect(
+      within(dialog).getByRole('button', { name: 'Ver 9 productos' }),
+    ).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('discards the pending selection on X, scrim, and Escape', () => {
     const { onChange } = renderFilter();
 
